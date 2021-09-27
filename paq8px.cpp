@@ -131,6 +131,11 @@ static void printHelp() {
          "\n"
          "Additional optional switches:\n"
          "\n"
+         "    -skipdetection\n"
+         "    Skip block detection, use generic model set only.\n" 
+         "    It helps when block detection would find false positives in a file with purely binary content.\n"
+         "\n"
+         "\n"
          "    -v\n"
          "    Print more detailed (verbose) information to screen.\n"
          "\n"
@@ -220,7 +225,7 @@ static void printCommand(const WHATTODO &whattodo) {
 
 static void printOptions(Shared *shared) {
   printf(" Level          = %d\n", shared->level);
-  printf(" Brute      (b) = %s\n", (shared->options & OPTION_BRUTE) != 0U ? "On  (Brute-force detection of DEFLATE streams)"
+  printf(" Brute      (b) = %s\n", (shared->options & OPTION_BRUTEFORCE_DEFLATE_DETECTION) != 0U ? "On  (Brute-force detection of DEFLATE streams)"
                                                                           : "Off"); //this is a compression-only option, but we put/get it for reproducibility
   printf(" Train exe  (e) = %s\n", (shared->options & OPTION_TRAINEXE) != 0U ? "On  (Pre-train x86/x64 model)" : "Off");
   printf(" Train txt  (t) = %s\n",
@@ -287,7 +292,7 @@ auto processCommandLine(int argc, char **argv) -> int {
           for( ; j < argLen; j++ ) {
             switch( argv[i][j] & 0xDFU ) {
               case 'B':
-                shared.options |= OPTION_BRUTE;
+                shared.detectionOptions |= OPTION_BRUTEFORCE_DEFLATE_DETECTION;
                 break;
               case 'E':
                 shared.options |= OPTION_TRAINEXE;
@@ -338,6 +343,8 @@ auto processCommandLine(int argc, char **argv) -> int {
             quit("The -log switch requires a filename.");
           }
           logfile += argv[i];
+        } else if( strcasecmp(argv[i], "-skipdetection") == 0 ) {
+          shared.detectionOptions |= OPTION_SKIP_BLOCK_DETECTION;
         }
         else if( strcasecmp(argv[i], "-simd") == 0 ) {
           if( ++i == argc ) {

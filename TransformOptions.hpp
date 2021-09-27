@@ -4,10 +4,10 @@
 struct TransformOptions
 {
   bool skipRgb = false;
-  bool useZlibBrute = false;
+  bool useBruteForceDeflateDetection = false;
   TransformOptions(const Shared * const shared) {
     skipRgb = (shared->options & OPTION_SKIPRGB) != 0u;
-    useZlibBrute = (shared->options & OPTION_BRUTE) != 0;
+    useBruteForceDeflateDetection = (shared->options & OPTION_BRUTEFORCE_DEFLATE_DETECTION) != 0;
   }
 };
 

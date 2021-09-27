@@ -102,17 +102,18 @@ class IntentionalException : public std::exception {};
   throw IntentionalException();
 }
 
-
+// compression/decompression options (they are stored in the archive)
 #define OPTION_MULTIPLE_FILE_MODE 1U
-#define OPTION_BRUTE 2U
-#define OPTION_TRAINEXE 4U
-#define OPTION_TRAINTXT 8U
-#define OPTION_ADAPTIVE 16U
-#define OPTION_SKIPRGB 32U
-#define OPTION_LSTM 64U
-#define OPTION_LSTM_TRAINING 128U
+#define OPTION_TRAINEXE 2U
+#define OPTION_TRAINTXT 4U
+#define OPTION_ADAPTIVE 8U
+#define OPTION_SKIPRGB 16U
+#define OPTION_LSTM 32U
+#define OPTION_LSTM_TRAINING 64U
 
-
+// block detection related options (they are not stored in the archive)
+#define OPTION_BRUTEFORCE_DEFLATE_DETECTION 1U
+#define OPTION_SKIP_BLOCK_DETECTION 2U
 
 inline auto clip(int const px) -> uint8_t {
   if( px > 255 ) {

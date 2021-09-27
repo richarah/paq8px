@@ -32,6 +32,7 @@ public:
     
     RingBuffer<uint8_t> buf; /**< Rotating input queue set by Predictor */
     uint8_t options = 0; /**< Compression options (bit field) */
+    uint8_t detectionOptions = 0; /**< Block detection related options (bit field) */
     SIMDType chosenSimd = SIMDType::SIMD_NONE; /**< default value, will be overridden by the CPU dispatcher, and may be overridden from the command line */
     uint8_t level = 0; /**< level=0: no compression (only transformations), level=1..12 compress using less..more RAM */
     uint64_t mem = 0; /**< pre-calculated value of 65536 * 2^level */
@@ -40,7 +41,7 @@ public:
     struct {
 
       //
-      // Global state, used by most models, updated after every bit in by update(y)
+      // Global state, used by most models, updated after every bit by update(y)
       // 
 
       uint8_t y = 0; /**< Last bit, 0 or 1 */

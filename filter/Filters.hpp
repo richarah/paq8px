@@ -510,7 +510,7 @@ static DetectionInfo detect(File *in, uint64_t blockSize, const TransformOptions
 
     int zh = parseZlibHeader(((int)zBuf[(zBufPos - 32) & 0xFF]) * 256 + (int)zBuf[(zBufPos - 32 + 1) & 0xFF]);
     bool valid = (i >= 31 && zh != -1);
-    if (!valid && transformOptions->useZlibBrute && i >= 255) {
+    if (!valid && transformOptions->useBruteForceDeflateDetection && i >= 255) {
       uint8_t bType = (zBuf[zBufPos] & 7) >> 1;
       if ((valid = (bType == 1 || bType == 2))) {
         int maximum = 0, used = 0, offset = zBufPos;
@@ -2071,7 +2071,21 @@ static void compressfile(const Shared* const shared, const char *filename, uint6
   printf("Block segmentation:\n");
   String blstr;
   TransformOptions transformOptions(shared);
-  compressRecursive(&in, fileSize, en, blstr, 0, 0.0F, 1.0F, &transformOptions);
+  if ((shared->detectionOptions & OPTION_SKIP_BLOCK_DETECTION) !=0) {
+    // skip blockType detection + compress
+    const uint64_t begin = 0;
+    int blNum = 0;
+    const int info = -1;
+    const int recursionLevel = 0;
+    float p1 = 0.0f;
+    float p2 = 1.0f;
+    const float pscale = fileSize != 0 ? (p2 - p1) / fileSize : 0;
+    compressBlock(&in, begin, fileSize, /*ref: */ blNum, BlockType::DEFAULT, info, en, /*in: */ blstr, recursionLevel, /*ref: */ p1, /*ref: */ p2, pscale, &transformOptions);
+  }
+  else {
+    // detect block types + compress
+    compressRecursive(&in, fileSize, en, blstr, 0, 0.0F, 1.0F, &transformOptions);
+  }
   in.close();
 
   if((shared->options & OPTION_MULTIPLE_FILE_MODE) != 0u ) { //multiple file mode
