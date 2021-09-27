@@ -16,13 +16,13 @@ private:
      * Define padding requirements.
      */
     [[nodiscard]] constexpr inline auto simdWidth() const -> int {
-      if( simd == SIMD_AVX2 ) {
+      if( simd == SIMDType::SIMD_AVX2 ) {
         return 32 / sizeof(short); // 256 bit (32 byte) data size
       }
-      else if( simd == SIMD_SSE2 || simd == SIMD_SSSE3 || simd == SIMD_NEON ) {
+      else if( simd == SIMDType::SIMD_SSE2 || simd == SIMDType::SIMD_SSSE3 || simd == SIMDType::SIMD_NEON ) {
         return 16 / sizeof(short); // 128 bit (16 byte) data size
       }
-      else if( simd == SIMD_NONE ) {
+      else if( simd == SIMDType::SIMD_NONE ) {
         return 4 / sizeof(short); // Processes 2 shorts at once -> width is 4 bytes
       }
       assert(false);
@@ -95,16 +95,16 @@ public:
               if (rate > MIN_LEARNING_RATE_SN) rate--;
             }
             rates[i] = rate;
-            if (simd == SIMD_NONE) {
+            if (simd == SIMDType::SIMD_NONE) {
               trainSimdNone(&tx[0], &wx[cxt[i] * n], nx, (err * rate) >> 16);
             }
-            else if (simd == SIMD_SSE2 || simd == SIMD_SSSE3) {
+            else if (simd == SIMDType::SIMD_SSE2 || simd == SIMDType::SIMD_SSSE3) {
               trainSimdSse2(&tx[0], &wx[cxt[i] * n], nx, (err * rate) >> 16);
             }
-            else if (simd == SIMD_AVX2) {
+            else if (simd == SIMDType::SIMD_AVX2) {
               trainSimdAvx2(&tx[0], &wx[cxt[i] * n], nx, (err * rate) >> 16);
             }
-            else if (simd == SIMD_NEON) {
+            else if (simd == SIMDType::SIMD_NEON) {
               trainSimdNeon(&tx[0], &wx[cxt[i] * n], nx, (err * rate) >> 16);
             }
 
@@ -129,16 +129,16 @@ public:
         for( uint64_t i = 0; i < numContexts; ++i ) {
           int dp = 0;
           if (cxt[i] != UINT32_MAX) { // valid mixer context (not to skip)
-            if (simd == SIMD_NONE) {
+            if (simd == SIMDType::SIMD_NONE) {
               dp = dotProductSimdNone(&tx[0], &wx[cxt[i] * n], nx);
             }
-            else if (simd == SIMD_SSE2 || simd == SIMD_SSSE3) {
+            else if (simd == SIMDType::SIMD_SSE2 || simd == SIMDType::SIMD_SSSE3) {
               dp = dotProductSimdSse2(&tx[0], &wx[cxt[i] * n], nx);
             }
-            else if (simd == SIMD_AVX2) {
+            else if (simd == SIMDType::SIMD_AVX2) {
               dp = dotProductSimdAvx2(&tx[0], &wx[cxt[i] * n], nx);
             }
-            else if (simd == SIMD_NEON) {
+            else if (simd == SIMDType::SIMD_NEON) {
               dp = dotProductSimdNeon(&tx[0], &wx[cxt[i] * n], nx);
             }
             else {
@@ -159,16 +159,16 @@ public:
         return mp->p();
       } // s=1 context
       int dp;
-      if( simd == SIMD_NONE ) {
+      if( simd == SIMDType::SIMD_NONE ) {
         dp = dotProductSimdNone(&tx[0], &wx[cxt[0] * n], nx);
       }
-      else if( simd == SIMD_SSE2 || simd == SIMD_SSSE3 ) {
+      else if( simd == SIMDType::SIMD_SSE2 || simd == SIMDType::SIMD_SSSE3 ) {
         dp = dotProductSimdSse2(&tx[0], &wx[cxt[0] * n], nx);
       }
-      else if( simd == SIMD_AVX2 ) {
+      else if( simd == SIMDType::SIMD_AVX2 ) {
         dp = dotProductSimdAvx2(&tx[0], &wx[cxt[0] * n], nx);
       }
-      else if (simd == SIMD_NEON) {
+      else if (simd == SIMDType::SIMD_NEON) {
         dp = dotProductSimdNeon(&tx[0], &wx[cxt[0] * n], nx);
       }
       else {

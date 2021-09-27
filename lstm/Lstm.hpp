@@ -255,7 +255,7 @@ public:
         memcpy(&layer_input[epoch][i + 1][num_cells + input_size], &hidden[i * num_cells], num_cells * sizeof(float));
       }
     }
-    if (simd == SIMD_AVX2)
+    if (simd == SIMDType::SIMD_AVX2)
       SoftMaxSimdAVX2();
     else
       SoftMaxSimdNone();

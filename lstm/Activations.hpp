@@ -54,7 +54,7 @@ private:
   }
 public:
   void Run(float* f, std::size_t const len) const {
-    if (simd == SIMD_AVX2)
+    if (simd == SIMDType::SIMD_AVX2)
       RunSimdAVX2(f, len);
     else {
       for (std::size_t i = 0u; i < len; i++)
@@ -118,7 +118,7 @@ private:
   }
 public:
   void Run(float* f, std::size_t const len) const {
-    if (simd == SIMD_AVX2)
+    if (simd == SIMDType::SIMD_AVX2)
       RunSimdAVX2(f, len);
     else {
       for (std::size_t i = 0u; i < len; i++)
