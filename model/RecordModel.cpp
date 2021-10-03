@@ -197,7 +197,8 @@ void RecordModel::mix(Mixer &m) {
     iMap[1].setDirect(N * 2 - NN);
     iMap[2].setDirect(N * 3 - NN * 3 + NNN);
 
-    sMap[3].set(pos & 255U); // mozilla
+    INJECT_SHARED_blockPos
+    sMap[3].set(blockPos & 255U); // mozilla
 
     // update last context positions
     cPos4[c] = cPos3[c];
