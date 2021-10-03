@@ -1,0 +1,18 @@
+#ifndef PAQ8PX_BLOCK_HPP
+#define PAQ8PX_BLOCK_HPP
+
+#include "Shared.hpp"
+#include "Encoder.hpp"
+#include "BlockType.hpp"
+
+namespace Block {
+
+  void EncodeBlockSize(Encoder* const encoder, uint64_t blockSize);
+  uint64_t DecodeBlockSize(Encoder* const encoder);
+  void EncodeBlockType(Encoder* const encoder, BlockType blocktype);
+  BlockType DecodeBlockType(Encoder* const encoder);
+  void EncodeInfo(Encoder* const encoder, int info);
+  int DecodeInfo(Encoder* const encoder);
+};
+
+#endif //PAQ8PX_BLOCK_HPP

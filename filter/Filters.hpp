@@ -1755,17 +1755,17 @@ static DetectionInfo detect(File *in, uint64_t blockSize, const TransformOptions
 
 static void directEncodeBlock(BlockType type, File *in, uint64_t len, Encoder &en, int info = -1) {
   // TODO: Large file support
-  en.encodeBlockType(type);
-  en.encodeBlockSize(len);
+  Block::EncodeBlockType(&en, type);
+  Block::EncodeBlockSize(&en, len);
   if( info != -1 ) {
-    en.encodeInfo(info);
+    Block::EncodeInfo(&en, info);
   }
   fprintf(stderr, "Compressing... ");
   for( uint64_t j = 0; j < len; ++j ) {
     if((j & 0xfff) == 0 ) {
       en.printStatus(j, len);
     }
-    en.compressByte(in->getchar());
+    en.compressByte(&en.predictorMain, in->getchar());
   }
   fprintf(stderr, "\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b");
 }
@@ -1921,8 +1921,8 @@ transformEncodeBlock(BlockType type, File *in, uint64_t len, Encoder &en, int in
       }
       if( hasRecursion(type)) {
         // TODO(epsteina): Large file support
-        en.encodeBlockType(type);
-        en.encodeBlockSize(tmpSize);
+        Block::EncodeBlockType(&en, type);
+        Block::EncodeBlockSize(&en, tmpSize);
         BlockType type2 = static_cast<BlockType>((info >> 24) & 0xFF);
         if( type2 != BlockType::DEFAULT ) {
           String blstrSub0;
@@ -2062,9 +2062,9 @@ static void compressfile(const Shared* const shared, const char *filename, uint6
   assert(en.getMode() == COMPRESS);
   assert(filename && filename[0]);
 
-  en.encodeBlockType(BlockType::FILECONTAINER);
+  Block::EncodeBlockType(&en, BlockType::FILECONTAINER);
   uint64_t start = en.size();
-  en.encodeBlockSize(fileSize);
+  Block::EncodeBlockSize(&en, fileSize);
 
   FileDisk in;
   in.open(filename, true);
@@ -2104,15 +2104,15 @@ static auto decompressRecursive(File *out, uint64_t blockSize, Encoder &en, FMod
   uint64_t diffFound = 0;
   int info = 0;
   while( i < blockSize ) {
-    type = en.decodeBlockType();
-    len = en.decodeBlockSize();
+    type = Block::DecodeBlockType(&en);
+    len = Block::DecodeBlockSize(&en);
     if( hasInfo(type)) {
-      info = en.decodeInfo();
+      info = Block::DecodeInfo(&en);
     }
     if (type == BlockType::MRB) {
       FileTmp tmp;
       for (uint64_t j = 0; j < len; ++j)
-          tmp.putChar(en.decompressByte());
+          tmp.putChar(en.decompressByte(&en.predictorMain));
       if (mode != FDISCARD) {
         tmp.setpos(0);
         len = decodeFunc(type, en, &tmp, len, info, out, mode, diffFound, transformOptions);
@@ -2138,14 +2138,14 @@ static auto decompressRecursive(File *out, uint64_t blockSize, Encoder &en, FMod
           en.printStatus();
         }
         if( mode == FDECOMPRESS ) {
-          out->putChar(en.decompressByte());
+          out->putChar(en.decompressByte(&en.predictorMain));
         } else if( mode == FCOMPARE ) {
-          if( en.decompressByte() != out->getchar() && (diffFound == 0u)) {
+          if( en.decompressByte(&en.predictorMain) != out->getchar() && (diffFound == 0u)) {
             mode = FDISCARD;
             diffFound = i + j + 1;
           }
         } else {
-          en.decompressByte();
+          en.decompressByte(&en.predictorMain);
         }
       }
     }
@@ -2159,11 +2159,11 @@ static void decompressFile(const Shared *const shared, const char *filename, FMo
   assert(en.getMode() == DECOMPRESS);
   assert(filename && filename[0]);
 
-  BlockType blocktype = en.decodeBlockType();
+  BlockType blocktype = Block::DecodeBlockType(&en);
   if( blocktype != BlockType::FILECONTAINER ) {
     quit("Bad archive.");
   }
-  uint64_t fileSize = en.decodeBlockSize();
+  uint64_t fileSize = Block::DecodeBlockSize(&en);
 
   FileDisk f;
   if( fMode == FCOMPARE ) {

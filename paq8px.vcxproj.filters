@@ -297,6 +297,9 @@
     <ClCompile Include="BlockType.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Block.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="AdaptiveMap.hpp">
@@ -721,6 +724,9 @@
     </ClInclude>
     <ClInclude Include="model\IContextModel.hpp">
       <Filter>model</Filter>
+    </ClInclude>
+    <ClInclude Include="Block.hpp">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -1,7 +1,7 @@
 #include "Encoder.hpp"
 
 
-Encoder::Encoder(Shared* const sh, Mode m, File *f) : shared(sh), predictor(sh), ari(f), mode(m), archive(f), alt(nullptr) {
+Encoder::Encoder(Shared* const sh, Mode m, File *f) : shared(sh), ari(f), mode(m), archive(f), alt(nullptr), predictorMain(sh) {
   if( mode == DECOMPRESS ) {
     uint64_t start = size();
     archive->setEnd();
@@ -29,21 +29,21 @@ void Encoder::flush() {
 
 void Encoder::setFile(File *f) { alt = f; }
 
-void Encoder::compressByte(uint8_t c) {
+void Encoder::compressByte(Predictor *predictor, uint8_t c) {
   assert(mode == COMPRESS);
   if( shared->level == 0 ) {
     archive->putChar(c);
   } else {
     for( int i = 7; i >= 0; --i ) {
-      int p = predictor.p();
+      int p = predictor->p();
       int y = (c >> i) & 1;
       ari.encodeBit(p, y);
-      predictor.update(y);
+      predictor->update(y);
     }
   }
 }
 
-auto Encoder::decompressByte() -> uint8_t {
+uint8_t Encoder::decompressByte(Predictor *predictor) {
   if( mode == COMPRESS ) {
     assert(alt);
     return alt->getchar();
@@ -53,58 +53,16 @@ auto Encoder::decompressByte() -> uint8_t {
   } else {
     uint8_t c = 0;
     for( int i = 0; i < 8; ++i ) {
-      int p = predictor.p();
+      int p = predictor->p();
       int y = ari.decodeBit(p);
       c = c << 1 | y;
-      predictor.update(y);
+      predictor->update(y);
     }
     return c;
   }
 }
 
-void Encoder::encodeBlockSize(uint64_t blockSize) {
-  while( blockSize > 0x7FU ) {
-    compressByte(0x80 | (blockSize & 0x7FU));
-    blockSize >>= 7U;
-  }
-  compressByte(uint8_t(blockSize));
-}
 
-void Encoder::encodeBlockType(BlockType blocktype) {
-  compressByte(uint8_t(blocktype));
-}
-
-auto Encoder::decodeBlockType() -> BlockType {
-  uint8_t b = decompressByte();
-  return (BlockType)b;
-}
-
-auto Encoder::decodeBlockSize() -> uint64_t {
-  uint64_t blockSize = 0;
-  uint8_t b = 0;
-  int i = 0;
-  do {
-    b = decompressByte();
-    blockSize |= uint64_t((b & 0x7FU) << i);
-    i += 7;
-  } while((b >> 7U) > 0 );
-  return blockSize;
-}
-
-void Encoder::encodeInfo(int info) {
-  compressByte((info >> 24) & 0xFF);
-  compressByte((info >> 16) & 0xFF);
-  compressByte((info >> 8) & 0xFF);
-  compressByte((info) & 0xFF);
-}
-auto Encoder::decodeInfo() -> int {
-  int info = 0;
-  for (int j = 0; j < 4; ++j) {
-    info <<= 8;
-    info += decompressByte();
-  }
-  return info;
-}
 
 void Encoder::setStatusRange(float perc1, float perc2) {
   p1 = perc1;

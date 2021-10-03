@@ -2,6 +2,7 @@
 #define PAQ8PX_EXE_HPP
 
 #include "../file/File.hpp"
+#include "../Block.hpp"
 #include "../Encoder.hpp"
 #include "../VLI.hpp"
 #include "Filter.hpp"
@@ -66,25 +67,24 @@ public:
      * @return
      */
     uint64_t decode(File *in, File *out, FMode fMode, uint64_t size, uint64_t &diffFound) override {
-      int begin = 0;
       int offset = 6;
       int a = 0;
       uint8_t c[6];
-      begin = static_cast<int>(encoder->decodeBlockSize());
-      size -= VLICost(uint64_t(begin));
+      uint64_t begin = Block::DecodeBlockSize(encoder);
+      size -= VLICost(begin);
       for( int i = 4; i >= 0; i-- ) {
-        c[i] = encoder->decompressByte(); // Fill queue
+        c[i] = encoder->decompressByte(&encoder->predictorMain); // Fill queue
       }
 
       while( offset < static_cast<int>(size) + 6 ) {
         memmove(c + 1, c, 5);
         if( offset <= static_cast<int>(size)) {
-          c[0] = encoder->decompressByte();
+          c[0] = encoder->decompressByte(&encoder->predictorMain);
         }
         // E8E9 transform: E8/E9 xx xx xx 00/FF -> subtract location from x
         if((c[0] == 0x00 || c[0] == 0xFF) && (c[4] == 0xE8 || c[4] == 0xE9 || (c[5] == 0x0F && (c[4] & 0xF0U) == 0x80)) &&
            (((offset - 1) ^ (offset - 6)) & -block) == 0 && offset <= static_cast<int>(size)) { // not crossing block boundary
-          a = ((c[1] ^ 176U) | (c[2] ^ 176U) << 8 | (c[3] ^ 176U) << 16U | c[0] << 24U) - offset - begin;
+          a = ((c[1] ^ 176U) | (c[2] ^ 176U) << 8 | (c[3] ^ 176U) << 16U | c[0] << 24U) - offset - static_cast<int>(begin);
           a <<= 7U;
           a >>= 7U;
           c[3] = a;

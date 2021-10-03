@@ -246,6 +246,7 @@
     <ClCompile Include="APMPost.cpp" />
     <ClCompile Include="ArithmeticEncoder.cpp" />
     <ClCompile Include="BitCount.cpp" />
+    <ClCompile Include="Block.cpp" />
     <ClCompile Include="BlockType.cpp" />
     <ClCompile Include="Clz.hpp" />
     <ClCompile Include="ContextMap.cpp" />
@@ -339,6 +340,7 @@
     <ClInclude Include="Array.hpp" />
     <ClInclude Include="BH.hpp" />
     <ClInclude Include="BitCount.hpp" />
+    <ClInclude Include="Block.hpp" />
     <ClInclude Include="BlockType.hpp" />
     <ClInclude Include="Bucket16.hpp" />
     <ClInclude Include="CharacterNames.hpp" />
