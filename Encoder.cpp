@@ -1,7 +1,6 @@
 #include "Encoder.hpp"
 
-
-Encoder::Encoder(Shared* const sh, Mode m, File *f) : shared(sh), ari(f), mode(m), archive(f), alt(nullptr), predictorMain(sh) {
+Encoder::Encoder(Shared* const sh, bool doEncoding, Mode m, File *f) : doEncoding(doEncoding), shared(sh), ari(f), mode(m), archive(f), alt(nullptr), predictorMain(sh) {
   if( mode == DECOMPRESS ) {
     uint64_t start = size();
     archive->setEnd();
@@ -12,7 +11,7 @@ Encoder::Encoder(Shared* const sh, Mode m, File *f) : shared(sh), ari(f), mode(m
     setStatusRange(0.0, static_cast<float>(end));
     archive->setpos(start);
   }
-  if( shared->level > 0 && mode == DECOMPRESS ) { // x = first 4 bytes of archive
+  if( doEncoding && mode == DECOMPRESS ) { // x = first 4 bytes of archive
     ari.prefetch();
   }
 }
@@ -22,7 +21,7 @@ auto Encoder::getMode() const -> Mode { return mode; }
 auto Encoder::size() const -> uint64_t { return archive->curPos(); }
 
 void Encoder::flush() {
-  if( mode == COMPRESS && shared->level > 0 ) {
+  if(doEncoding && mode == COMPRESS) {
     ari.flush();
   }
 }
@@ -31,15 +30,16 @@ void Encoder::setFile(File *f) { alt = f; }
 
 void Encoder::compressByte(Predictor *predictor, uint8_t c) {
   assert(mode == COMPRESS);
-  if( shared->level == 0 ) {
+  if (!doEncoding) {
     archive->putChar(c);
   } else {
     for( int i = 7; i >= 0; --i ) {
-      int p = predictor->p();
+      uint32_t p = predictor->p();
       int y = (c >> i) & 1;
       ari.encodeBit(p, y);
-      predictor->update(y);
+      updateModels(p, y);
     }
+    assert(shared->State.c1 == c);
   }
 }
 
@@ -48,20 +48,22 @@ uint8_t Encoder::decompressByte(Predictor *predictor) {
     assert(alt);
     return alt->getchar();
   }
-  if( shared->level == 0 ) {
+  if (!doEncoding) {
     return archive->getchar();
   } else {
-    uint8_t c = 0;
     for( int i = 0; i < 8; ++i ) {
       int p = predictor->p();
       int y = ari.decodeBit(p);
-      c = c << 1 | y;
-      predictor->update(y);
+      updateModels(p, y);
     }
-    return c;
+    return shared->State.c1;
   }
 }
 
+void Encoder::updateModels(uint32_t p, int y) {
+  bool isMissed = ((p >> (ArithmeticEncoder::PRECISION - 1)) != y);
+  shared->update(y, isMissed);
+}
 
 
 void Encoder::setStatusRange(float perc1, float perc2) {

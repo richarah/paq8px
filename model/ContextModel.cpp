@@ -9,7 +9,12 @@
 #include "ContextModelAudio8.cpp"
 #include "ContextModelAudio16.cpp"
 
-ContextModel::ContextModel(Shared* const sh, Models* const models) : shared(sh), models(models) {}
+ContextModel::ContextModel(Shared* const sh, Models* const models, const MixerFactory* const mf) :
+  shared(sh), 
+  models(models), 
+  mixerFactory(mf),
+  contextModelGeneric(sh, models, mf)
+{}
 
 int ContextModel::p() {
   uint32_t &blpos = shared->State.blockPos;
@@ -97,7 +102,7 @@ int ContextModel::p() {
       switch (blockType) {
 
         case BlockType::IMAGE1: {
-          static ContextModelImage1 contextModelImage1{ shared, models };
+          static ContextModelImage1 contextModelImage1{ shared, models, mixerFactory};
           int width = blockInfo;
           contextModelImage1.setParam(width);
           selectedContextModel = &contextModelImage1;
@@ -105,7 +110,7 @@ int ContextModel::p() {
         }
 
         case BlockType::IMAGE4: {
-          static ContextModelImage4 contextModelImage4{ shared, models };
+          static ContextModelImage4 contextModelImage4{ shared, models, mixerFactory };
           int width = blockInfo;
           contextModelImage4.setParam(width);
           selectedContextModel = &contextModelImage4;
@@ -116,7 +121,7 @@ int ContextModel::p() {
         case BlockType::PNG8:
         case BlockType::IMAGE8GRAY:
         case BlockType::PNG8GRAY: {
-          static ContextModelImage8 contextModelImage8{ shared, models };
+          static ContextModelImage8 contextModelImage8{ shared, models, mixerFactory };
           int isGray = blockType == BlockType::IMAGE8GRAY || blockType == BlockType::PNG8GRAY;
           int isPNG = blockType == BlockType::PNG8 || blockType == BlockType::PNG8GRAY;
           int width = blockInfo & 0xffffff;
@@ -129,7 +134,7 @@ int ContextModel::p() {
         case BlockType::PNG24:
         case BlockType::IMAGE32:
         case BlockType::PNG32: {
-          static ContextModelImage24 contextModelImage24{ shared, models };
+          static ContextModelImage24 contextModelImage24{ shared, models, mixerFactory };
           int isAlpha = blockType == BlockType::IMAGE32 || blockType == BlockType::PNG32;
           int isPNG = blockType == BlockType::PNG24 || blockType == BlockType::PNG32;
           int width = blockInfo & 0xffffff;
@@ -142,13 +147,13 @@ int ContextModel::p() {
         case BlockType::AUDIO:
         case BlockType::AUDIO_LE: {
           if ((blockInfo & 2) == 0) {
-            static ContextModelAudio8 contextModelAudio8{ shared, models };
+            static ContextModelAudio8 contextModelAudio8{ shared, models, mixerFactory };
             contextModelAudio8.setParam(blockInfo);
             selectedContextModel = &contextModelAudio8;
             break;
           }
           else {
-            static ContextModelAudio16 contextModelAudio16{ shared, models };
+            static ContextModelAudio16 contextModelAudio16{ shared, models, mixerFactory };
             contextModelAudio16.setParam(blockInfo);
             selectedContextModel = &contextModelAudio16;
             break;
@@ -157,13 +162,13 @@ int ContextModel::p() {
   #endif //DISABLE_AUDIOMODEL
 
         case BlockType::JPEG: {
-          static ContextModelJpeg contextModelJpeg{ shared, models };
+          static ContextModelJpeg contextModelJpeg{ shared, models, mixerFactory };
           selectedContextModel = &contextModelJpeg;
           break;
         }
 
         case BlockType::DEC_ALPHA: {
-          static ContextModelDec contextModelDec{ shared, models };
+          static ContextModelDec contextModelDec{ shared, models, mixerFactory };
           selectedContextModel = &contextModelDec;
           break;
         }
@@ -171,7 +176,7 @@ int ContextModel::p() {
         case BlockType::TEXT:
         case BlockType::TEXT_EOL:
         case BlockType::DBF: {
-          static ContextModelText contextModelText{ shared, models };
+          static ContextModelText contextModelText{ shared, models, mixerFactory };
           selectedContextModel = &contextModelText;
           break;
         }

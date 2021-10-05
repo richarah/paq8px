@@ -53,7 +53,7 @@ private:
 
 public:
     explicit SSE(Shared* const sh);
-    int p(int pr_orig);
+    uint32_t p(uint32_t pr_orig);
 };
 
 #endif //PAQ8PX_SSE_HPP

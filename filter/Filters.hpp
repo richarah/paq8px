@@ -2071,7 +2071,7 @@ static void compressfile(const Shared* const shared, const char *filename, uint6
   printf("Block segmentation:\n");
   String blstr;
   TransformOptions transformOptions(shared);
-  if ((shared->detectionOptions & OPTION_SKIP_BLOCK_DETECTION) !=0) {
+  if (shared->GetOptionSkipBlockDetection()) {
     // skip blockType detection + compress
     const uint64_t begin = 0;
     int blNum = 0;
@@ -2088,7 +2088,7 @@ static void compressfile(const Shared* const shared, const char *filename, uint6
   }
   in.close();
 
-  if((shared->options & OPTION_MULTIPLE_FILE_MODE) != 0u ) { //multiple file mode
+  if (shared->GetOptionMultipleFileMode()) { //multiple file mode
     if( verbose ) {
       printf("File size to encode   : 4\n"); //This string must be long enough. "Compressing ..." is still on screen, we need to overwrite it.
     }

@@ -6,8 +6,8 @@ struct TransformOptions
   bool skipRgb = false;
   bool useBruteForceDeflateDetection = false;
   TransformOptions(const Shared * const shared) {
-    skipRgb = (shared->options & OPTION_SKIPRGB) != 0u;
-    useBruteForceDeflateDetection = (shared->options & OPTION_BRUTEFORCE_DEFLATE_DETECTION) != 0;
+    skipRgb = shared->GetOptionSkipRGB();
+    useBruteForceDeflateDetection = shared->GetOptionBruteforceDeflateDetection();
   }
 };
 

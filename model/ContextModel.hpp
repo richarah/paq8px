@@ -13,6 +13,7 @@
 class ContextModel {
     Shared * const shared;
     Models * const models;
+    const MixerFactory* const mixerFactory;
     BlockType nextBlockType = BlockType::DEFAULT;
     BlockType blockType = BlockType::DEFAULT;
     int blockSize = 1;
@@ -20,11 +21,11 @@ class ContextModel {
     int bytesRead = 0;
     bool readSize = false;
 
-    ContextModelGeneric contextModelGeneric{ shared, models }; // we always need a generic model, so we declare and instatiate it here
+    ContextModelGeneric contextModelGeneric; // we always need a generic model, so we declare it here
     IContextModel* selectedContextModel = &contextModelGeneric;
 
 public:
-    ContextModel(Shared* const sh, Models* const models);
+    ContextModel(Shared* const sh, Models* const models, const MixerFactory* const mixerFactory);
     int p();
 };
 

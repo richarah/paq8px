@@ -35,7 +35,7 @@ public:
     modelType(LSTM::Model::Type::Default), pModelType(LSTM::Model::Type::Default),
     pBlockType(BlockType::Count)
   {
-    if ((this->shared->options & OPTION_LSTM_TRAINING) != 0u) {
+    if (this->shared->GetOptionTrainLSTM()) {
       repo[LSTM::Model::Type::Default] = std::unique_ptr<LSTM::Model>(new LSTM::Model(shape)); // std::make_unique requires C++14
       lstm.SaveModel(*repo[LSTM::Model::Type::Default]);
       repo[LSTM::Model::Type::English] = std::unique_ptr<LSTM::Model>(new LSTM::Model(shape));
@@ -59,7 +59,7 @@ public:
       memcpy(&this->probs[0], &output[0], (1 << Bits) * sizeof(float));
       this->top = (1 << Bits) - 1;
       this->bot = 0;
-      if (((this->shared->options & OPTION_LSTM_TRAINING) != 0u) && (this->shared->State.blockPos == 0u)) {
+      if ((this->shared->GetOptionTrainLSTM()) && (this->shared->State.blockPos == 0u)) {
         BlockType const blockType = static_cast<BlockType>(this->shared->State.blockType);
         if (blockType != pBlockType) {
           switch (blockType) {

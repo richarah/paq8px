@@ -57,7 +57,7 @@ Image{
   }
   {}
 
-auto SSE::p(const int pr_orig) -> int {
+uint32_t SSE::p(const uint32_t pr_orig) {
 
   INJECT_SHARED_c0
   INJECT_SHARED_bpos

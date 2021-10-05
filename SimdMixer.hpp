@@ -13,7 +13,7 @@ private:
     SIMDMixer *mp; /**< points to a Mixer to combine results */
 
     /**
-     * Define padding requirements.
+     * Define SIMD padding requirements.
      */
     [[nodiscard]] constexpr inline auto simdWidth() const -> int {
       if( simd == SIMDType::SIMD_AVX2 ) {
@@ -29,11 +29,12 @@ private:
     }
 
 public:
-    SIMDMixer(const Shared* const sh, const int n, const int m, const int s) : Mixer(sh, ((n + (simdWidth() - 1)) & -(simdWidth())), m, s) {
+    SIMDMixer(const Shared* const sh, const int n, const int m, const int s, const int promoted) : 
+      Mixer(sh, ((n + (simdWidth() - 1)) & -(simdWidth())), m, s) {
       assert((this->n & (simdWidth() - 1)) == 0);
       assert(this->m > 0);
       assert(this->s > 0);
-      mp = (s > 1) ? new SIMDMixer<simd>(sh, s + (((sh->options & OPTION_LSTM) != 0u) ? 1 : 0), 1, 1) : nullptr;
+      mp = (s > 1) ? new SIMDMixer<simd>(sh, s + promoted, 1, 1, 0) : nullptr;
     }
 
     ~SIMDMixer() override {
@@ -63,7 +64,8 @@ public:
         for( uint64_t i = 0; i < numContexts; ++i ) {
           if (cxt[i] != UINT32_MAX) {
             int err = target - pr[i];
-            if ((shared->options & OPTION_ADAPTIVE) != 0) {
+            const bool isAdaptiveLearningRate = shared->GetOptionAdaptiveLearningRate();
+            if (isAdaptiveLearningRate) {
               const uint32_t logErr = min(0xF, ilog2(abs(err)));
               info[i].sum -= square(info[i].data[1] >> 28);
               info[i].data[1] <<= 4;

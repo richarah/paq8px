@@ -1,15 +1,14 @@
 #include "JpegModel.hpp"
 #include "../Stretch.hpp"
 
-JpegModel::JpegModel(Shared* const sh, const uint64_t size) : shared(sh), t(size),
+JpegModel::JpegModel(Shared* const sh, const MixerFactory* const mf, const uint64_t size) : shared(sh), t(size),
         MJPEGMap(sh, 21, 3, 128, 127), /* BitsOfContext, InputBits, Scale, Limit */
         sm(sh, N, 256, 1023, StateMap::BitHistory), apm1(sh, 0x20000, 18), 
         apm2(sh, 0x4000, 20), apm3(sh, 0x4000, 21), apm4(sh, 0x4000, 22), apm5(sh, 0x4000, 23), 
         apm6(sh, 0x4000, 20), apm7(sh, 0x4000, 21), apm8(sh, 0x4000, 22), apm9(sh, 0x4000, 23), apm10(sh, 0x4000, 24),
         apm11(sh, 0x8000, 22), apm12(sh, 0x8000, 22), apm13(sh, 0x8000, 22), apm14(sh, 0x8000, 22)
 {
-  auto mf = new MixerFactory();
-  m1 = mf->createMixer(sh, N + 1 /*bias*/+ IndirectMap::MIXERINPUTS /*MJPEGMap*/, 1024 + 2 + 1024 + 1024, 4);
+  m1 = mf->createMixer(N + 1 /*bias*/+ IndirectMap::MIXERINPUTS /*MJPEGMap*/, 1024 + 2 + 1024 + 1024, 4 , 0);
   m1->setScaleFactor(1024, 128); // 2048, 256 for small images
 }
 

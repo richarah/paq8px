@@ -20,8 +20,10 @@ private:
     File* archive; /**< Compressed data file */
     File *alt; /**< decompressByte() source in COMPRESS mode */
     float p1 {}, p2 {}; /**< percentages for progress indicator: 0.0 .. 1.0 */
-    const Shared * const shared;
+    bool doEncoding; /**<  false when compression level is 0 */
+    Shared * const shared;
 
+    void updateModels(uint32_t p, int y);
 
 public:
 
@@ -36,7 +38,7 @@ public:
      * @param m the mode to operate in
      * @param f the file to read from or write to
      */
-    Encoder(Shared* const sh, Mode m, File *f);
+    Encoder(Shared* const sh, bool doEncoding, Mode m, File *f);
     [[nodiscard]] auto getMode() const -> Mode;
 
     /**

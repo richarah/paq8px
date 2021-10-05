@@ -28,6 +28,7 @@
 #include "lstm/LstmModel.hpp"
 #include "lstm/LstmFactory.hpp"
 #include "model/IContextModel.hpp"
+#include "MixerFactory.hpp"
 
 /**
  * This is a factory class for lazy object creation for models.
@@ -36,8 +37,12 @@
 class Models {
 private:
   Shared * const shared;
+  const MixerFactory* const mixerFactory;
+  void trainText(const char* const dictionary, int iterations);
+  void trainExe();
 public:
-  explicit Models(Shared* const sh);
+  explicit Models(Shared* const sh, MixerFactory* mf);
+  void trainModelsWhenNeeded();
   auto normalModel() -> NormalModel &;
   auto dmcForest() -> DmcForest &;
   auto charGroupModel() -> CharGroupModel &;
