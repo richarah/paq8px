@@ -1753,11 +1753,11 @@ static DetectionInfo detect(File *in, uint64_t blockSize, const TransformOptions
 
 //////////////////// Compress, Decompress ////////////////////////////
 
-static void directEncodeBlock(BlockType type, File *in, uint64_t len, Encoder &en, int info = -1) {
+static void directEncodeBlock(BlockType type, File *in, uint64_t len, Encoder &en, int info) {
   // TODO: Large file support
   Block::EncodeBlockType(&en, type);
   Block::EncodeBlockSize(&en, len);
-  if( info != -1 ) {
+  if(hasInfo(type)) {
     Block::EncodeInfo(&en, info);
   }
   fprintf(stderr, "Compressing... ");
@@ -1790,6 +1790,7 @@ decodeFunc(BlockType type, Encoder &en, File *tmp, uint64_t len, int info, File 
     return e->decode(tmp, out, mode, len, diffFound);
   } else if( type == BlockType::EXE ) {
     auto e = new ExeFilter();
+    e->setBegin(info); 
     e->setEncoder(en);
     return e->decode(tmp, out, mode, len, diffFound);
   } else if( type == BlockType::TEXT_EOL ) {
@@ -1811,6 +1812,7 @@ decodeFunc(BlockType type, Encoder &en, File *tmp, uint64_t len, int info, File 
     return decodeGif(tmp, len, out, mode, diffFound);
   } else if( type == BlockType::RLE ) {
     auto r = new RleFilter();
+    //r->setScanLineSize(info & 0xFFFFFFU); //now it self-encodes this info, but eventually we need to pass it
     return r->decode(tmp, out, mode, len, diffFound);
   } else if( type == BlockType::MRB) {
     uint8_t packingMethod = (info >> 24) & 3; //0..3
@@ -1844,6 +1846,7 @@ static auto encodeFunc(BlockType type, File *in, File *tmp, uint64_t len, int in
     e->encode(in, tmp, len, info, hdrsize);
   } else if( type == BlockType::EXE ) {
     auto e = new ExeFilter();
+    e->setBegin(info); 
     e->encode(in, tmp, len, info, hdrsize);
   } else if( type == BlockType::TEXT_EOL ) {
     auto e = new EolFilter();
@@ -1863,6 +1866,7 @@ static auto encodeFunc(BlockType type, File *in, File *tmp, uint64_t len, int in
     return encodeGif(in, tmp, len, hdrsize) != 0 ? 0 : 1;
   } else if( type == BlockType::RLE ) {
     auto r = new RleFilter();
+    r->setScanLineSize(info & 0xFFFFFFU);
     r->encode(in, tmp, len, info, hdrsize);
   } else if (type == BlockType::MRB) {
     const uint8_t packingMethod = (info >> 24) & 3; //0..3
@@ -1910,7 +1914,7 @@ transformEncodeBlock(BlockType type, File *in, uint64_t len, Encoder &en, int in
     if( diffFound > 0 || tmp.getchar() != EOF) {
       printf("Transform fails at %" PRIu64 ", skipping...\n", diffFound - 1);
       in->setpos(begin);
-      directEncodeBlock(BlockType::DEFAULT, in, len, en);
+      directEncodeBlock(BlockType::DEFAULT, in, len, en, -1);
     } else {
       tmp.setpos(0);
       if (type == BlockType::MRB) {
@@ -1937,7 +1941,7 @@ transformEncodeBlock(BlockType type, File *in, uint64_t len, Encoder &en, int in
           printf(" %-11s | ->  exploded     |%10d bytes [%d - %d]\n", blstrSub0.c_str(), int(tmpSize), 0, int(tmpSize - 1));
           if (headerSize != 0) {
             printf(" %-11s | --> added header |%10d bytes [%d - %d]\n", blstrSub1.c_str(), headerSize, 0, headerSize - 1);
-            directEncodeBlock(BlockType::HDR, &tmp, headerSize, en);
+            directEncodeBlock(BlockType::HDR, &tmp, headerSize, en, -1);
             printf(" %-11s | --> data         |%10d bytes [%d - %d]\n", blstrSub2.c_str(), int(tmpSize - headerSize), headerSize,
               int(tmpSize - 1));
           }
@@ -1946,12 +1950,12 @@ transformEncodeBlock(BlockType type, File *in, uint64_t len, Encoder &en, int in
           compressRecursive(&tmp, tmpSize, en, blstr, recursionLevel + 1, p1, p2, transformOptions);
         }
       } else {
-        directEncodeBlock(type, &tmp, tmpSize, en, hasInfo(type) ? info : -1);
+        directEncodeBlock(type, &tmp, tmpSize, en, info);
       }
     }
     tmp.close();
   } else {
-    directEncodeBlock(type, in, len, en, hasInfo(type) ? info : -1);
+    directEncodeBlock(type, in, len, en, info);
   }
 }
 
@@ -2098,14 +2102,13 @@ static void compressfile(const Shared* const shared, const char *filename, uint6
 }
 
 static auto decompressRecursive(File *out, uint64_t blockSize, Encoder &en, FMode mode, int recursionLevel, TransformOptions *transformOptions) -> uint64_t {
-  BlockType type;
-  uint64_t len = 0;
   uint64_t i = 0;
   uint64_t diffFound = 0;
-  int info = 0;
   while( i < blockSize ) {
-    type = Block::DecodeBlockType(&en);
-    len = Block::DecodeBlockSize(&en);
+
+    BlockType type = Block::DecodeBlockType(&en);
+    uint64_t len = Block::DecodeBlockSize(&en);
+    int info = 0;
     if( hasInfo(type)) {
       info = Block::DecodeInfo(&en);
     }

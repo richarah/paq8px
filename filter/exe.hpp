@@ -4,7 +4,6 @@
 #include "../file/File.hpp"
 #include "../Block.hpp"
 #include "../Encoder.hpp"
-#include "../VLI.hpp"
 #include "Filter.hpp"
 #include <cstdint>
 
@@ -22,8 +21,14 @@
 class ExeFilter : public Filter {
 private:
     constexpr static int block = 0x10000; /**< block size */
+    int info;
 public:
-    /**
+  
+  void setBegin(int info) {
+    this->info = info;
+  }
+
+  /**
      * @todo Large file support
      * @param in
      * @param out
@@ -32,7 +37,6 @@ public:
      */
     void encode(File *in, File *out, uint64_t size, int info, int &headerSize) override {
       Array<uint8_t> blk(block);
-      out->putVLI(info);
 
       // Transform
       for( uint64_t offset = 0; offset < size; offset += block ) {
@@ -70,8 +74,7 @@ public:
       int offset = 6;
       int a = 0;
       uint8_t c[6];
-      uint64_t begin = Block::DecodeBlockSize(encoder);
-      size -= VLICost(begin);
+      uint64_t begin = info;
       for( int i = 4; i >= 0; i-- ) {
         c[i] = encoder->decompressByte(&encoder->predictorMain); // Fill queue
       }
