@@ -83,8 +83,12 @@ uint32_t SSE::p(const uint32_t pr_orig) {
     ((misses & 0xff00) != 0) << 2;
   
   constexpr int limit = 1023;
+  
+  const BlockType normalizedBlockType =
+    blockType == BlockType::JPEG && shared->State.JPEG.state == 0 ? BlockType::DEFAULT :
+    blockType;
 
-  switch(blockType) {
+  switch(normalizedBlockType) {
     case BlockType::TEXT:
     case BlockType::TEXT_EOL: {
       uint32_t pr0 = Text.APMs[0].p(pr_orig, static_cast<uint32_t>(c0) << 7 | (shared->State.Text.mask & 0x0F) | misses3 << 4, limit); //15

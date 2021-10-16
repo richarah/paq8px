@@ -21,7 +21,7 @@ void NormalModel::updateHashes() {
       blockType == BlockType::AUDIO_LE = BlockType::AUDIO
       blockType == BlockType::TEXT_EOL = BlockType::TEXT
   */
-  if (isTEXT(blockType))
+  if (isTEXT(blockType) || (blockType == BlockType::JPEG && shared->State.JPEG.state == 0))
     normalizedBlockType = BlockType::DEFAULT;
   else if (blockType == BlockType::AUDIO_LE)
     normalizedBlockType = BlockType::AUDIO;
