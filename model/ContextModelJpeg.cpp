@@ -17,8 +17,7 @@ public:
       JpegModel::MIXERINPUTS +
       SparseMatchModel::MIXERINPUTS +
       SparseModel::MIXERINPUTS + SparseBitModel::MIXERINPUTS + RecordModel::MIXERINPUTS + CharGroupModel::MIXERINPUTS +
-      TextModel::MIXERINPUTS + WordModel::MIXERINPUTS_BIN + IndirectModel::MIXERINPUTS +
-      DmcForest::MIXERINPUTS + NestModel::MIXERINPUTS + XMLModel::MIXERINPUTS +
+      TextModel::MIXERINPUTS + WordModel::MIXERINPUTS_BIN + 
       LinearPredictionModel::MIXERINPUTS +
       (useLSTM ? LstmModel<>::MIXERINPUTS : 0)
       ,
@@ -26,8 +25,7 @@ public:
       JpegModel::MIXERCONTEXTS +
       SparseMatchModel::MIXERCONTEXTS +
       SparseModel::MIXERCONTEXTS + SparseBitModel::MIXERCONTEXTS + RecordModel::MIXERCONTEXTS + CharGroupModel::MIXERCONTEXTS +
-      TextModel::MIXERCONTEXTS + WordModel::MIXERCONTEXTS + IndirectModel::MIXERCONTEXTS +
-      DmcForest::MIXERCONTEXTS + NestModel::MIXERCONTEXTS + XMLModel::MIXERCONTEXTS +
+      TextModel::MIXERCONTEXTS + WordModel::MIXERCONTEXTS + 
       LinearPredictionModel::MIXERCONTEXTS +
       (useLSTM ? LstmModel<>::MIXERCONTEXTS : 0)
       ,
@@ -35,8 +33,7 @@ public:
       JpegModel::MIXERCONTEXTSETS +
       SparseMatchModel::MIXERCONTEXTSETS +
       SparseModel::MIXERCONTEXTSETS + SparseBitModel::MIXERCONTEXTSETS + RecordModel::MIXERCONTEXTSETS + CharGroupModel::MIXERCONTEXTSETS +
-      TextModel::MIXERCONTEXTSETS + WordModel::MIXERCONTEXTSETS + IndirectModel::MIXERCONTEXTSETS +
-      DmcForest::MIXERCONTEXTSETS + NestModel::MIXERCONTEXTSETS + XMLModel::MIXERCONTEXTSETS +
+      TextModel::MIXERCONTEXTSETS + WordModel::MIXERCONTEXTSETS +
       LinearPredictionModel::MIXERCONTEXTSETS +
       (useLSTM ? LstmModel<>::MIXERCONTEXTSETS : 0)
       ,
@@ -81,18 +78,10 @@ public:
       textModel.mix(*m);
       WordModel& wordModel = models->wordModel();
       wordModel.mix(*m);
-      IndirectModel& indirectModel = models->indirectModel();
-      indirectModel.mix(*m);
-      DmcForest& dmcForest = models->dmcForest();
-      dmcForest.mix(*m);
-      NestModel& nestModel = models->nestModel();
-      nestModel.mix(*m);
-      XMLModel& xmlModel = models->xmlModel();
-      xmlModel.mix(*m);
       LinearPredictionModel& linearPredictionModel = models->linearPredictionModel();
       linearPredictionModel.mix(*m);
-
-      m->setScaleFactor(940, 80);
+      
+      m->setScaleFactor(1200, 120); 
       return m->p();
     }
 
