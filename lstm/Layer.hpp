@@ -5,7 +5,7 @@
 #include "IOptimizer.hpp"
 #include "IActivation.hpp"
 #include "IDecay.hpp"
-#include "../utils.hpp"
+#include "../Utils.hpp"
 
 template<SIMDType simd, class Optimizer, class Activation, class Decay, typename T>
 class Layer {

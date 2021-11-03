@@ -2,7 +2,7 @@
 #define PAQ8PX_ZLIB_HPP
 
 #include "Filters.hpp"
-#include "../utils.hpp"
+#include "../Utils.hpp"
 #include <zlib.h>
 
 static auto parseZlibHeader(int header) -> int {

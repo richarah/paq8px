@@ -1,7 +1,7 @@
 #ifndef PAQ8PX_MIXERFACTORY_HPP
 #define PAQ8PX_MIXERFACTORY_HPP
 
-#include "utils.hpp"
+#include "Utils.hpp"
 #include "Mixer.hpp"
 #include "Shared.hpp"
 #include "SimdMixer.hpp"

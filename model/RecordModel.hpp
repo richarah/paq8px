@@ -8,7 +8,7 @@
 #include "../RingBuffer.hpp"
 #include "../SmallStationaryContextMap.hpp"
 #include "../StationaryMap.hpp"
-#include "../utils.hpp"
+#include "../Utils.hpp"
 
 /**
  * Model 2-d data with fixed record length. Also order 1-2 models that include the distance to the last match.

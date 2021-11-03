@@ -12,7 +12,7 @@
 #define PROGYEAR     "2021"
 
 
-#include "utils.hpp"
+#include "Utils.hpp"
 
 #include <stdexcept>  //std::exception
 

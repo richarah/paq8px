@@ -3,7 +3,7 @@
 
 #include "IPredictor.hpp"
 #include "Shared.hpp"
-#include "utils.hpp"
+#include "Utils.hpp"
 
 #if defined(__i386__) || defined(__x86_64__) || defined(_M_X64)
 #include <immintrin.h>

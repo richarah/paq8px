@@ -12,7 +12,7 @@
 #include "model/ExeModel.hpp"
 #include "model/NormalModel.hpp"
 #include "model/WordModel.hpp"
-#include "utils.hpp"
+#include "Utils.hpp"
 
 /**
  * A Predictor estimates the probability that the next bit of uncompressed data is 1.

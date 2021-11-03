@@ -2,7 +2,7 @@
 #define PAQ8PX_ADAM_HPP
 
 #include "IOptimizer.hpp"
-#include "../utils.hpp"
+#include "../Utils.hpp"
 #include "../simd.hpp"
 #include <cmath>
 //#define USE_RSQRT
