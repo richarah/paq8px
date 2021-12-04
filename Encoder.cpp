@@ -1,6 +1,17 @@
 #include "Encoder.hpp"
 
-Encoder::Encoder(Shared* const sh, bool doEncoding, Mode m, File *f) : doEncoding(doEncoding), shared(sh), ari(f), mode(m), archive(f), alt(nullptr), predictorMain(sh) {
+Encoder::Encoder(Shared* const sharedMain, bool doEncoding, Mode m, File *f) : 
+  doEncoding(doEncoding), 
+  ari(f), 
+  mode(m), 
+  archive(f), 
+  alt(nullptr), 
+  sharedBlock(),
+  predictorMain(sharedMain),
+  predictorBlock(&sharedBlock)
+{
+  sharedBlock.init(sharedMain->level, 16);
+  sharedBlock.chosenSimd = sharedMain->chosenSimd;
   if( mode == DECOMPRESS ) {
     uint64_t start = size();
     archive->setEnd();
@@ -37,9 +48,9 @@ void Encoder::compressByte(Predictor *predictor, uint8_t c) {
       uint32_t p = predictor->p();
       int y = (c >> i) & 1;
       ari.encodeBit(p, y);
-      updateModels(p, y);
+      updateModels(predictor, p, y);
     }
-    assert(shared->State.c1 == c);
+    assert(predictor->shared->State.c1 == c);
   }
 }
 
@@ -54,15 +65,15 @@ uint8_t Encoder::decompressByte(Predictor *predictor) {
     for( int i = 0; i < 8; ++i ) {
       int p = predictor->p();
       int y = ari.decodeBit(p);
-      updateModels(p, y);
+      updateModels(predictor, p, y);
     }
-    return shared->State.c1;
+    return predictor->shared->State.c1;
   }
 }
 
-void Encoder::updateModels(uint32_t p, int y) {
+void Encoder::updateModels(Predictor* predictor, uint32_t p, int y) {
   bool isMissed = ((p >> (ArithmeticEncoder::PRECISION - 1)) != y);
-  shared->update(y, isMissed);
+  predictor->shared->update(y, isMissed);
 }
 
 

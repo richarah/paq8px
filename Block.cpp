@@ -1,51 +1,103 @@
 #include "Block.hpp"
 
-//IBlock::IBlock(Shared* const sh, Encoder* const enc) : shared(sh), encoder(enc) {}
-
 namespace Block {
 
-  void EncodeBlockSize(Encoder* const encoder, uint64_t blockSize) {
-    while (blockSize > 0x7FU) {
-      encoder->compressByte(&encoder->predictorMain, 0x80 | (blockSize & 0x7FU));
-      blockSize >>= 7U;
-    }
-    encoder->compressByte(&encoder->predictorMain, uint8_t(blockSize));
+  void EncodeBlockHeader(Encoder* const encoder, BlockType blockType, uint64_t blockSize, int blockInfo) {
+    EncodeBlockType(encoder, blockType);
+    EncodeBlockSize(encoder, blockSize);
+    if (hasInfo(blockType))
+      EncodeInfo(encoder, blockInfo);
+
+    Shared* shared = encoder->predictorMain.shared;
+    shared->State.blockType = blockType;
+    shared->State.blockInfo = blockInfo;
+    shared->State.blockPos = UINT32_MAX;
   }
 
-  uint64_t DecodeBlockSize(Encoder* const encoder) {
-    uint64_t blockSize = 0;
-    uint8_t b = 0;
-    int i = 0;
-    do {
-      b = encoder->decompressByte(&encoder->predictorMain);
-      blockSize |= uint64_t((b & 0x7FU) << i);
-      i += 7;
-    } while ((b >> 7U) > 0);
+  uint64_t DecodeBlockHeader(Encoder* const encoder) { //returns blockSize
+    BlockType blockType = DecodeBlockType(encoder);
+    uint64_t blockSize = DecodeBlockSize(encoder);
+    int blockInfo = -1;
+    if (hasInfo(blockType))
+      blockInfo = DecodeInfo(encoder);
+
+    Shared* shared = encoder->predictorMain.shared;
+    shared->State.blockType = blockType;
+    shared->State.blockInfo = blockInfo;
+    shared->State.blockPos = UINT32_MAX;
     return blockSize;
   }
 
   void EncodeBlockType(Encoder* const encoder, BlockType blocktype) {
-    encoder->compressByte(&encoder->predictorMain, uint8_t(blocktype));
+    encoder->predictorBlock.shared->State.WordModel.order = 0x10;
+    encoder->compressByte(&encoder->predictorBlock, uint8_t(blocktype));
+    encoder->predictorBlock.shared->State.rLength <<= 8;
+    encoder->predictorBlock.shared->State.rLength |= uint8_t(blocktype);
   }
 
   BlockType DecodeBlockType(Encoder* const encoder) {
-    uint8_t b = encoder->decompressByte(&encoder->predictorMain);
+    encoder->predictorBlock.shared->State.WordModel.order = 0x10;
+    uint8_t b = encoder->decompressByte(&encoder->predictorBlock);
+    encoder->predictorBlock.shared->State.rLength <<= 8;
+    encoder->predictorBlock.shared->State.rLength |= b;
     return (BlockType)b;
   }
 
+  void EncodeBlockSize(Encoder* const encoder, uint64_t blockSize) {
+    encoder->predictorBlock.shared->State.WordModel.order = 0x20;
+    encoder->compressByte(&encoder->predictorBlock, (blockSize >> 24) & 0xFF);
+    encoder->predictorBlock.shared->State.WordModel.order = 0x21;
+    encoder->compressByte(&encoder->predictorBlock, (blockSize >> 16) & 0xFF);
+    encoder->predictorBlock.shared->State.WordModel.order = 0x22;
+    encoder->compressByte(&encoder->predictorBlock, (blockSize >> 8) & 0xFF);
+    encoder->predictorBlock.shared->State.WordModel.order = 0x23;
+    encoder->compressByte(&encoder->predictorBlock, (blockSize) & 0xFF);
+  }
+
+  uint64_t DecodeBlockSize(Encoder* const encoder) {
+    uint64_t blockSize = 0;
+    uint8_t b;
+    encoder->predictorBlock.shared->State.WordModel.order = 0x20;
+    b = encoder->decompressByte(&encoder->predictorBlock);
+    blockSize = blockSize << 8 | b;
+    encoder->predictorBlock.shared->State.WordModel.order = 0x21;
+    b = encoder->decompressByte(&encoder->predictorBlock);
+    blockSize = blockSize << 8 | b;
+    encoder->predictorBlock.shared->State.WordModel.order = 0x22;
+    b = encoder->decompressByte(&encoder->predictorBlock);
+    blockSize = blockSize << 8 | b;
+    encoder->predictorBlock.shared->State.WordModel.order = 0x23;
+    b = encoder->decompressByte(&encoder->predictorBlock);
+    blockSize = blockSize << 8 | b;
+    return blockSize;
+  }
+
   void EncodeInfo(Encoder* const encoder, int info) {
-    encoder->compressByte(&encoder->predictorMain, (info >> 24) & 0xFF);
-    encoder->compressByte(&encoder->predictorMain, (info >> 16) & 0xFF);
-    encoder->compressByte(&encoder->predictorMain, (info >> 8) & 0xFF);
-    encoder->compressByte(&encoder->predictorMain, (info) & 0xFF);
+    encoder->predictorBlock.shared->State.WordModel.order = 0x30;
+    encoder->compressByte(&encoder->predictorBlock, (info >> 24) & 0xFF);
+    encoder->predictorBlock.shared->State.WordModel.order = 0x31;
+    encoder->compressByte(&encoder->predictorBlock, (info >> 16) & 0xFF);
+    encoder->predictorBlock.shared->State.WordModel.order = 0x32;
+    encoder->compressByte(&encoder->predictorBlock, (info >> 8) & 0xFF);
+    encoder->predictorBlock.shared->State.WordModel.order = 0x33;
+    encoder->compressByte(&encoder->predictorBlock, (info) & 0xFF);
   }
 
   int DecodeInfo(Encoder* const encoder) {
     int info = 0;
-    for (int j = 0; j < 4; ++j) {
-      info <<= 8;
-      info += encoder->decompressByte(&encoder->predictorMain);
-    }
+    uint8_t b;
+    encoder->predictorBlock.shared->State.WordModel.order = 0x30;
+    b = encoder->decompressByte(&encoder->predictorBlock);
+    info = info << 8 | b;
+    encoder->predictorBlock.shared->State.WordModel.order = 0x31;
+    b = encoder->decompressByte(&encoder->predictorBlock);
+    info = info << 8 | b;
+    encoder->predictorBlock.shared->State.WordModel.order = 0x32;
+    b = encoder->decompressByte(&encoder->predictorBlock);
+    info = info << 8 | b;
+    encoder->predictorBlock.shared->State.WordModel.order = 0x33;
+    b = encoder->decompressByte(&encoder->predictorBlock);
+    info = info << 8 | b;
     return info;
   }
 

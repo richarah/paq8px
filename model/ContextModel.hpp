@@ -5,7 +5,6 @@
 #include "../Mixer.hpp"
 #include "../MixerFactory.hpp"
 #include "../Models.hpp"
-#include "ContextModelGeneric.cpp"
 
 /**
  * This combines all the context models with a Mixer.
@@ -14,18 +13,11 @@ class ContextModel {
     Shared * const shared;
     Models * const models;
     const MixerFactory* const mixerFactory;
-    BlockType nextBlockType = BlockType::DEFAULT;
-    BlockType blockType = BlockType::DEFAULT;
-    int blockSize = 1;
-    int blockInfo = 0;
-    int bytesRead = 0;
-    bool readSize = false;
 
-    ContextModelGeneric contextModelGeneric; // we always need a generic model, so we declare it here
-    IContextModel* selectedContextModel = &contextModelGeneric;
+    IContextModel* selectedContextModel = nullptr;
 
 public:
-    ContextModel(Shared* const sh, Models* const models, const MixerFactory* const mixerFactory);
+  ContextModel(Shared* const sh, Models* const models, const MixerFactory* const mixerFactory);
     int p();
 };
 

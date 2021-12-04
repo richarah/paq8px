@@ -5,7 +5,6 @@
 
 enum class BlockType {
   DEFAULT = 0,
-  FILECONTAINER,
   JPEG,
   HDR,
   IMAGE1,

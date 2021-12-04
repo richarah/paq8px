@@ -4,14 +4,16 @@
 #include "Predictor.hpp"
 #include "ArithmeticEncoder.hpp"
 #include "Shared.hpp"
+#include "PredictorMain.hpp"
+#include "PredictorBlock.hpp"
 
 typedef enum {
     COMPRESS, DECOMPRESS
 } Mode;
 
 /**
- * An Encoder does arithmetic encoding.
- * If shared->level is 0, then data is stored without arithmetic coding.
+ * An Encoder encodes or decodes bytes using a Predictor and arithmetic encoding.
+ * If shared->level is 0, then data is stored in 'archive' without arithmetic coding.
  */
 class Encoder {
 private:
@@ -21,14 +23,14 @@ private:
     File *alt; /**< decompressByte() source in COMPRESS mode */
     float p1 {}, p2 {}; /**< percentages for progress indicator: 0.0 .. 1.0 */
     bool doEncoding; /**<  false when compression level is 0 */
-    Shared * const shared;
+    Shared sharedBlock;
 
-    void updateModels(uint32_t p, int y);
+    void updateModels(Predictor* predictor, uint32_t p, int y);
 
 public:
 
-    Predictor predictorMain;
-    //Predictor predictor;
+    PredictorMain predictorMain;
+    PredictorBlock predictorBlock;
 
     /**
      * Encoder(COMPRESS, f) creates encoder for compression to archive @ref f, which
@@ -39,13 +41,13 @@ public:
      * @param f the file to read from or write to
      */
     Encoder(Shared* const sh, bool doEncoding, Mode m, File *f);
-    [[nodiscard]] auto getMode() const -> Mode;
+    auto getMode() const -> Mode;
 
     /**
      * Returns current length of archive
      * @return length of archive so far
      */
-    [[nodiscard]] auto size() const -> uint64_t;
+    auto size() const -> uint64_t;
 
     /**
      * Should be called exactly once after compression is done and

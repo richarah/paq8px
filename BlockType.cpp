@@ -2,7 +2,7 @@
 #include "BlockType.hpp"
 
 bool hasRecursion(BlockType ft) {
-  return ft == BlockType::CD || ft == BlockType::ZLIB || ft == BlockType::BASE64 || ft == BlockType::GIF || ft == BlockType::RLE || ft == BlockType::LZW || ft == BlockType::FILECONTAINER;
+  return ft == BlockType::CD || ft == BlockType::ZLIB || ft == BlockType::BASE64 || ft == BlockType::GIF || ft == BlockType::RLE || ft == BlockType::LZW;
 }
 
 bool hasInfo(BlockType ft) {

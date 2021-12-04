@@ -1,32 +1,18 @@
 #ifndef PAQ8PX_PREDICTOR_HPP
 #define PAQ8PX_PREDICTOR_HPP
 
-#include "Models.hpp"
-#include "SSE.hpp"
 #include "Shared.hpp"
-#include "model/ContextModel.hpp"
 
-/**
- * A Predictor estimates the probability that the next bit of uncompressed data is 1.
- */
 class Predictor {
-private:
-    Shared *shared;
-    Models *models;
-    MixerFactory* mixerFactory;
-    ContextModel *contextModel;
-    SSE sse;
-
 public:
+  Shared* shared;
   Predictor(Shared* const sh);
-  ~Predictor();
-
-    /**
-     * Returns P(1) as a 12 bit number (0-4095).
-     * @return the prediction
-     */
-    [[nodiscard]] uint32_t p();
-
+  /**
+    * Returns the final probability that the next bit is a 1: P(1).
+    * This prediction can be entropy encoded.
+    * It is a fixed point number between 0.0 and 1.0 scaled by 31 bits (this comes from the PRECISION requirement of the arithmetic encoder)
+    * @return the prediction
+    */
+  virtual uint32_t p() = 0;
 };
-
 #endif //PAQ8PX_PREDICTOR_HPP

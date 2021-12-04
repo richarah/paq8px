@@ -1,4 +1,5 @@
 #include "ContextModel.hpp"
+#include "ContextModelGeneric.cpp"
 #include "ContextModelText.cpp"
 #include "ContextModelImage1.cpp"
 #include "ContextModelImage4.cpp"
@@ -12,50 +13,18 @@
 ContextModel::ContextModel(Shared* const sh, Models* const models, const MixerFactory* const mf) :
   shared(sh), 
   models(models), 
-  mixerFactory(mf),
-  contextModelGeneric(sh, models, mf)
+  mixerFactory(mf)
 {}
 
 int ContextModel::p() {
-  uint32_t &blpos = shared->State.blockPos;
-  // Parse block type and block size
   INJECT_SHARED_bpos
   if( bpos == 0 ) {
-    --blockSize;
+    uint32_t& blpos = shared->State.blockPos;
     blpos++;
-    INJECT_SHARED_c1
-    if( blockSize == -1 ) {
-      selectedContextModel = &contextModelGeneric;
-      nextBlockType = static_cast<BlockType>(c1); //got blockType but don't switch (we don't have all the info yet)
-      bytesRead = 0;
-      readSize = true;
-    } else if( blockSize < 0 ) {
-      selectedContextModel = &contextModelGeneric;
-      if( readSize ) {
-        bytesRead |= int(c1 & 0x7FU) << ((-blockSize - 2) * 7);
-        if((c1 >> 7U) == 0 ) {
-          readSize = false;
-          if( !hasInfo(nextBlockType)) {
-            blockSize = bytesRead;
-            if( hasRecursion(nextBlockType)) {
-              blockSize = 0;
-            }
-            blpos = 0;
-          } else {
-            blockSize = -1;
-          }
-        }
-      } else if( blockSize == -5 ) {
-        INJECT_SHARED_c4
-        blockSize = bytesRead;
-        blockInfo = c4;
-        blpos = 0;
-      }
-    }
-
     if (blpos == 0) {
-      blockType = nextBlockType; //got all the info - switch to next blockType
-      shared->State.blockType = blockType;
+      
+      BlockType blockType = shared->State.blockType;
+      int blockInfo = shared->State.blockInfo;
 
       if (blockType == BlockType::MRB) {
         const uint8_t packingMethod = (blockInfo >> 24) & 3; //0..3
@@ -182,15 +151,11 @@ int ContextModel::p() {
         }
 
         default: {
+          static ContextModelGeneric contextModelGeneric{ shared, models, mixerFactory };
           selectedContextModel = &contextModelGeneric;
           break;
         }
       }
-    }
-    if( blockSize == 0 ) {
-      blockType = BlockType::DEFAULT;
-      shared->State.blockType = blockType;
-      selectedContextModel = &contextModelGeneric;
     }
   }
 

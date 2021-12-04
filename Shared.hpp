@@ -90,8 +90,9 @@ public:
       uint32_t c8 = 0; /**< Another 4 bytes (buf(8)..buf(5)) */
       uint32_t misses{}; //updated by the Predictor, used by SSE stage
 
-      BlockType blockType{}; //used by wordModel, recordModel, SSE stage
-      uint32_t blockPos{}; //relative position in block, used by many models
+      BlockType blockType{}; //current blockType
+      int blockInfo{};       //current block info (or -1 when none)
+      uint32_t blockPos{};   //relative position in block
 
       //
       // State and statistics per model - set by the individual models
