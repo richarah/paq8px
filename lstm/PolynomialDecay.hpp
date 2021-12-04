@@ -1,5 +1,4 @@
-#ifndef PAQ8PX_POLYNOMIALDECAY_HPP
-#define PAQ8PX_POLYNOMIALDECAY_HPP
+#pragma once
 
 #include "IDecay.hpp"
 #include "../utils.hpp"
@@ -27,5 +26,3 @@ public:
       rate = std::max<float>(learning_rate / std::pow(decay * time_step + 1.0f, power), end_learning_rate);
   }
 };
-
-#endif //PAQ8PX_POLYNOMIALDECAY_HPP

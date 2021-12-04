@@ -1,5 +1,4 @@
-#ifndef PAQ8PX_EOL_HPP
-#define PAQ8PX_EOL_HPP
+#pragma once
 
 #include "../file/File.hpp"
 #include "../Encoder.hpp"
@@ -60,5 +59,3 @@ public:
       return count;
     }
 };
-
-#endif //PAQ8PX_EOL_HPP

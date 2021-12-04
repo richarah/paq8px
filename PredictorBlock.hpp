@@ -1,5 +1,4 @@
-#ifndef PAQ8PX_PREDICTORFORMETADATA_HPP
-#define PAQ8PX_PREDICTORFORMETADATA_HPP
+#pragma once
 
 #include "Shared.hpp"
 #include "Predictor.hpp"
@@ -18,5 +17,3 @@ public:
   PredictorBlock(Shared* const sh);
   uint32_t p();
 };
-
-#endif PAQ8PX_PREDICTORFORMETADATA_HPP

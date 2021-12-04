@@ -482,6 +482,7 @@
     <ClInclude Include="TransformOptions.hpp" />
     <ClInclude Include="UpdateBroadcaster.hpp" />
     <ClInclude Include="utils.hpp" />
+    <ClInclude Include="VLI.hpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

@@ -1,5 +1,4 @@
-#ifndef PAQ8PX_DECALPHAFILTER_HPP
-#define PAQ8PX_DECALPHAFILTER_HPP
+#pragma once
 
 #include "DecAlpha.hpp"
 #include "../file/File.hpp"
@@ -93,5 +92,3 @@ public:
     return size;
   }
 };
-
-#endif //PAQ8PX_DECALPHAFILTER_HPP

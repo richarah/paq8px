@@ -752,6 +752,9 @@
     <ClInclude Include="PredictorMain.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="VLI.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

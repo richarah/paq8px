@@ -1,5 +1,4 @@
-#ifndef PAQ8PX_BMP_HPP
-#define PAQ8PX_BMP_HPP
+#pragma once
 
 #include "Filter.hpp"
 #include "../file/File.hpp"
@@ -131,5 +130,3 @@ public:
       return size;
     }
 };
-
-#endif //PAQ8PX_BMP_HPP

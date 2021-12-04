@@ -1,5 +1,4 @@
-#ifndef PAQ8PX_CONTEXTMODELBLOCK_HPP
-#define PAQ8PX_CONTEXTMODELBLOCK_HPP
+#pragma once
 
 #include "../MixerFactory.hpp"
 
@@ -16,5 +15,3 @@ public:
   ~ContextModelBlock();
 
 };
-
-#endif //PAQ8PX_CONTEXTMODELBLOCK_HPP

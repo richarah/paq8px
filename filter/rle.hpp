@@ -1,5 +1,4 @@
-#ifndef PAQ8PX_RLE_HPP
-#define PAQ8PX_RLE_HPP
+#pragma once
 
 #include "Filter.hpp"
 #include "../VLI.hpp"
@@ -143,5 +142,3 @@ public:
       return pos;
     }
 };
-
-#endif //PAQ8PX_RLE_HPP

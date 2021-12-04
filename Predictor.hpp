@@ -1,5 +1,4 @@
-#ifndef PAQ8PX_PREDICTOR_HPP
-#define PAQ8PX_PREDICTOR_HPP
+#pragma once
 
 #include "Shared.hpp"
 
@@ -15,4 +14,3 @@ public:
     */
   virtual uint32_t p() = 0;
 };
-#endif //PAQ8PX_PREDICTOR_HPP

@@ -1,5 +1,4 @@
-#ifndef PAQ8PX_JPEGMODEL_HPP
-#define PAQ8PX_JPEGMODEL_HPP
+#pragma once
 
 #include "../BH.hpp"
 #include "../APM.hpp"
@@ -163,5 +162,3 @@ public:
     ~JpegModel();
     auto mix(Mixer &m) -> int;
 };
-
-#endif //PAQ8PX_JPEGMODEL_HPP

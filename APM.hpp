@@ -1,5 +1,4 @@
-#ifndef PAQ8PX_APM_HPP
-#define PAQ8PX_APM_HPP
+#pragma once
 
 #include "AdaptiveMap.hpp"
 
@@ -38,5 +37,3 @@ public:
      */
     int p(int pr, int cx, int lim);
 };
-
-#endif //PAQ8PX_APM_HPP

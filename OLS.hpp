@@ -1,5 +1,4 @@
-#ifndef PAQ8PX_OLS_HPP
-#define PAQ8PX_OLS_HPP
+#pragma once
 
 #include <cmath>
 #include <cstdint>
@@ -182,5 +181,3 @@ public:
       }
     }
 };
-
-#endif //PAQ8PX_OLS_HPP

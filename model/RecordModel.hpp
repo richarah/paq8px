@@ -1,5 +1,4 @@
-#ifndef PAQ8PX_RECORDMODEL_HPP
-#define PAQ8PX_RECORDMODEL_HPP
+#pragma once
 
 #include "../Shared.hpp"
 #include "../ContextMap.hpp"
@@ -50,5 +49,3 @@ public:
     void setParam(uint32_t fixedRecordLenght);
     void mix(Mixer &m);
 };
-
-#endif //PAQ8PX_RECORDMODEL_HPP

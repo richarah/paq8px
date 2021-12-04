@@ -1,5 +1,4 @@
-#ifndef PAQ8PX_LSTM_HPP
-#define PAQ8PX_LSTM_HPP
+#pragma once
 
 #include "LstmLayer.hpp"
 #include "SimdFunctions.hpp"
@@ -370,5 +369,3 @@ public:
     }
   }
 };
-
-#endif //PAQ8PX_LSTM_HPP

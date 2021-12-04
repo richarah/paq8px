@@ -1,5 +1,4 @@
-#ifndef PAQ8PX_MIXER_HPP
-#define PAQ8PX_MIXER_HPP
+#pragma once
 
 #include "IPredictor.hpp"
 #include "Shared.hpp"
@@ -245,5 +244,3 @@ public:
     void skip(uint32_t range);
     void reset();
 };
-
-#endif //PAQ8PX_MIXER_HPP

@@ -1,5 +1,4 @@
-#ifndef PAQ8PX_HASH_HPP
-#define PAQ8PX_HASH_HPP
+#pragma once
 
 #include "utils.hpp"
 #include <cassert>
@@ -176,5 +175,3 @@ static ALWAYS_INLINE
 uint64_t combine64(const uint64_t seed, const uint64_t x) {
   return hash(seed + x);
 }
-
-#endif //PAQ8PX_HASH_HPP

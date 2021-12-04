@@ -1,5 +1,4 @@
-#ifndef PAQ8PX_MODELS_HPP
-#define PAQ8PX_MODELS_HPP
+#pragma once
 
 #include "text/TextModel.hpp"
 #include "model/Audio16BitModel.hpp"
@@ -71,5 +70,3 @@ public:
   auto lstmModel() -> LstmModel<> &;
   auto decAlphaModel() -> DECAlphaModel &;
 };
-
-#endif //PAQ8PX_MODELS_HPP

@@ -1,6 +1,4 @@
-#ifndef PAQ8PX_INFO_HPP
-#define PAQ8PX_INFO_HPP
-
+#pragma once
 
 #include "../Shared.hpp"
 #include "../ContextMap2.hpp"
@@ -67,5 +65,3 @@ public:
     void lineModelSkip();
     void predict(uint8_t pdfTextParserState);
 };
-
-#endif //PAQ8PX_INFO_HPP

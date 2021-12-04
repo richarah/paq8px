@@ -1,5 +1,4 @@
-#ifndef PAQ8PX_ADAPTIVEMAP_HPP
-#define PAQ8PX_ADAPTIVEMAP_HPP
+#pragma once
 
 #include <cstdint>
 #include "Array.hpp"
@@ -23,5 +22,3 @@ protected:
 public:
     void setLimit(int lim);
 };
-
-#endif //PAQ8PX_ADAPTIVEMAP_HPP

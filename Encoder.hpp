@@ -1,5 +1,4 @@
-#ifndef PAQ8PX_ENCODER_HPP
-#define PAQ8PX_ENCODER_HPP
+#pragma once
 
 #include "Predictor.hpp"
 #include "ArithmeticEncoder.hpp"
@@ -77,6 +76,3 @@ public:
     void printStatus(uint64_t n, uint64_t size) const;
     void printStatus() const;
 };
-
-
-#endif //PAQ8PX_ENCODER_HPP

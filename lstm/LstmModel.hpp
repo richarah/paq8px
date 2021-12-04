@@ -1,5 +1,4 @@
-#ifndef PAQ8PX_LSTMMODEL_HPP
-#define PAQ8PX_LSTMMODEL_HPP
+#pragma once
 
 #include "../Shared.hpp"
 #include "../Mixer.hpp"
@@ -39,5 +38,3 @@ public:
   virtual ~LstmModel() = default;
   virtual void mix(Mixer& m) = 0;
 };
-
-#endif //PAQ8PX_LSTMMODEL_HPP

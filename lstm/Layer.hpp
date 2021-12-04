@@ -1,5 +1,4 @@
-#ifndef PAQ8PX_LAYER_HPP
-#define PAQ8PX_LAYER_HPP
+#pragma once
 
 #include "SimdFunctions.hpp"
 #include "IOptimizer.hpp"
@@ -160,5 +159,3 @@ public:
     }
   }
 };
-
-#endif //PAQ8PX_LAYER_HPP

@@ -1,5 +1,4 @@
-#ifndef PAQ8PX_IM32_HPP
-#define PAQ8PX_IM32_HPP
+#pragma once
 
 #include "../Encoder.hpp"
 #include "../file/File.hpp"
@@ -92,5 +91,3 @@ static auto decodeIm32(Encoder &en, uint64_t size, int width, File *out, FMode m
   }
   return size;
 }
-
-#endif //PAQ8PX_IM32_HPP

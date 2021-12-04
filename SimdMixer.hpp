@@ -1,5 +1,4 @@
-#ifndef PAQ8PX_SIMDMIXER_HPP
-#define PAQ8PX_SIMDMIXER_HPP
+#pragma once
 
 #include "UpdateBroadcaster.hpp"
 #include "BitCount.hpp"
@@ -180,5 +179,3 @@ public:
       return pr[0] = squash(dp);
     }
 };
-
-#endif //PAQ8PX_SIMDMIXER_HPP

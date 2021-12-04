@@ -1,5 +1,4 @@
-#ifndef PAQ8PX_SIMDLSTMMODEL_HPP
-#define PAQ8PX_SIMDLSTMMODEL_HPP
+#pragma once
 
 #include "LstmModel.hpp"
 #include "Lstm.hpp"
@@ -124,5 +123,3 @@ public:
     m.set(static_cast<std::uint32_t>(lstm.epoch) << 3 | bpos, 100 * 8);
   }
 };
-
-#endif //PAQ8PX_SIMDLSTMMODEL_HPP

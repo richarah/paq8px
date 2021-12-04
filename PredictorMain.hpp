@@ -1,5 +1,4 @@
-#ifndef PAQ8PX_PREDICTORMAIN_HPP
-#define PAQ8PX_PREDICTORMAIN_HPP
+#pragma once
 
 #include "Models.hpp"
 #include "SSE.hpp"
@@ -22,5 +21,3 @@ public:
   ~PredictorMain();
   uint32_t p();
 };
-
-#endif //PAQ8PX_PREDICTORMAIN_HPP

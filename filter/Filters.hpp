@@ -1,5 +1,4 @@
-#ifndef PAQ8PX_FILTERS_HPP
-#define PAQ8PX_FILTERS_HPP
+#pragma once
 
 #include "../Array.hpp"
 #include "../BlockType.hpp"
@@ -1755,11 +1754,7 @@ static DetectionInfo detect(File *in, uint64_t blockSize, const TransformOptions
 
 static void directEncodeBlock(BlockType type, File *in, uint64_t len, Encoder &en, int info) {
   // TODO: Large file support
-  Block::EncodeBlockType(&en, type);
-  Block::EncodeBlockSize(&en, len);
-  if(hasInfo(type)) {
-    Block::EncodeInfo(&en, info);
-  }
+  Block::EncodeBlockHeader(&en, type, len, info);
   fprintf(stderr, "Compressing... ");
   for( uint64_t j = 0; j < len; ++j ) {
     if((j & 0xfff) == 0 ) {
@@ -1969,7 +1964,7 @@ static void composeSubBlockStringToPrint(String& blstr, String& blstrSub, int bl
 }
 
 static void printBlock(const uint64_t begin, const uint64_t len, const BlockType type, const int blockInfo, String& blstrSub, const int recursionLevel) {
-  static const char* typeNames[28] = { "default", "filecontainer", "jpeg", "hdr", "1b-image", "4b-image", "8b-image", "8b-img-grayscale",
+  static const char* typeNames[27] = { "default", "jpeg", "hdr", "1b-image", "4b-image", "8b-image", "8b-img-grayscale",
                                       "24b-image", "32b-image", "audio", "audio - le", "x86/64", "cd", "zlib", "base64", "gif", "png-8b",
                                       "png-8b-grayscale", "png-24b", "png-32b", "text", "text - eol", "rle", "lzw", "dec-alpha", "mrb", "dBase"};
   static const char* audioTypes[4] = { "8b-mono", "8b-stereo", "16b-mono", "16b-stereo" };
@@ -2066,7 +2061,6 @@ static void compressfile(const Shared* const shared, const char *filename, uint6
   assert(en.getMode() == COMPRESS);
   assert(filename && filename[0]);
 
-  Block::EncodeBlockType(&en, BlockType::FILECONTAINER);
   uint64_t start = en.size();
   Block::EncodeBlockSize(&en, fileSize);
 
@@ -2106,12 +2100,9 @@ static auto decompressRecursive(File *out, uint64_t blockSize, Encoder &en, FMod
   uint64_t diffFound = 0;
   while( i < blockSize ) {
 
-    BlockType type = Block::DecodeBlockType(&en);
-    uint64_t len = Block::DecodeBlockSize(&en);
-    int info = 0;
-    if( hasInfo(type)) {
-      info = Block::DecodeInfo(&en);
-    }
+    uint64_t len = Block::DecodeBlockHeader(&en);
+    BlockType type = en.predictorMain.shared->State.blockType;
+    int info = en.predictorMain.shared->State.blockInfo;
     if (type == BlockType::MRB) {
       FileTmp tmp;
       for (uint64_t j = 0; j < len; ++j)
@@ -2158,14 +2149,10 @@ static auto decompressRecursive(File *out, uint64_t blockSize, Encoder &en, FMod
 }
 
 // Decompress or compare a file
-static void decompressFile(const Shared *const shared, const char *filename, FMode fMode, Encoder &en) {
+static void decompressFile(const Shared* const shared, const char* filename, FMode fMode, Encoder& en) {
   assert(en.getMode() == DECOMPRESS);
   assert(filename && filename[0]);
 
-  BlockType blocktype = Block::DecodeBlockType(&en);
-  if( blocktype != BlockType::FILECONTAINER ) {
-    quit("Bad archive.");
-  }
   uint64_t fileSize = Block::DecodeBlockSize(&en);
 
   FileDisk f;
@@ -2192,5 +2179,3 @@ static void decompressFile(const Shared *const shared, const char *filename, FMo
   }
   f.close();
 }
-
-#endif //PAQ8PX_FILTERS_HPP

@@ -1,5 +1,4 @@
-#ifndef PAQ8PX_ENDIANNESS16B_HPP
-#define PAQ8PX_ENDIANNESS16B_HPP
+#pragma once
 
 #include "../Encoder.hpp"
 #include "../file/File.hpp"
@@ -51,5 +50,3 @@ public:
     }
 
 };
-
-#endif //PAQ8PX_ENDIANNESS16B_HPP

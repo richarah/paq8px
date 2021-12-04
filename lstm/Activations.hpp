@@ -1,5 +1,4 @@
-#ifndef PAQ8PX_ACTIVATIONS_HPP
-#define PAQ8PX_ACTIVATIONS_HPP
+#pragma once
 
 #include "IActivation.hpp"
 #include "../utils.hpp"
@@ -126,5 +125,3 @@ public:
     }
   }
 };
-
-#endif //PAQ8PX_ACTIVATIONS_HPP

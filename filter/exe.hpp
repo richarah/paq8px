@@ -1,5 +1,4 @@
-#ifndef PAQ8PX_EXE_HPP
-#define PAQ8PX_EXE_HPP
+#pragma once
 
 #include "../file/File.hpp"
 #include "../Block.hpp"
@@ -108,5 +107,3 @@ public:
       return size;
     }
 };
-
-#endif //PAQ8PX_EXE_HPP

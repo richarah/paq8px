@@ -1,5 +1,4 @@
-#ifndef PAQ8PX_BLOCK_HPP
-#define PAQ8PX_BLOCK_HPP
+#pragma once
 
 #include "Shared.hpp"
 #include "Encoder.hpp"
@@ -16,5 +15,3 @@ namespace Block {
   void EncodeInfo(Encoder* const encoder, int info);
   int DecodeInfo(Encoder* const encoder);
 };
-
-#endif //PAQ8PX_BLOCK_HPP

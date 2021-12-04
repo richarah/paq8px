@@ -1,5 +1,4 @@
-#ifndef PAQ8PX_MIXERFACTORY_HPP
-#define PAQ8PX_MIXERFACTORY_HPP
+#pragma once
 
 #include "utils.hpp"
 #include "Mixer.hpp"
@@ -13,5 +12,3 @@ public:
   Mixer* createMixer(int n, int m, int s, int promoted) const;
   MixerFactory(const Shared* const sh);
 };
-
-#endif //PAQ8PX_MIXERFACTORY_HPP

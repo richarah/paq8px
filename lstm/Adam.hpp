@@ -1,5 +1,4 @@
-#ifndef PAQ8PX_ADAM_HPP
-#define PAQ8PX_ADAM_HPP
+#pragma once
 
 #include "IOptimizer.hpp"
 #include "../utils.hpp"
@@ -156,5 +155,3 @@ public:
       RunSimdNone(g, m, v, w, learning_rate, time_step);
   }
 };
-
-#endif //PAQ8PX_ADAM_HPP

@@ -1,5 +1,4 @@
-#ifndef PAQ8PX_LSTMFACTORY_HPP
-#define PAQ8PX_LSTMFACTORY_HPP
+#pragma once
 
 #include "LstmModel.hpp"
 #include "SimdLstmModel.hpp"
@@ -23,5 +22,3 @@ public:
       return new SIMDLstmModel<SIMDType::SIMD_NONE, Bits>(sh, num_cells, num_layers, horizon, learning_rate, gradient_clip);
   }
 };
-
-#endif //PAQ8PX_LSTMFACTORY_HPP

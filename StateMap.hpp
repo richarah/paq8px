@@ -1,5 +1,4 @@
-#ifndef PAQ8PX_STATEMAP_HPP
-#define PAQ8PX_STATEMAP_HPP
+#pragma once
 
 #include "DivisionTable.hpp"
 #include "AdaptiveMap.hpp"
@@ -60,5 +59,3 @@ public:
     void skip(uint32_t s);
     void print() const;
 };
-
-#endif //PAQ8PX_STATEMAP_HPP

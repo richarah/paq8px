@@ -1,5 +1,4 @@
-#ifndef PAQ8PX_BH_HPP
-#define PAQ8PX_BH_HPP
+#pragma once
 
 #include "Array.hpp"
 #include "Hash.hpp"
@@ -91,5 +90,3 @@ inline auto BH<B>::operator[](const uint64_t ctx) -> uint8_t * {
   memcpy(&t[i * B], tmp, B);
   return &t[i * B + 2];
 }
-
-#endif //PAQ8PX_BH_HPP

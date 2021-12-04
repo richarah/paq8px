@@ -1,5 +1,4 @@
-#ifndef PAQ8PX_TRANSFORMOPTIONS_HPP
-#define PAQ8PX_TRANSFORMOPTIONS_HPP
+#pragma once
 
 struct TransformOptions
 {
@@ -10,5 +9,3 @@ struct TransformOptions
     useBruteForceDeflateDetection = shared->GetOptionBruteforceDeflateDetection();
   }
 };
-
-#endif

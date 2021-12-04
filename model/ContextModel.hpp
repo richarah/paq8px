@@ -1,5 +1,4 @@
-#ifndef PAQ8PX_CONTEXTMODEL_HPP
-#define PAQ8PX_CONTEXTMODEL_HPP
+#pragma once
 
 #include "../BlockType.hpp"
 #include "../Mixer.hpp"
@@ -20,5 +19,3 @@ public:
   ContextModel(Shared* const sh, Models* const models, const MixerFactory* const mixerFactory);
     int p();
 };
-
-#endif //PAQ8PX_CONTEXTMODEL_HPP

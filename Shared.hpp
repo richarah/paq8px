@@ -1,5 +1,4 @@
-#ifndef PAQ8PX_SHARED_HPP
-#define PAQ8PX_SHARED_HPP
+#pragma once
 
 #include <cstdint>
 #include "BlockType.hpp"
@@ -197,5 +196,3 @@ private:
      */
     static auto isOutputRedirected() -> bool;
 };
-
-#endif //PAQ8PX_SHARED_HPP

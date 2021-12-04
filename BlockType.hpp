@@ -1,5 +1,4 @@
-#ifndef PAQ8PX_BLOCKTYPE_HPP
-#define PAQ8PX_BLOCKTYPE_HPP
+#pragma once
 
 #include <type_traits>
 
@@ -49,5 +48,3 @@ bool hasTransform(BlockType ft, int info);
 bool isPNG(BlockType ft);
 
 bool isTEXT(BlockType ft);
-
-#endif //PAQ8PX_BLOCKTYPE_HPP

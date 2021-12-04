@@ -1,5 +1,4 @@
-#ifndef PAQ8PX_LSTMLAYER_HPP
-#define PAQ8PX_LSTMLAYER_HPP
+#pragma once
 
 #include "Layer.hpp"
 #include "Adam.hpp"
@@ -142,5 +141,3 @@ public:
     return weights;
   }
 };
-
-#endif //PAQ8PX_LSTMLAYER_HPP
