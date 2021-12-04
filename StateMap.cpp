@@ -27,6 +27,7 @@ StateMap::StateMap(const Shared* const sh, const int s, const int n, const int l
             n1 = 29 + (1 << incremental_state);
           n0 = n0 * 3 + 1;
           n1 = n1 * 3 + 1;
+          assert(n0 < 16384 && n1 < 16384);
           p = ((n1 << 18) / (n0 + n1)) << 14 | min((n0 + n1) >> 3, 1023);
           //printf("%d %d\n", state, p >> 20); // verifying
         }
@@ -42,13 +43,14 @@ StateMap::StateMap(const Shared* const sh, const int s, const int n, const int l
       const int uncertainty = (cx >> 1) & 1;
       //const int bp = (cx>>2)&1; // unused in calculation - a-priory does not seem to depend on bitPosition in the general case
       const int runCount = (cx >> 4); // 0..254
-      uint32_t n0 = uncertainty * 16 + 16;
-      uint32_t n1 = runCount * 128 + 16;
+      uint32_t n0 = uncertainty + 1;
+      uint32_t n1 = (runCount + 1) * 12;
       if( predictedBit == 0 ) {
         std::swap(n0, n1);
       }
+      assert(n0 < 4096 && n1 < 4096);
       for( uint64_t s = 0; s < numContextSets; ++s ) {
-        t[s * numContextsPerSet + cx] = ((n1 << 20) / (n0 + n1)) << 12 | min(runCount, limit);
+        t[s * numContextsPerSet + cx] = ((n1 << 20) / (n0 + n1)) << 12 | limit;
       }
     }
   } else { // no a-priory in the general case
