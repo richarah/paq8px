@@ -8,7 +8,7 @@
 #include "../file/File.hpp"
 #include "../file/FileDisk.hpp"
 #include "../file/FileTmp.hpp"
-#include "../utils.hpp"
+#include "../Utils.hpp"
 #include "Filter.hpp"
 #include "TextParserStateInfo.hpp"
 #include "base64.hpp"
@@ -169,6 +169,13 @@ struct DetectionInfo {
     DataStart = HeaderStart + HeaderLength;
     DataLength = data_len;
     DataInfo = recordLength;
+  }
+
+  bool SizeVerificationPassed(uint64_t nextBlockStart) {
+    bool passed = DataStart + DataLength <= nextBlockStart;
+    if (!passed)
+      memset(this, 0, sizeof(DetectionInfo));
+    return passed;
   }
 };
 
@@ -833,7 +840,8 @@ static DetectionInfo detect(File *in, uint64_t blockSize, const TransformOptions
             if ((wavch == 1 || wavch == 2) && (wavbps == 8 || wavbps == 16) && wavD > 0 && wavSize >= wavD + 36 &&
                 wavD % ((wavbps / 8) * wavch) == 0) {
               detectionInfo.AUD_DET(start, (wavbps == 8) ? BlockType::AUDIO : BlockType::AUDIO_LE, wavi - 3, 44 + wavm, wavD, wavch + wavbps / 4 - 3);
-              return detectionInfo;
+              if (detectionInfo.SizeVerificationPassed(start + n))
+                return detectionInfo;
             }
             wavi = 0;
           }
@@ -860,7 +868,8 @@ static DetectionInfo detect(File *in, uint64_t blockSize, const TransformOptions
               int wavD = bswap(buf0); // size of data section
               if ((wavD != 0) && (wavD + 12) == wavLen) {
                 detectionInfo.AUD_DET(start, BlockType::AUDIO_LE, wavi - 3, (12 + wavlist - (wavi - 3) + 1) & ~1, wavD, 1 + 16 / 4 - 3 /*mono, 16-bit*/);
-                return detectionInfo;
+                if (detectionInfo.SizeVerificationPassed(start + n))
+                  return detectionInfo;
               }
               wavi = 0; // fail; bad format
             }
@@ -896,7 +905,10 @@ static DetectionInfo detect(File *in, uint64_t blockSize, const TransformOptions
       }
       else if (p == 42 + aiffs) { // Sound Data Chunk
         detectionInfo.AUD_DET(start, BlockType::AUDIO, aiff - 3, 54 + aiffs, buf0 - 8, aiffm);
-        return detectionInfo;
+        if (detectionInfo.SizeVerificationPassed(start + n))
+          return detectionInfo;
+        else
+          aiff = 0; //fail
       }
     }
 
@@ -922,7 +934,8 @@ static DetectionInfo detect(File *in, uint64_t blockSize, const TransformOptions
       }
       if (numPat < 65) {
         detectionInfo.AUD_DET(start, BlockType::AUDIO, i - 1083, 1084 + numPat * 256 * chn, len, 4 /*mono, 8-bit*/);
-        return detectionInfo;
+        if (detectionInfo.SizeVerificationPassed(start + n))
+          return detectionInfo;
       }
       in->setpos(savedPos);
     }
@@ -971,7 +984,8 @@ static DetectionInfo detect(File *in, uint64_t blockSize, const TransformOptions
         }
         if ((ok != 0) && samStart < (1 << 16)) {
           detectionInfo.AUD_DET(start, BlockType::AUDIO, s3mi - 31, samStart, samEnd - samStart, 0 /*mono, 8-bit*/);
-          return detectionInfo;
+          if (detectionInfo.SizeVerificationPassed(start + n))
+            return detectionInfo;
         }
         s3mi = 0;
         in->setpos(savedPos);
@@ -1030,7 +1044,10 @@ static DetectionInfo detect(File *in, uint64_t blockSize, const TransformOptions
           else {
             // success
             detectionInfo.MRB_DET(start, BlockType::MRB, mrbPackingMethod, BitCount, mrb - 1, mrbsize - mrbcsize, mrbcsize, mrbw, mrbh);
-            return detectionInfo;
+            if (detectionInfo.SizeVerificationPassed(start + n))
+              return detectionInfo;
+            else
+              mrb = 0;
           }
         }
         else {
@@ -1279,20 +1296,25 @@ static DetectionInfo detect(File *in, uint64_t blockSize, const TransformOptions
         {
           if ((pgmw != 0) && (pgmh != 0) && (pgmc == 0) && pgmn == 4) {
             detectionInfo.IMG_DET(start, BlockType::IMAGE1, pgm - 2, pgmdata - pgm + 3, (pgmw + 7) / 8, pgmh);
-            return detectionInfo;
+            if (detectionInfo.SizeVerificationPassed(start + n))
+              return detectionInfo;
           }
           if ((pgmw != 0) && (pgmh != 0) && (pgmc != 0) && (pgmn == 5 || (pgmn == 7 && pamd == 1 && pamatr == 6))) {
             detectionInfo.IMG_DET(start, BlockType::IMAGE8GRAY, pgm - 2, pgmdata - pgm + 3, pgmw, pgmh);
-            return detectionInfo;
+            if (detectionInfo.SizeVerificationPassed(start + n))
+              return detectionInfo;
           }
           if ((pgmw != 0) && (pgmh != 0) && (pgmc != 0) && (pgmn == 6 || (pgmn == 7 && pamd == 3 && pamatr == 6))) {
             detectionInfo.IMG_DET(start, BlockType::IMAGE24, pgm - 2, pgmdata - pgm + 3, pgmw * 3, pgmh);
-            return detectionInfo;
+            if (detectionInfo.SizeVerificationPassed(start + n))
+              return detectionInfo;
           }
           if ((pgmw != 0) && (pgmh != 0) && (pgmc != 0) && (pgmn == 7 && pamd == 4 && pamatr == 6)) {
             detectionInfo.IMG_DET(start, BlockType::IMAGE32, pgm - 2, pgmdata - pgm + 3, pgmw * 4, pgmh);
-            return detectionInfo;
+            if (detectionInfo.SizeVerificationPassed(start + n))
+              return detectionInfo;
           }
+          pgm = 0; //fail
         }
         else if ((--pgmDataSize) == 0) {
           pgm = 0; // all data was probably text in pixel area: fail
@@ -1325,7 +1347,8 @@ static DetectionInfo detect(File *in, uint64_t blockSize, const TransformOptions
         int z = buf0 & 0xffff;
         if ((rgbx != 0) && (rgby != 0) && (z == 1 || z == 3 || z == 4)) {
           detectionInfo.IMG_DET(start, BlockType::IMAGE8, rgbi - 1, 512, rgbx, rgby * z);
-          return detectionInfo;
+          if (detectionInfo.SizeVerificationPassed(start + n))
+            return detectionInfo;
         }
         rgbi = 0;
       }
