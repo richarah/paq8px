@@ -1,10 +1,9 @@
 #include "StateMap.hpp"
 #include "Utils.hpp"
 
-StateMap::StateMap(const Shared* const sh, const int s, const int n, const int lim, const StateMap::MAPTYPE mapType) :
-  AdaptiveMap(sh, n * s, lim), numContextSets(s), numContextsPerSet(n), currentContextSetIndex(0), cxt(s) {
+StateMap::StateMap (const Shared* const sh, const int s, const int n, const int lim, const StateMap::MAPTYPE mapType) :
+  AdaptiveMap(sh, n * s), limit(lim), numContextSets(s), numContextsPerSet(n), currentContextSetIndex(0), cxt(s) {
   assert(numContextSets > 0 && numContextsPerSet > 0);
-  assert(limit > 0 && limit < 1024);
   if( mapType == BitHistory ) { // when the context is a bit history byte, we have a-priory for p
     assert((numContextsPerSet & 255) == 0);
     for( uint64_t cx = 0; cx < numContextsPerSet; ++cx ) {
@@ -41,7 +40,7 @@ StateMap::StateMap(const Shared* const sh, const int s, const int n, const int l
     for( uint64_t cx = 0; cx < numContextsPerSet; ++cx ) {
       const int predictedBit = (cx) & 1;
       const int uncertainty = (cx >> 1) & 1;
-      //const int bp = (cx>>2)&1; // unused in calculation - a-priory does not seem to depend on bitPosition in the general case
+      //const int bp = (cx>>2)&1; // unused in calculation - a-priory does not seem to depend on bitPosition for a RunMap
       const int runCount = (cx >> 4); // 0..254
       uint32_t n0 = uncertainty + 1;
       uint32_t n1 = (runCount + 1) * 12;
@@ -69,7 +68,7 @@ void StateMap::update() {
       continue; // skipped context
     }
     assert(currentContextSetIndex * numContextsPerSet <= idx && idx < (currentContextSetIndex + 1) * numContextsPerSet);
-    AdaptiveMap::update(&t[idx]);
+    AdaptiveMap::update(&t[idx], limit);
   }
 }
 

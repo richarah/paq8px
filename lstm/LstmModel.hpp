@@ -30,7 +30,7 @@ public:
     float const gradient_clip) :
     shared(sh),
     probs(1.f / Size, Size),
-    apm1{ sh, 0x10000u, 24 }, apm2{ sh, 0x800u, 24 }, apm3{ sh, 1024, 24 },
+    apm1{ sh, 0x10000u, 24, 255 }, apm2{ sh, 0x800u, 24, 255 }, apm3{ sh, 1024, 24, 255 },
     iCtx{ 11, 1, 9 },
     top(Size - 1), mid(0), bot(0),
     expected(0)

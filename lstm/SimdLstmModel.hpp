@@ -113,9 +113,9 @@ public:
     m.promote(stretch(p)/2);
     m.add(stretch(p));
     m.add((p - 2048) >> 2);
-    int const pr1 = this->apm1.p(p, (c0 << 8) | (this->shared->State.misses & 0xFF), 0xFF);
-    int const pr2 = this->apm2.p(p, (bpos << 8) | this->expected, 0xFF);
-    int const pr3 = this->apm3.p(pr2, ctx, 0xFF);
+    int const pr1 = this->apm1.p(p, (c0 << 8) | (this->shared->State.misses & 0xFF));
+    int const pr2 = this->apm2.p(p, (bpos << 8) | this->expected);
+    int const pr3 = this->apm3.p(pr2, ctx);
     m.add(stretch(pr1) >> 1);
     m.add(stretch(pr2) >> 1);
     m.add(stretch(pr3) >> 1);
