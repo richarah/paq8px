@@ -1,6 +1,5 @@
 #pragma once
 
-#include "utils.hpp"
 #include "Mixer.hpp"
 #include "Shared.hpp"
 #include "SimdMixer.hpp"

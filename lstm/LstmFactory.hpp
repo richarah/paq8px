@@ -3,7 +3,7 @@
 #include "LstmModel.hpp"
 #include "SimdLstmModel.hpp"
 #include "../Shared.hpp"
-#include "../utils.hpp"
+#include "../Utils.hpp"
 
 template <std::size_t Bits = 8>
 class LstmFactory {

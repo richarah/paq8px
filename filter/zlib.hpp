@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Filters.hpp"
-#include "../utils.hpp"
+#include "../Utils.hpp"
 #include <zlib.h>
 
 static auto parseZlibHeader(int header) -> int {

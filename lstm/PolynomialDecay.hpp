@@ -1,7 +1,7 @@
 #pragma once
 
 #include "IDecay.hpp"
-#include "../utils.hpp"
+#include "../Utils.hpp"
 #include <cmath>
 
 template <std::uint16_t LR, std::uint8_t E1, std::uint16_t ELR, std::uint8_t E2, std::uint16_t DECAY, std::uint8_t DECAY_E, std::uint8_t N, std::uint8_t D, std::uint64_t Steps = 0>

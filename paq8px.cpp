@@ -1,4 +1,4 @@
-  /*
+/*
   PAQ8PX file compressor/archiver
   see README for information
   see DOC for technical details
@@ -12,7 +12,7 @@
 #define PROGYEAR     "2021"
 
 
-#include "utils.hpp"
+#include "Utils.hpp"
 
 #include <stdexcept>  //std::exception
 

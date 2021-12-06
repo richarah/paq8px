@@ -1,7 +1,7 @@
 #pragma once
 
 #include "IActivation.hpp"
-#include "../utils.hpp"
+#include "../Utils.hpp"
 #include "../SIMDType.hpp"
 #include "SimdFunctions.hpp"
 #include <cmath>
