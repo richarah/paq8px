@@ -11,16 +11,17 @@
 class NormalModel {
 private:
     static constexpr int nCM = 9;
-    static constexpr int nSM = 3;
+    static constexpr int nSM = 2*4;
     Shared * const shared;
     ContextMap2 cm;
-    StateMap smOrder0Slow;
-    StateMap smOrder1Slow;
-    StateMap smOrder1Fast;
+    StateMap smSlow0;
+    StateMap smFast0;
+    StateMap smSlow1;
+    StateMap smFast1;
 public:
     static constexpr int MIXERINPUTS =
       nCM * (ContextMap2::MIXERINPUTS + ContextMap2::MIXERINPUTS_RUN_STATS + ContextMap2::MIXERINPUTS_BYTE_HISTORY) + 
-      nSM; //66
+      nSM; //71
     static constexpr int MIXERCONTEXTS_PRE = 64;
     static constexpr int MIXERCONTEXTS_POST = 1024 + 256 + 512 + 256 + 256 + 1536; //3840
     static constexpr int MIXERCONTEXTSETS_PRE = 1;

@@ -1,10 +1,11 @@
 #include "NormalModel.hpp"
 
-NormalModel::NormalModel(Shared* const sh, const uint64_t cmSize) : 
+NormalModel::NormalModel(Shared* const sh, const uint64_t cmSize) :
   shared(sh), cm(sh, cmSize, nCM, 64),
-  smOrder0Slow(sh, 1, 255, 1023, StateMap::Generic), 
-  smOrder1Slow(sh, 1, 255 * 256, 1023, StateMap::Generic),
-  smOrder1Fast(sh, 1, 255 * 256, 64, StateMap::Generic) // 64->16 is also ok
+  smSlow0(sh, 1, 255, 1023, StateMap::Generic),
+  smFast0(sh, 1, 255, 16, StateMap::Generic),
+  smSlow1(sh, 1, 255 * 256, 1023, StateMap::Generic),
+  smFast1(sh, 1, 255 * 256, 32, StateMap::Generic)
 {
   assert(isPowerOf2(cmSize));
 }
@@ -16,7 +17,7 @@ void NormalModel::reset() {
 void NormalModel::updateHashes() {
   INJECT_SHARED_c1
   INJECT_SHARED_blockType
-  BlockType normalizedBlockType = blockType;
+    BlockType normalizedBlockType = blockType;
   /* todo: let blocktype represent simply the blocktype without any transformation used:
       blockType == BlockType::AUDIO_LE = BlockType::AUDIO
       blockType == BlockType::TEXT_EOL = BlockType::TEXT
@@ -36,21 +37,27 @@ void NormalModel::mix(Mixer &m) {
   INJECT_SHARED_bpos
   if( bpos == 0 ) {
     updateHashes();
-    uint64_t* cxt = shared->State.NormalModel.cxt;
+    uint64_t* cxtHashes = shared->State.NormalModel.cxt;
     const uint8_t RH = CM_USE_RUN_STATS | CM_USE_BYTE_HISTORY;
     for(uint64_t i = 1; i <= 6; ++i ) {
-      cm.set(RH, cxt[i]);
+      cm.set(RH, cxtHashes[i]);
     }
-    cm.set(RH, cxt[8]); 
-    cm.set(RH, cxt[11]);
-    cm.set(RH, cxt[14]);
+    cm.set(RH, cxtHashes[8]); 
+    cm.set(RH, cxtHashes[11]);
+    cm.set(RH, cxtHashes[14]);
   }
   cm.mix(m);
+
   INJECT_SHARED_c0
   INJECT_SHARED_c1
-  m.add((stretch(smOrder0Slow.p1(c0 - 1))) >> 2U); //order 0
-  m.add((stretch(smOrder1Fast.p1((c0 - 1) << 8U | c1))) >> 2U); //order 1
-  m.add((stretch(smOrder1Slow.p1((c0 - 1) << 8U | c1))) >> 2U); //order 1
+
+  int pr, st;
+  int ct1 = (c0 - 1);
+  pr = smSlow0.p1(ct1); m.add((pr - 2048) >> 3); st = stretch(pr); m.add(st >> 2);
+  pr = smFast0.p1(ct1); m.add((pr - 2048) >> 3); st = stretch(pr); m.add(st >> 2);
+  int ct2 = 255 + (ct1 << 8 | c1);
+  pr = smSlow1.p1(ct2); m.add((pr - 2048) >> 3); st = stretch(pr); m.add(st >> 2);
+  pr = smFast1.p1(ct2); m.add((pr - 2048) >> 3); st = stretch(pr); m.add(st >> 2);
 
   const int order = max(0, cm.order - (nCM - 7)); //0-7
   assert(0 <= order && order <= 7);
