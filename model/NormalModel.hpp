@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../ContextMap2.hpp"
+#include "../StateMapPair.hpp"
 
 /**
  * Model for order 0-14 contexts
@@ -14,10 +15,8 @@ private:
     static constexpr int nSM = 2*4;
     Shared * const shared;
     ContextMap2 cm;
-    StateMap smSlow0;
-    StateMap smFast0;
-    StateMap smSlow1;
-    StateMap smFast1;
+    StateMapPair smOrder0;
+    StateMapPair smOrder1;
 public:
     static constexpr int MIXERINPUTS =
       nCM * (ContextMap2::MIXERINPUTS + ContextMap2::MIXERINPUTS_RUN_STATS + ContextMap2::MIXERINPUTS_BYTE_HISTORY) + 
@@ -28,6 +27,7 @@ public:
     static constexpr int MIXERCONTEXTSETS_POST = 6;
     NormalModel(Shared* const sh, const uint64_t cmSize);
     void reset();
+    void resetBetweenBlocks();
 
     /**
      * update order 1..14 context hashes.

@@ -319,6 +319,7 @@
     <ClCompile Include="Squash.cpp" />
     <ClCompile Include="SSE.cpp" />
     <ClCompile Include="StateMap.cpp" />
+    <ClCompile Include="StateMapPair.cpp" />
     <ClCompile Include="StateTable.cpp" />
     <ClCompile Include="StationaryMap.cpp" />
     <ClCompile Include="Stretch.cpp" />
@@ -458,6 +459,7 @@
     <ClInclude Include="Squash.hpp" />
     <ClInclude Include="SSE.hpp" />
     <ClInclude Include="StateMap.hpp" />
+    <ClInclude Include="StateMapPair.hpp" />
     <ClInclude Include="StateTable.hpp" />
     <ClInclude Include="StationaryMap.hpp" />
     <ClInclude Include="Stretch.hpp" />

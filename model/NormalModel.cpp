@@ -2,10 +2,8 @@
 
 NormalModel::NormalModel(Shared* const sh, const uint64_t cmSize) :
   shared(sh), cm(sh, cmSize, nCM, 64),
-  smSlow0(sh, 1, 255, 1023, StateMap::Generic),
-  smFast0(sh, 1, 255, 16, StateMap::Generic),
-  smSlow1(sh, 1, 255 * 256, 1023, StateMap::Generic),
-  smFast1(sh, 1, 255 * 256, 32, StateMap::Generic)
+  smOrder0(sh, 255, 1023, 16),
+  smOrder1(sh, 255 * 256, 1023, 32)
 {
   assert(isPowerOf2(cmSize));
 }
@@ -51,13 +49,15 @@ void NormalModel::mix(Mixer &m) {
   INJECT_SHARED_c0
   INJECT_SHARED_c1
 
-  int pr, st;
+  int pr_slow, pr_fast, st;
   int ct1 = (c0 - 1);
-  pr = smSlow0.p1(ct1); m.add((pr - 2048) >> 3); st = stretch(pr); m.add(st >> 2);
-  pr = smFast0.p1(ct1); m.add((pr - 2048) >> 3); st = stretch(pr); m.add(st >> 2);
-  int ct2 = 255 + (ct1 << 8 | c1);
-  pr = smSlow1.p1(ct2); m.add((pr - 2048) >> 3); st = stretch(pr); m.add(st >> 2);
-  pr = smFast1.p1(ct2); m.add((pr - 2048) >> 3); st = stretch(pr); m.add(st >> 2);
+  smOrder0.p(ct1, pr_slow, pr_fast);
+  m.add((pr_slow - 2048) >> 3); st = stretch(pr_slow); m.add(st >> 2);
+  m.add((pr_fast - 2048) >> 3); st = stretch(pr_fast); m.add(st >> 2);
+  int ct2 = ct1 << 8 | c1;
+  smOrder1.p(ct2, pr_slow, pr_fast);
+  m.add((pr_slow - 2048) >> 3); st = stretch(pr_slow); m.add(st >> 2);
+  m.add((pr_fast - 2048) >> 3); st = stretch(pr_fast); m.add(st >> 2);
 
   const int order = max(0, cm.order - (nCM - 7)); //0-7
   assert(0 <= order && order <= 7);
