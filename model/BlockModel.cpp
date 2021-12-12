@@ -11,18 +11,18 @@ BlockModel::BlockModel(Shared* const sh, const uint64_t cmSize) :
 }
 
 void BlockModel::mix(Mixer& m) {
-  const uint32_t blockTypeHistory = shared->State.rLength; // xx xx xx xx
-  const uint8_t position = shared->State.WordModel.order; //0x10, 0x20..0x23, 0x30..0x33
-  uint8_t bytePos = (position & 0x0f); //0,1,2,3
+  const uint32_t blockTypeHistory = shared->State.blockTypeHistory; // xx xx xx xx
+  const uint8_t blockStateID = shared->State.blockStateID; //0x10, 0x20..0x23, 0x30..0x33
+  uint8_t bytePos = (blockStateID & 0x0f); //0,1,2,3
   INJECT_SHARED_c4
   uint32_t extrabytes = c4 & (0xffffff >> ((3 - bytePos) * 8)); //last 0-1-2-3 bytes (depending on bytePos) from c4 
-  bytePos = (position == 0x10) ? 0 : (bytePos + 1); //0,1,2,3,4
-  const uint8_t pos9 = bytePos + (position >= 0x30 ? 4 : 0); //0,1,2,3,4,5,6,7,8
+  bytePos = (blockStateID == 0x10) ? 0 : (bytePos + 1); //0,1,2,3,4
+  const uint8_t pos9 = bytePos + (blockStateID >= 0x30 ? 4 : 0); //0,1,2,3,4,5,6,7,8
   INJECT_SHARED_bpos
   if (bpos == 0) {
     const uint8_t _H = CM_USE_BYTE_HISTORY;
     uint64_t i = 0;
-    if (position == 0x10) { //blocktype
+    if (blockStateID == 0x10) { //blocktype
       cm.set(_H, hash(++i));
       cm.set(_H, hash(++i, blockTypeHistory & 0xff)); //1 history
       cm.set(_H, hash(++i, blockTypeHistory & 0xffff)); //2 history
@@ -31,15 +31,15 @@ void BlockModel::mix(Mixer& m) {
     }
     else { //blockSize and blockInfo
       if (extrabytes == 0) {
-        cm.set(_H, hash(++i, position));
+        cm.set(_H, hash(++i, blockStateID));
       }
       else {
         cm.skip(_H); ++i;
       }
-      cm.set(_H, hash(++i, position, extrabytes));
-      cm.set(_H, hash(++i, position, extrabytes, blockTypeHistory & 0xff)); //1 history
-      cm.set(_H, hash(++i, position, extrabytes, blockTypeHistory & 0xffff)); //2 history
-      cm.set(0, hash(++i, position, extrabytes, blockTypeHistory & 0xffffff)); //3 history
+      cm.set(_H, hash(++i, blockStateID, extrabytes));
+      cm.set(_H, hash(++i, blockStateID, extrabytes, blockTypeHistory & 0xff)); //1 history
+      cm.set(_H, hash(++i, blockStateID, extrabytes, blockTypeHistory & 0xffff)); //2 history
+      cm.set(0, hash(++i, blockStateID, extrabytes, blockTypeHistory & 0xffffff)); //3 history
     }
   }
   cm.mix(m);

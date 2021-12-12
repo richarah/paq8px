@@ -89,9 +89,16 @@ public:
       uint32_t c8 = 0; /**< Another 4 bytes (buf(8)..buf(5)) */
       uint32_t misses{}; //updated by the Predictor, used by SSE stage
 
-      BlockType blockType{}; //current blockType
-      int blockInfo{};       //current block info (or -1 when none)
-      uint32_t blockPos{};   //relative position in block
+      //written by BlockModel, used by many models 
+      //see PredictorMain, ContextModel
+      BlockType blockType; //current blockType
+      int blockInfo;       //current block info (or -1 when none)
+      uint32_t blockPos;   //relative position in block
+
+      //written and used by BlockModel
+      //see PredictorBlock, ContextModelBlock
+      uint32_t blockTypeHistory;
+      uint8_t blockStateID;
 
       //
       // State and statistics per model - set by the individual models
@@ -160,13 +167,13 @@ public:
       
       //ExeModel
       struct {
-        std::uint8_t state; // used by SSE stage
+        uint8_t state; // used by SSE stage
       } x86_64;
 
       //DECAlphaModel
       struct {
-        std::uint8_t state; // used by SSE stage
-        std::uint8_t bcount; // used by SSE stage
+        uint8_t state; // used by SSE stage
+        uint8_t bcount; // used by SSE stage
       } DEC;
 
     } State{};
