@@ -1173,7 +1173,8 @@ static DetectionInfo detect(File *in, uint64_t blockSize, const TransformOptions
           } // too small - not worthy to use the image models
           else {
             detectionInfo.IMG_DET(start, blockType, headerPos, headerSize, widthInBytes, bmpy);
-            return detectionInfo;
+            if (detectionInfo.SizeVerificationPassed(start + n))
+              return detectionInfo;
           }
         }
         bmpi = dibi = 0;
@@ -1469,15 +1470,18 @@ static DetectionInfo detect(File *in, uint64_t blockSize, const TransformOptions
             in->setpos(start + tga + 11 + tgaid);
             bool isGray = isGrayscalePalette(in);
             detectionInfo.IMG_DET(start, isGray ? BlockType::IMAGE8GRAY : BlockType::IMAGE8, tga - 7, 18 + tgaid + 256 * tgamap, tgax, tgay);
-            return detectionInfo;
+            if (detectionInfo.SizeVerificationPassed(start + n))
+              return detectionInfo;
           }
           if (tgat == 2) {
             detectionInfo.IMG_DET(start, (tgaz == 24) ? BlockType::IMAGE24 : BlockType::IMAGE32, tga - 7, 18 + tgaid, tgax * (tgaz >> 3), tgay);
-            return detectionInfo;
+            if (detectionInfo.SizeVerificationPassed(start + n))
+              return detectionInfo;
           }
           if (tgat == 3) {
             detectionInfo.IMG_DET(start, BlockType::IMAGE8GRAY, tga - 7, 18 + tgaid, tgax, tgay);
-            return detectionInfo;
+            if (detectionInfo.SizeVerificationPassed(start + n))
+              return detectionInfo;
           }
           if (tgat == 9 || tgat == 11) {
             int info;
@@ -1528,7 +1532,8 @@ static DetectionInfo detect(File *in, uint64_t blockSize, const TransformOptions
               detectionInfo.DataInfo = info;
               detectionInfo.DataStart = start + tga + 11 + tgaid + 256 * tgamap;
               detectionInfo.DataLength = detd;
-              return detectionInfo;
+              if (detectionInfo.SizeVerificationPassed(start + n))
+                return detectionInfo;
             }
             in->setpos(savedPos);
           }
