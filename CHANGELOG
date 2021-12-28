@@ -1925,3 +1925,30 @@ paq8px_v205 by Zoltán Gotthardt
 paq8px_v205fix1 by Zoltán Gotthardt
 2021.09.27
 - Fixed TEXT_FRAGMENT_MIN_SIZE to be the intended 1024
+
+
+paq8px_v206 by Zoltán Gotthardt
+2021.12.28
+- Compression enhancement:
+  - Now modelling metadata (blocktype, blockinfo and blocksize) separately from file data.
+  - Skipping some RecordModel contexts in case of Text blocks.
+  - Using block pos instead of file pos for a context in RecordModel (mozilla).
+  - Treat JPEG metadata az BlockType::DEFAULT in NormalModel and in SSE stage.
+  - Removed some models from JPEG metadata modelling.
+  - Added fast adapting order-0 StateMap to NormalModel, parameter tuning.
+  - Added 2 contexts to WordModel to model columns in fixed-length lines.
+- Refactoring:
+  - Moved "limit" out of AdaptiveMap.
+  - Created new map to deal with a pair of slow and fast adapting state mapping: StateMapPair.
+  - Encoding functions are moved out of encoder.
+  - Moved encoding of blockInfo out of exe filter.
+  - Refactored Shared and Predictor; fixed memory leaks related to MixerFactory instantiation; moved model pre-training from Predictor to Models.
+  - Replaced include guards with #pragma once in hpp files. Fixed Filters.hpp from previous commit.
+- Fixes:
+  - Fixed some compiler warnings.
+  - Fixed overflow in StateMap (RunMap) a-priory initialization + slight parameter tuning.
+  - Fixed rgb image detection with a size guard + Included more size guards in block detection function.
+  - Fixed reading VLI sizes >4gb from archive; fixed 64-bit file stat on Windows (backported from paq8px-lite-t1).
+  - Fixed compilation on some linux systems (with gcc 7.5.0): utils.hpp->Utils.hpp
+- New command line option:
+  - Added -skipdetection command line option to aid compressing binary files with false positive blocktypes detected.
