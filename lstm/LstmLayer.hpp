@@ -5,7 +5,7 @@
 #include "Adam.hpp"
 #include "Activations.hpp"
 #include "PolynomialDecay.hpp"
-#include "../Utils.hpp"
+#include "../utils.hpp"
 #include "../SIMDType.hpp"
 #include <vector>
 

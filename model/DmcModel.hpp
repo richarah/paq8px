@@ -8,7 +8,7 @@
 #include "../StateMap.hpp"
 #include "../StateTable.hpp"
 #include "../Stretch.hpp"
-#include "../Utils.hpp"
+#include "../utils.hpp"
 #include "DmcNode.hpp"
 #include <cassert>
 #include <cstdint>

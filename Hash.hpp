@@ -1,7 +1,7 @@
 #ifndef PAQ8PX_HASH_HPP
 #define PAQ8PX_HASH_HPP
 
-#include "Utils.hpp"
+#include "utils.hpp"
 #include <cassert>
 #include <cstdint>
 #include <cstdio>

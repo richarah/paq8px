@@ -1,7 +1,7 @@
 #ifndef PAQ8PX_SIMDFUNCTIONS_HPP
 #define PAQ8PX_SIMDFUNCTIONS_HPP
 
-#include "../Utils.hpp"
+#include "../utils.hpp"
 #include "../simd.hpp"
 #include <cmath>
 #include <numeric>

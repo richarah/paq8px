@@ -2,7 +2,7 @@
 #define PAQ8PX_ACTIVATIONS_HPP
 
 #include "IActivation.hpp"
-#include "../Utils.hpp"
+#include "../utils.hpp"
 #include "../SIMDType.hpp"
 #include "SimdFunctions.hpp"
 #include <cmath>

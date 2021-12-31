@@ -6,7 +6,7 @@
 #include "Posit.hpp"
 #include "../file/BitFileDisk.hpp"
 #include "../file/OpenFromMyFolder.hpp"
-#include "../Utils.hpp"
+#include "../utils.hpp"
 #include <vector>
 #include <array>
 #include <unordered_map>

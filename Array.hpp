@@ -2,7 +2,7 @@
 #define PAQ8PX_ARRAY_HPP
 
 #include <cstdint>
-#include "Utils.hpp"
+#include "utils.hpp"
 #include <cstdlib>
 #include <cstdio>
 #include <cassert>

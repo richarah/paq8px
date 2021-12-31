@@ -5,7 +5,7 @@
 #include "../LMS.hpp"
 #include "../OLS.hpp"
 #include "../SmallStationaryContextMap.hpp"
-#include "../Utils.hpp"
+#include "../utils.hpp"
 #include "../BitCount.hpp"
 #include <cstdint>
 

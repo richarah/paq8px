@@ -1,5 +1,5 @@
 #include <string.h>
-#include "Utils.hpp"
+#include "utils.hpp"
 #include "String.hpp"
 
 #ifndef NDEBUG
