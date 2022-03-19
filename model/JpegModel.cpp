@@ -3,7 +3,7 @@
 
 JpegModel::JpegModel(Shared* const sh, const MixerFactory* const mf, const uint64_t size) : shared(sh), t(size),
         MJPEGMap(sh, 21, 3, 128, 127), /* BitsOfContext, InputBits, Scale, Limit */
-        sm(sh, N, 256, 1023, StateMap::BitHistory), apm1(sh, 0x20000, 18, 1023), 
+        sm(sh, N, 256, 1023, StateMapType::BitHistory), apm1(sh, 0x20000, 18, 1023), 
         apm2(sh, 0x4000, 20, 1023), apm3(sh, 0x4000, 21, 1023), apm4(sh, 0x4000, 22, 1023), apm5(sh, 0x4000, 23, 1023),
         apm6(sh, 0x4000, 20, 1023), apm7(sh, 0x4000, 21, 1023), apm8(sh, 0x4000, 22, 1023), apm9(sh, 0x4000, 23, 1023), apm10(sh, 0x4000, 24, 1023),
         apm11(sh, 0x8000, 22, 1023), apm12(sh, 0x8000, 22, 1023), apm13(sh, 0x8000, 22, 1023), apm14(sh, 0x8000, 22, 1023)

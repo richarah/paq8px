@@ -6,6 +6,10 @@
 #include "UpdateBroadcaster.hpp"
 #include "IPredictor.hpp"
 
+enum class StateMapType {
+  Generic, BitHistory, Run
+};
+
 /**
  * A @ref StateMap maps a context to a probability.
  */
@@ -17,10 +21,7 @@ protected:
   Array<uint32_t> cxt; /**< context index of last prediction per context set */
 public:
   int limit; //1..1023
-  
-  enum MAPTYPE {
-    Generic, BitHistory, Run
-  };
+ 
 
   /**
     * Creates a @ref StateMap with @ref n contexts using 4*n bytes memory.
@@ -29,7 +30,7 @@ public:
     * @param lim
     * @param mapType
     */
-  StateMap (const Shared* const sh, int s, int n, int lim, MAPTYPE mapType);
+  StateMap (const Shared* const sh, int s, int n, int lim, StateMapType mapType);
   ~StateMap() override = default;
 
   void update() override;

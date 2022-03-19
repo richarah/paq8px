@@ -2,10 +2,10 @@
 
 ContextMap2::ContextMap2(const Shared* const sh, const uint64_t size, const uint32_t contexts, const int scale) : shared(sh), 
         C(contexts), contextInfoList(contexts), hashTable(size >> 6),
-        runMap(sh, contexts, (1 << 12), 127, StateMap::Run),         /* StateMap : s, n, lim, init */ // 63-255
-        stateMap(sh, contexts, (1 << 8), 511, StateMap::BitHistory), /* StateMap : s, n, lim, init */ // 511-1023
-        bhMap8B(sh, contexts, (1 << 8), 511, StateMap::Generic),     /* StateMap : s, n, lim, init */ // 511-1023
-        bhMap12B(sh, contexts, (1 << 12), 511, StateMap::Generic),   /* StateMap : s, n, lim, init */ // 255-1023
+        runMap(sh, contexts, (1 << 12), 127, StateMapType::Run),         /* StateMap : s, n, lim, init */ // 63-255
+        stateMap(sh, contexts, (1 << 8), 511, StateMapType::BitHistory), /* StateMap : s, n, lim, init */ // 511-1023
+        bhMap8B(sh, contexts, (1 << 8), 511, StateMapType::Generic),     /* StateMap : s, n, lim, init */ // 511-1023
+        bhMap12B(sh, contexts, (1 << 12), 511, StateMapType::Generic),   /* StateMap : s, n, lim, init */ // 255-1023
         index(0), mask(uint32_t(hashTable.size() - 1)), hashBits(ilog2(mask + 1)), scale(scale), contextflagsAll(0) {
   assert(size >= 64 && isPowerOf2(size));
   static_assert(sizeof(Bucket16 <HashElementForContextMap, 7>) == (sizeof(HashElementForContextMap) + 2) * 7, "Something is wrong, please pack that struct");

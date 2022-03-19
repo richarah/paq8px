@@ -3,9 +3,9 @@
 MatchModel::MatchModel(Shared* const sh, const uint64_t hashtablesize, const uint64_t mapmemorysize) : 
   shared(sh),
   hashtable(hashtablesize),
-  stateMaps {{sh, 1, 28 * 2 * 8,        1023, StateMap::Generic},
-             {sh, 1, 8 * 256 * 256 + 1, 1023, StateMap::Generic},
-             {sh, 1, 256 * 256,         1023, StateMap::Generic}},
+  stateMaps {{sh, 1, 28 * 2 * 8,        1023, StateMapType::Generic},
+             {sh, 1, 8 * 256 * 256 + 1, 1023, StateMapType::Generic},
+             {sh, 1, 256 * 256,         1023, StateMapType::Generic}},
   cm(sh, mapmemorysize, nCM, 64),
   mapL /* LargeStationaryMap : Contexts, HashBits, Scale=64, Rate=16  */
         {sh, nLSM, 20}, // effective bits: ~22

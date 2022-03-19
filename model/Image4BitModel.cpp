@@ -8,7 +8,7 @@ Image4BitModel::Image4BitModel(const Shared* const sh, const uint64_t size) : sh
   mask(uint32_t(hashTable.size() - 1)),
   hashBits(ilog2(mask + 1)),
   hashes(S),
-  sm {sh, S, 256, 1023, StateMap::BitHistory},
+  sm {sh, S, 256, 1023, StateMapType::BitHistory},
   mapL (sh, S, 22)
 {}
 

@@ -2,7 +2,7 @@
 
 ContextMap::ContextMap(const Shared* const sh, uint64_t m, const int contexts) : 
   shared(sh), C(contexts), t(m >> 6), cp(contexts), cxt(contexts), chk(contexts), runP(contexts),
-  sm(sh, contexts, 256, 1023, StateMap::BitHistory), cn(0),
+  sm(sh, contexts, 256, 1023, StateMapType::BitHistory), cn(0),
   mask(uint32_t(t.size() - 1)), hashBits(ilog2(mask + 1)), validFlags(0) {
   assert(m >= 64 && isPowerOf2(m));
   assert(C <= (int) sizeof(validFlags) * 8); // validFlags is 64 bits - it can't support more than 64 contexts

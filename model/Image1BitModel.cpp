@@ -1,7 +1,7 @@
 #include "Image1BitModel.hpp"
 #include "../Stretch.hpp"
 
-Image1BitModel::Image1BitModel(const Shared* const sh) : shared(sh), sm {sh, s, 256, 1023, StateMap::BitHistory} {}
+Image1BitModel::Image1BitModel(const Shared* const sh) : shared(sh), sm {sh, s, 256, 1023, StateMapType::BitHistory} {}
 
 void Image1BitModel::setParam(int widthInBytes) {
   w = widthInBytes;

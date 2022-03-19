@@ -6,7 +6,7 @@ auto DmcModel::incrementCounter(const uint32_t x, const uint32_t increment) -> u
 
 DmcModel::DmcModel(const Shared* const sh, const uint64_t dmcNodes, const uint32_t thStart) : shared(sh), 
   t(min(dmcNodes + dmcNodesBase, dmcNodesMax)),
-  sm(sh, 1, 256, 256 /*64-512 are all fine*/, StateMap::BitHistory) {
+  sm(sh, 1, 256, 256 /*64-512 are all fine*/, StateMapType::BitHistory) {
     resetStateGraph(thStart);
   }
 

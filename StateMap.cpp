@@ -1,10 +1,10 @@
 #include "StateMap.hpp"
 #include "Utils.hpp"
 
-StateMap::StateMap (const Shared* const sh, const int s, const int n, const int lim, const StateMap::MAPTYPE mapType) :
+StateMap::StateMap (const Shared* const sh, const int s, const int n, const int lim, const StateMapType mapType) :
   AdaptiveMap(sh, n * s), limit(lim), numContextSets(s), numContextsPerSet(n), currentContextSetIndex(0), cxt(s) {
   assert(numContextSets > 0 && numContextsPerSet > 0);
-  if( mapType == BitHistory ) { // when the context is a bit history byte, we have a-priory for p
+  if( mapType == StateMapType::BitHistory ) { // when the context is a bit history byte, we have a-priory for p
     assert((numContextsPerSet & 255) == 0);
     for( uint64_t cx = 0; cx < numContextsPerSet; ++cx ) {
       auto state = uint8_t(cx & 255);
@@ -36,7 +36,7 @@ StateMap::StateMap (const Shared* const sh, const int s, const int n, const int 
         t[s * numContextsPerSet + cx] = p;
       }
     }
-  } else if( mapType == Run ) { // when the context is a run count: we have a-priory for p
+  } else if( mapType == StateMapType::Run ) { // when the context is a run count: we have a-priory for p
     for( uint32_t cx = 0; cx < numContextsPerSet; ++cx ) {
       const int predictedBit = (cx) & 1;
       const int uncertainty = (cx >> 1) & 1;
