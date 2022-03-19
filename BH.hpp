@@ -22,31 +22,31 @@
  */
 template<uint64_t B>
 class BH {
-    uint32_t searchLimit = 8;
-    Array<uint8_t> t; /**< elements */
-    const uint32_t mask; /**< size-1 */
-    const int hashBits;
+  uint32_t searchLimit = 8;
+  Array<uint8_t> t; /**< elements */
+  const uint32_t mask; /**< size-1 */
+  const int hashBits;
 
 public:
-    /**
-     * Creates @ref n element table with @ref b bytes each. @ref n must be a power of 2.
-     * The first two bytes of each element is reserved for a checksum to detect collisions.
-     * The remaining b-2 bytes are values, prioritized by the first value. This byte is 0 to mark an unused element.
-     * @param n number of elements in the table
-     */
-    explicit BH(uint64_t n) : t(n * B), mask(uint32_t(n - 1)), hashBits(ilog2(mask + 1)) {
-      assert(B >= 2 && n > 0 && isPowerOf2(n));
-    }
+  /**
+    * Creates @ref n element table with @ref b bytes each. @ref n must be a power of 2.
+    * The first two bytes of each element is reserved for a checksum to detect collisions.
+    * The remaining b-2 bytes are values, prioritized by the first value. This byte is 0 to mark an unused element.
+    * @param n number of elements in the table
+    */
+  explicit BH(uint64_t n) : t(n * B), mask(uint32_t(n - 1)), hashBits(ilog2(mask + 1)) {
+    assert(B >= 2 && n > 0 && isPowerOf2(n));
+  }
 
-    /**
-     * Returns a pointer to the ctx'th element, such that
-     * t[ctx][-2]..t[ctx][-1] is a checksum of @ref ctx, t[ctx][0] is the priority, and
-     * t[ctx][1..B-3] are other values (0-255).
-     * @tparam B number of bytes in each slot including the checksum and priority
-     * @param ctx bucket selector
-     * @return pointer to the ctx'th element
-     */
-    auto operator[](uint64_t ctx) -> uint8_t *;
+  /**
+    * Returns a pointer to the ctx'th element, such that
+    * t[ctx][-2]..t[ctx][-1] is a checksum of @ref ctx, t[ctx][0] is the priority, and
+    * t[ctx][1..B-3] are other values (0-255).
+    * @tparam B number of bytes in each slot including the checksum and priority
+    * @param ctx bucket selector
+    * @return pointer to the ctx'th element
+    */
+  auto operator[](uint64_t ctx) -> uint8_t *;
 };
 
 template<uint64_t B>

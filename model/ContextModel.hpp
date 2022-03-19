@@ -9,13 +9,13 @@
  * This combines all the context models with a Mixer.
  */
 class ContextModel {
-    Shared * const shared;
-    Models * const models;
-    const MixerFactory* const mixerFactory;
+  Shared * const shared;
+  Models * const models;
+  const MixerFactory* const mixerFactory;
 
-    IContextModel* selectedContextModel = nullptr;
+  IContextModel* selectedContextModel = nullptr;
 
 public:
   ContextModel(Shared* const sh, Models* const models, const MixerFactory* const mixerFactory);
-    int p();
+  int p();
 };

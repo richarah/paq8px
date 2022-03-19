@@ -76,9 +76,7 @@ void SparseModel::mix(Mixer &m) {
       cm.set(RH, hash(++i, buf(9) << 8 | buf(7)));  // silesia/nci
       cm.set(RH, hash(++i, buf(10) << 8 | buf(8))); // silesia/nci
     }
-
-
-    assert((int) i == isText ? nCM_TEXT : nCM);
+    assert((int) i == (isText ? nCM_TEXT : nCM));
   }
   cm.mix(m);
 

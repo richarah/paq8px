@@ -16,9 +16,9 @@
 
 // Multipliers
 // - They don't need to be prime, just large odd numbers
-// - It's advantageous to have a multiplier such as m-1 is divicible by 4
+// - It's advantageous to have a multiplier such as m-1 is divisible by 4
 //   See also: https://en.wikipedia.org/wiki/Linear_congruential_generator
-// - It's advantageoud where the multiplier is based on an irrational number to guarantee good (long) periodic behaviour
+// - It's advantageous when the multiplier is based on an irrational number to guarantee good (long) periodic behaviour
 // - The golden ratio is usually preferred as a multiplier (PHI64) as it is the most irrational number
 
 static constexpr uint64_t hashes[14] = {UINT64_C(0x9E3779B97F4A7C15), UINT64_C(0x993DDEFFB1462949), UINT64_C(0xE9C91DC159AB0D2D),
@@ -48,7 +48,7 @@ static constexpr uint64_t hashes[14] = {UINT64_C(0x9E3779B97F4A7C15), UINT64_C(0
 
 
 /**
- * Finalizers (range reduction).
+ * Finalizer (range reduction).
  * Keep the necessary number of bits after performing a
  * (combination of) multiplicative hash(es).
  * @param hash

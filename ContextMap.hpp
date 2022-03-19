@@ -80,38 +80,38 @@
 
 class ContextMap : IPredictor {
 public:
-    static constexpr int MIXERINPUTS = 5;
+  static constexpr int MIXERINPUTS = 5;
 
 private:
-    const Shared * const shared;
-    Random rnd;
-    const int C; /**< max number of contexts */
-    Array<Bucket16<HashElementForContextMap, 7>> t; /**< bit and byte histories (statistics) */
-    Array<uint8_t *> cp; /**< @ref C pointers to current bit history */
-    Array<uint32_t> cxt; /**< c whole byte context hashes */
-    Array<uint16_t> chk; /**< c whole byte context checksums */
-    Array<uint8_t *> runP; /**< c [0..3] = count, value, unused, unused */
-    StateMap sm; /**< c maps of state -> p */
-    int cn; /**< next context to set by set() */
-    const uint32_t mask;
-    const int hashBits;
-    uint64_t validFlags;
-    Ilog *ilog = &Ilog::getInstance();
+  const Shared * const shared;
+  Random rnd;
+  const int C; /**< max number of contexts */
+  Array<Bucket16<HashElementForContextMap, 7>> t; /**< bit and byte histories (statistics) */
+  Array<uint8_t *> cp; /**< @ref C pointers to current bit history */
+  Array<uint32_t> cxt; /**< c whole byte context hashes */
+  Array<uint16_t> chk; /**< c whole byte context checksums */
+  Array<uint8_t *> runP; /**< c [0..3] = count, value, unused, unused */
+  StateMap sm; /**< c maps of state -> p */
+  int cn; /**< next context to set by set() */
+  const uint32_t mask;
+  const int hashBits;
+  uint64_t validFlags;
+  Ilog *ilog = &Ilog::getInstance();
 
 public:
-    /**
-     * Construct using @ref m bytes of memory for @ref contexts contexts
-     * @param m bytes of memory to use
-     * @param contexts max number of contexts
-     */
-    ContextMap(const Shared* const sh, uint64_t m, int contexts);
+  /**
+    * Construct using @ref m bytes of memory for @ref contexts contexts
+    * @param m bytes of memory to use
+    * @param contexts max number of contexts
+    */
+  ContextMap(const Shared* const sh, uint64_t m, int contexts);
 
-    /**
-     * Set next whole byte context to @ref cx.
-     * @param cx
-     */
-    void set(uint64_t cx);
-    void skip();
-    void update() override;
-    void mix(Mixer &m);
+  /**
+    * Set next whole byte context to @ref cx.
+    * @param cx
+    */
+  void set(uint64_t cx);
+  void skip();
+  void update() override;
+  void mix(Mixer &m);
 };

@@ -131,7 +131,7 @@ void ChartModel::mix(Mixer& m) {
       cm.set(__, hash(++h, (e & 7) << 8 | (k & 0xff00ff)));   //  101 001
     }
 
-    assert(h == isText ? nCM_TEXT : nCM);
+    assert((int)h == (isText ? nCM_TEXT : nCM));
   }
   
   cm.mix(m);

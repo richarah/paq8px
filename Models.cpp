@@ -47,8 +47,8 @@ void Models::trainText(const char* const dictionary, int iterations) {
     NormalModel::MIXERCONTEXTSETS_PRE + WordModel::MIXERCONTEXTSETS);
   shared->State.blockType = BlockType::TEXT;
   INJECT_SHARED_pos
-    INJECT_SHARED_blockPos
-    assert(pos == 0 && blockPos == 0);
+  INJECT_SHARED_blockPos
+  assert(pos == 0 && blockPos == 0);
   FileDisk f;
   printf("Pre-training models with text...");
   OpenFromMyFolder::anotherFile(&f, dictionary);
@@ -64,9 +64,7 @@ void Models::trainText(const char* const dictionary, int iterations) {
       if (c != CARRIAGE_RETURN) {
         for (int bpos = 0; bpos < 8; bpos++) {
           normalModel.mix(mDummy); //update (train) model
-#ifndef DISABLE_TEXTMODEL
           wordModel.mix(mDummy); //update (train) model
-#endif
           mDummy.p();
           int y = (c1 >> (7 - bpos)) & 1U;
           shared->update(y, false);
@@ -76,14 +74,10 @@ void Models::trainText(const char* const dictionary, int iterations) {
       // reset models in between
       if (c == NEW_LINE) {
         normalModel.reset();
-#ifndef DISABLE_TEXTMODEL
         wordModel.reset();
-#endif
         for (int bpos = 0; bpos < 8; bpos++) {
           normalModel.mix(mDummy); //update (train) model
-#ifndef DISABLE_TEXTMODEL
           wordModel.mix(mDummy); //update (train) model
-#endif
           mDummy.p();
           int y = (c1 >> (7 - bpos)) & 1U;
           shared->update(y, false);
@@ -92,9 +86,7 @@ void Models::trainText(const char* const dictionary, int iterations) {
     } while ((c = f.getchar()) != EOF);
   }
   normalModel.reset();
-#ifndef DISABLE_TEXTMODEL
   wordModel.reset();
-#endif
   shared->reset();
   printf(" done [%s, %d bytes]\n", dictionary, trainingByteCount);
   f.close();
@@ -104,8 +96,8 @@ void Models::trainExe() {
   ExeModel& exeModel = this->exeModel();
   DummyMixer mDummy(shared, ExeModel::MIXERINPUTS, ExeModel::MIXERCONTEXTS, ExeModel::MIXERCONTEXTSETS);
   INJECT_SHARED_pos
-    INJECT_SHARED_blockPos
-    assert(pos == 0 && blockPos == 0);
+  INJECT_SHARED_blockPos
+  assert(pos == 0 && blockPos == 0);
   FileDisk f;
   printf("Pre-training x86/x64 model...");
   OpenFromMyFolder::myself(&f);
@@ -175,8 +167,6 @@ auto Models::chartModel() -> ChartModel& {
   return instance;
 }
 
-#ifndef DISABLE_TEXTMODEL
-
 auto Models::textModel() -> TextModel & {
   static TextModel instance {shared, shared->mem * 16};
   return instance;
@@ -186,15 +176,6 @@ auto Models::wordModel() -> WordModel & {
   static WordModel instance {shared, shared->mem * 16};
   return instance;
 }
-
-#else
-
-auto wordModel() -> WordModel & {
-      static WordModel instance {};
-      return instance;
-    }
-
-#endif //DISABLE_TEXTMODEL
 
 auto Models::nestModel() -> NestModel & {
   static NestModel instance {shared, shared->mem};
@@ -241,8 +222,6 @@ auto Models::image1BitModel() -> Image1BitModel & {
   return instance;
 }
 
-#ifndef DISABLE_AUDIOMODEL
-
 auto Models::audio8BitModel() -> Audio8BitModel & {
   static Audio8BitModel instance {shared};
   return instance;
@@ -252,8 +231,6 @@ auto Models::audio16BitModel() -> Audio16BitModel & {
   static Audio16BitModel instance {shared};
   return instance;
 }
-
-#endif //DISABLE_AUDIOMODEL
 
 auto Models::lstmModel() -> LstmModel<> & {
   static LstmModel<>* instance = LstmFactory<>::CreateLSTM(shared, 200, 2, 100, 0.06f, 16.f);

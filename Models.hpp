@@ -63,10 +63,8 @@ public:
   auto image8BitModel() -> Image8BitModel &;
   auto image4BitModel() -> Image4BitModel &;
   auto image1BitModel() -> Image1BitModel &;
-#ifndef DISABLE_AUDIOMODEL
   auto audio8BitModel() -> Audio8BitModel &;
   auto audio16BitModel() -> Audio16BitModel &;
-#endif //DISABLE_AUDIOMODEL
   auto lstmModel() -> LstmModel<> &;
   auto decAlphaModel() -> DECAlphaModel &;
 };

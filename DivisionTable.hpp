@@ -7,11 +7,11 @@
  */
 class DivisionTable {
 public:
-    static auto getDT() -> int * {
-      static int dt[1024]; // i -> 16K/(i+i+3)
-      for( int i = 0; i < 1024; ++i ) {
-        dt[i] = 16384 / (i + i + 3);
-      }
-      return dt;
+  static auto getDT() -> int * {
+    static int dt[1024]; // i -> 16K/(i+i+3)
+    for( int i = 0; i < 1024; ++i ) {
+      dt[i] = 16384 / (i + i + 3);
     }
+    return dt;
+  }
 };

@@ -1,7 +1,5 @@
 #include "WordModel.hpp"
 
-#ifndef DISABLE_TEXTMODEL
-
 WordModel::WordModel(Shared* const sh, const uint64_t size) : 
   shared(sh),
   cm(sh, size, nCM1 + nCM2_TEXT, 64),
@@ -73,5 +71,3 @@ void WordModel::mix(Mixer &m) {
   m.set((order >> 1) << 3 | bpos, 16 * 8);
   shared->State.WordModel.order = order;
 }
-
-#endif //DISABLE_TEXTMODEL

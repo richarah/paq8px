@@ -6,8 +6,6 @@ include(CheckIPOSupported)
 check_ipo_supported(RESULT supported OUTPUT error)
 
 option(NATIVECPU "Whether to build for your cpu (vs. the general public)" OFF)
-option(DISABLE_TEXTMODEL "Whether to disable TextModel and WordModel" OFF)
-option(DISABLE_AUDIOMODEL "Whether to disable AudioModels" OFF)
 option(DISABLE_ZLIB "Whether to disable zlib" OFF)
 option(NDEBUG "Whether to suppress asserts and array bound checks" ON)
 
@@ -16,14 +14,6 @@ if (NATIVECPU)
 else ()
     add_definitions(-march=nocona -mtune=generic)
 endif (NATIVECPU)
-
-if (DISABLE_TEXTMODEL)
-    add_definitions(-DDISABLE_TEXTMODEL)
-endif (DISABLE_TEXTMODEL)
-
-if (DISABLE_AUDIOMODEL)
-    add_definitions(-DDISABLE_AUDIOMODEL)
-endif (DISABLE_AUDIOMODEL)
 
 if (DISABLE_ZLIB)
     add_definitions(-DDISABLE_ZLIB)

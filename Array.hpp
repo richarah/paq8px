@@ -34,68 +34,68 @@ static void CHECK_INDEX(uint64_t index, uint64_t upperBound) {
 template<class T, const int Align = 16>
 class Array {
 private:
-    uint64_t usedSize {};
-    uint64_t reservedSize {};
-    char *ptr {}; /**< Address of allocated memory (may not be aligned) */
-    T *data;   /**< Aligned base address of the elements, (ptr <= T) */
-    ProgramChecker *programChecker = ProgramChecker::getInstance();
-    void create(uint64_t requestedSize);
+  uint64_t usedSize {};
+  uint64_t reservedSize {};
+  char *ptr {}; /**< Address of allocated memory (may not be aligned) */
+  T *data;   /**< Aligned base address of the elements, (ptr <= T) */
+  ProgramChecker *programChecker = ProgramChecker::getInstance();
+  void create(uint64_t requestedSize);
 
-    [[nodiscard]] inline uint64_t padding() const { return Align - 1; }
+  [[nodiscard]] inline uint64_t padding() const { return Align - 1; }
 
-    [[nodiscard]] inline uint64_t allocatedBytes() const {
-      return (reservedSize == 0) ? 0 : reservedSize * sizeof(T) + padding();
-    }
+  [[nodiscard]] inline uint64_t allocatedBytes() const {
+    return (reservedSize == 0) ? 0 : reservedSize * sizeof(T) + padding();
+  }
 
-    /**
+  /**
     * Assignment operator is private so that it cannot be called
     */
-    auto operator=(Array const& /*unused*/) -> Array& { return *this; }
+  auto operator=(Array const& /*unused*/) -> Array& { return *this; }
 
 public:
-    explicit Array(uint64_t requestedSize) { create(requestedSize); }
+  explicit Array(uint64_t requestedSize) { create(requestedSize); }
 
-    ~Array();
+  ~Array();
 
-    T &operator[](uint64_t i) {
-      CHECK_INDEX(i, usedSize);
-      return data[i];
-    }
+  T &operator[](uint64_t i) {
+    CHECK_INDEX(i, usedSize);
+    return data[i];
+  }
 
-    const T &operator[](uint64_t i) const {
-      CHECK_INDEX(i, usedSize);
-      return data[i];
-    }
+  const T &operator[](uint64_t i) const {
+    CHECK_INDEX(i, usedSize);
+    return data[i];
+  }
 
-    /**
-     * @return the number of T elements currently in the array.
-     */
-    [[nodiscard]] uint64_t size() const { return usedSize; }
+  /**
+    * @return the number of T elements currently in the array.
+    */
+  [[nodiscard]] uint64_t size() const { return usedSize; }
 
-    /**
-     * Grows or shrinks the array.
-     * @param newSize the new size of the array
-     */
-    void resize(uint64_t newSize);
+  /**
+    * Grows or shrinks the array.
+    * @param newSize the new size of the array
+    */
+  void resize(uint64_t newSize);
 
-    /**
-     * Removes the last element by reducing the size by one (but does not free memory).
-     */
-    void popBack() {
-      assert(usedSize > 0);
-      --usedSize;
-    }
+  /**
+    * Removes the last element by reducing the size by one (but does not free memory).
+    */
+  void popBack() {
+    assert(usedSize > 0);
+    --usedSize;
+  }
 
-    /**
-     * appends x to the end of the array and reserves space for more elements if needed.
-     * @param x the element to append
-     */
-    void pushBack(const T &x);
-    /**
-     * Prevent copying
-     * Remark: GCC complains if this member is private, so it is public
-     */
-    Array(const Array &) { assert(false); }
+  /**
+    * appends x to the end of the array and reserves space for more elements if needed.
+    * @param x the element to append
+    */
+  void pushBack(const T &x);
+  /**
+    * Prevent copying
+    * Remark: GCC complains if this member is private, so it is public
+    */
+  Array(const Array &) { assert(false); }
 
 };
 

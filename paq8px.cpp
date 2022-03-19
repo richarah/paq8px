@@ -165,18 +165,6 @@ static void printModules() {
   printf("ZLIB: DISABLED, ");
 #endif
 
-#ifndef DISABLE_AUDIOMODEL
-  printf("AUDIOMODEL: ENABLED, ");
-#else
-  printf("AUDIOMODEL: DISABLED, ");
-#endif
-
-#ifndef DISABLE_TEXTMODEL
-  printf("TEXTMODEL: ENABLED ");
-#else
-  printf("TEXTMODEL: DISABLED ");
-#endif
-
   printf("\n");
 }
 

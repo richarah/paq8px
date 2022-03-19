@@ -228,8 +228,7 @@ void TextModel::update() {
       }
       case '?':
       case '!': {
-        cSentence->type = (c == '.') ? Sentence::Types::Declarative : (c == '?') ? Sentence::Types::Interrogative
-                                                                                 : Sentence::Types::Exclamative;
+        cSentence->type = (c == '.') ? Sentence::Types::Declarative : (c == '?') ? Sentence::Types::Interrogative : Sentence::Types::Exclamative;
         cSentence->segmentCount++;
         cParagraph->sentenceCount++;
         cParagraph->typeCount[cSentence->type]++;

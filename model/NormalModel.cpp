@@ -15,7 +15,7 @@ void NormalModel::reset() {
 void NormalModel::updateHashes() {
   INJECT_SHARED_c1
   INJECT_SHARED_blockType
-    BlockType normalizedBlockType = blockType;
+  BlockType normalizedBlockType = blockType;
   /* todo: let blocktype represent simply the blocktype without any transformation used:
       blockType == BlockType::AUDIO_LE = BlockType::AUDIO
       blockType == BlockType::TEXT_EOL = BlockType::TEXT

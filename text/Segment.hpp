@@ -5,7 +5,7 @@
 
 class Segment {
 public:
-    Word firstWord; /**< useful following questions */
-    uint32_t wordCount {};
-    uint32_t numCount {};
+  Word firstWord; /**< useful following questions */
+  uint32_t wordCount {};
+  uint32_t numCount {};
 };

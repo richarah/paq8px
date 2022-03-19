@@ -336,7 +336,6 @@ static DetectionInfo detect(File *in, uint64_t blockSize, const TransformOptions
   uint64_t sos = 0; // Start Of Scan
   uint64_t app = 0; // Application-specific marker
 
-#ifndef DISABLE_AUDIOMODEL
   // For WAVE detection
   uint64_t wavi = 0;
   int wavSize = 0; // filesize
@@ -356,7 +355,6 @@ static DetectionInfo detect(File *in, uint64_t blockSize, const TransformOptions
   uint64_t s3mi = 0;
   int s3Mno = 0;
   int s3Mni = 0; 
-#endif //  DISABLE_AUDIOMODEL
    
   // For MRB detection
   uint64_t mrb = 0; 
@@ -803,7 +801,7 @@ static DetectionInfo detect(File *in, uint64_t blockSize, const TransformOptions
       detectionInfo.DataLength = start + i +1 - detectionInfo.DataStart;
       return detectionInfo;
     }
-#ifndef DISABLE_AUDIOMODEL
+
     // Detect .wav file header
     if (buf0 == 0x52494646 /*RIFF*/) { 
       wavi = i;
@@ -991,7 +989,7 @@ static DetectionInfo detect(File *in, uint64_t blockSize, const TransformOptions
         in->setpos(savedPos);
       }
     }
-#endif //  DISABLE_AUDIOMODEL
+
 
     //detect uncompressed and rle encoded mrb files inside windows hlp files 506C
     //we support only single images
@@ -1110,12 +1108,12 @@ static DetectionInfo detect(File *in, uint64_t blockSize, const TransformOptions
         if (bswap(buf0) <= static_cast<uint32_t>(nColors) || bswap(buf0) == 0x10000000) {
           if (bmpi == 0 /*headerless*/ && (bmpx * 2 == bmpy) && imgbpp > 1 && // possible icon/cursor?
             ((bmps > 0 && bmps == ((bmpx * bmpy * (imgbpp + 1)) >> 4)) || (((bmps == 0u) || bmps < ((bmpx * bmpy * imgbpp) >> 3)) &&
-              ((bmpx == 8) || (bmpx == 10) || (bmpx == 14) || (bmpx == 16) ||
-                (bmpx == 20) || (bmpx == 22) || (bmpx == 24) ||
-                (bmpx == 32) || (bmpx == 40) || (bmpx == 48) ||
-                (bmpx == 60) || (bmpx == 64) || (bmpx == 72) ||
-                (bmpx == 80) || (bmpx == 96) || (bmpx == 128) ||
-                (bmpx == 256))))) {
+              ((bmpx == 8)  || (bmpx == 10) || (bmpx == 14) || (bmpx == 16) ||
+               (bmpx == 20) || (bmpx == 22) || (bmpx == 24) ||
+               (bmpx == 32) || (bmpx == 40) || (bmpx == 48) ||
+               (bmpx == 60) || (bmpx == 64) || (bmpx == 72) ||
+               (bmpx == 80) || (bmpx == 96) || (bmpx == 128) ||
+               (bmpx == 256))))) {
             bmpy = bmpx;
           }
 

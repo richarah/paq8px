@@ -310,12 +310,12 @@ void ExeModel::mix(Mixer &m) {
     INJECT_SHARED_c0
     uint8_t s = (
       (stateBh[context] >> (28 - bpos)) & 0x08U) |
-    ((stateBh[context] >> (21 - bpos)) & 0x04U) |
-    ((stateBh[context] >> (14 - bpos)) & 0x02U) |
-    ((stateBh[context] >> (7 - bpos)) & 0x01U) |
-    (static_cast<int>(op.category == OP_GEN_BRANCH) << 4U) |
-    (static_cast<int>((c0 & ((1U << bpos) - 1)) == 0) << 5U
-      );
+      ((stateBh[context] >> (21 - bpos)) & 0x04U) |
+      ((stateBh[context] >> (14 - bpos)) & 0x02U) |
+      ((stateBh[context] >> (7 - bpos)) & 0x01U) |
+      (static_cast<int>(op.category == OP_GEN_BRANCH) << 4U) |
+      (static_cast<int>((c0 & ((1U << bpos) - 1)) == 0) << 5U
+    );
 
     m.set(context * 4 + (s >> 4U), 1024);
     m.set(state * 64 + bpos * 8 + static_cast<int>(op.bytesRead > 0) * 4 + (s >> 4U), 1024);

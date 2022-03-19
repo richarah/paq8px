@@ -8,13 +8,13 @@
  */
 class FileName : public String {
 public:
-    explicit FileName(const char *s = "");
-    [[nodiscard]] auto lastSlashPos() const -> int;
-    void keepFilename();
-    void keepPath();
+  explicit FileName(const char *s = "");
+  [[nodiscard]] auto lastSlashPos() const -> int;
+  void keepFilename();
+  void keepPath();
 
-    /**
-     * Prepare path string for screen output.
-     */
-    void replaceSlashes();
+  /**
+    * Prepare path string for screen output.
+    */
+  void replaceSlashes();
 };

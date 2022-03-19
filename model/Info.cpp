@@ -224,17 +224,17 @@ void Info::lineModelPredict() {
   uint64_t i = 1024;
   const auto isNewline = c == NEW_LINE || c == 0;
   INJECT_SHARED_pos
-    if( isNewline ) { // a new line has just started (or: zero in asciiz or in binary data)
-      nl4 = nl3;
-      nl3 = nl2;
-      nl2 = nl1;
-      nl1 = pos;
-      firstChar = -1;
-      firstWord = 0;
-      line0 = 0;
-    }
+  if( isNewline ) { // a new line has just started (or: zero in asciiz or in binary data)
+    nl4 = nl3;
+    nl3 = nl2;
+    nl2 = nl1;
+    nl1 = pos;
+    firstChar = -1;
+    firstWord = 0;
+    line0 = 0;
+  }
   INJECT_SHARED_c1
-    line0 = combine64(line0, c1);
+  line0 = combine64(line0, c1);
   cm.set(RH, hash(++i, line0));
 
   uint32_t col = pos - nl1;

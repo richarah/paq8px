@@ -28,7 +28,7 @@ void Audio16BitModel::setParam(int info) {
 
 void Audio16BitModel::mix(Mixer &m) {
   INJECT_SHARED_bpos
-    INJECT_SHARED_blockPos
+  INJECT_SHARED_blockPos
   if( bpos == 0 && blockPos != 0 ) {
     ch = (stereo) != 0 ? (blockPos & 2U) >> 1U : 0;
     lsb = (blockPos & 1U) ^ static_cast<uint32_t>(wMode < 4);

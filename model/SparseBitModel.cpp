@@ -30,7 +30,7 @@ void SparseBitModel::mix(Mixer &m) {
       cm.set(__, hash(++i, c4 & 0x0f0f0f0f));
     }
 
-    assert((int)i == isText ? nCM_TEXT : nCM);
+    assert((int)i == (isText ? nCM_TEXT : nCM));
   }
 
   cm.mix(m);

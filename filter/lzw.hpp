@@ -9,60 +9,60 @@
 
 class LZWFilter : Filter {
 public:
-    void encode(File *in, File *out, uint64_t  /*size*/, int  /*info*/, int & /*headerSize*/) override {
-      LZWDictionary dic;
-      int parent = -1;
-      int code = 0;
-      int buffer = 0;
-      int bitsPerCode = 9;
-      int bitsUsed = 0;
-      bool done = false;
-      while( !done ) {
-        buffer = in->getchar();
-        if( buffer < 0 ) {
-          return;// 0;
-        }
-        for( int j = 0; j < 8; j++ ) {
-          code += code + ((buffer >> (7 - j)) & 1), bitsUsed++;
-          if( bitsUsed >= bitsPerCode ) {
-            if( code == LZW_EOF_CODE ) {
-              done = true;
-              break;
-            }
-            if( code == LZW_RESET_CODE ) {
-              dic.reset();
-              parent = -1;
-              bitsPerCode = 9;
-            } else {
-              if( code < dic.index ) {
-                if( parent != -1 ) {
-                  dic.addEntry(parent, dic.dumpEntry(out, code));
-                } else {
-                  out->putChar(code);
-                }
-              } else if( code == dic.index ) {
-                int a = dic.dumpEntry(out, parent);
-                out->putChar(a);
-                dic.addEntry(parent, a);
+  void encode(File *in, File *out, uint64_t  /*size*/, int  /*info*/, int & /*headerSize*/) override {
+    LZWDictionary dic;
+    int parent = -1;
+    int code = 0;
+    int buffer = 0;
+    int bitsPerCode = 9;
+    int bitsUsed = 0;
+    bool done = false;
+    while( !done ) {
+      buffer = in->getchar();
+      if( buffer < 0 ) {
+        return;// 0;
+      }
+      for( int j = 0; j < 8; j++ ) {
+        code += code + ((buffer >> (7 - j)) & 1), bitsUsed++;
+        if( bitsUsed >= bitsPerCode ) {
+          if( code == LZW_EOF_CODE ) {
+            done = true;
+            break;
+          }
+          if( code == LZW_RESET_CODE ) {
+            dic.reset();
+            parent = -1;
+            bitsPerCode = 9;
+          } else {
+            if( code < dic.index ) {
+              if( parent != -1 ) {
+                dic.addEntry(parent, dic.dumpEntry(out, code));
               } else {
-                return;// 0;
+                out->putChar(code);
               }
-              parent = code;
+            } else if( code == dic.index ) {
+              int a = dic.dumpEntry(out, parent);
+              out->putChar(a);
+              dic.addEntry(parent, a);
+            } else {
+              return;// 0;
             }
-            bitsUsed = 0;
-            code = 0;
-            if((1U << bitsPerCode) == dic.index + 1 && dic.index < 4096 ) {
-              bitsPerCode++;
-            }
+            parent = code;
+          }
+          bitsUsed = 0;
+          code = 0;
+          if((1U << bitsPerCode) == dic.index + 1 && dic.index < 4096 ) {
+            bitsPerCode++;
           }
         }
       }
-      // return 1;
     }
+    // return 1;
+  }
 
-    auto decode(File * /*in*/, File * /*out*/, FMode  /*fMode*/, uint64_t  /*size*/, uint64_t & /*diffFound*/) -> uint64_t override {
-      return 0;
-    }
+  auto decode(File * /*in*/, File * /*out*/, FMode  /*fMode*/, uint64_t  /*size*/, uint64_t & /*diffFound*/) -> uint64_t override {
+    return 0;
+  }
 
 };
 

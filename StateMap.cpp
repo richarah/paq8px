@@ -37,7 +37,7 @@ StateMap::StateMap (const Shared* const sh, const int s, const int n, const int 
       }
     }
   } else if( mapType == Run ) { // when the context is a run count: we have a-priory for p
-    for( uint64_t cx = 0; cx < numContextsPerSet; ++cx ) {
+    for( uint32_t cx = 0; cx < numContextsPerSet; ++cx ) {
       const int predictedBit = (cx) & 1;
       const int uncertainty = (cx >> 1) & 1;
       //const int bp = (cx>>2)&1; // unused in calculation - a-priory does not seem to depend on bitPosition for a RunMap

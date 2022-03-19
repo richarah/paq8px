@@ -11,9 +11,9 @@
  */
 class AdaptiveMap {
 protected:
-    const Shared * const shared;
-    Array<uint32_t> t; /**< cxt -> prediction in high 22 bits, count in low 10 bits */
-    int *dt; /**< Pointer to division table */
-    AdaptiveMap(const Shared* const sh, int n);
-    void update(uint32_t *p, int limit);
+  const Shared * const shared;
+  Array<uint32_t> t; /**< cxt -> prediction in high 22 bits, count in low 10 bits */
+  int *dt; /**< Pointer to division table */
+  AdaptiveMap(const Shared* const sh, int n);
+  void update(uint32_t *p, int limit);
 };

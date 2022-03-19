@@ -252,6 +252,4 @@ void RecordModel::mix(Mixer &m) {
   m.set(static_cast<uint32_t>(rLength[0] > 2) * ((bpos << 7U) | mxCtx), 1024);
   m.set(((N ^ B) >> 4U) | (x << 4U), 512);
   m.set(((shared->State.Text.characterGroup) << 5U) | x, 11 * 32);
- 
-  shared->State.rLength = rLength[0];
 }

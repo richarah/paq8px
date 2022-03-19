@@ -54,15 +54,11 @@ auto FileTmp::getchar() -> int {
     if( filePos >= fileSize ) {
       return EOF;
     }
-
     const uint8_t c = (*contentInRam)[filePos];
     filePos++;
     return c;
-
   }
-  {
-    return fileOnDisk->getchar();
-  }
+  return fileOnDisk->getchar();
 }
 
 void FileTmp::putChar(uint8_t c) {
