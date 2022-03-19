@@ -76,11 +76,11 @@ public:
       for (std::size_t i = 0u; i < static_cast<std::size_t>(length & 3u); i++)
         blk[l + i] = encoder->decompressByte(&encoder->predictorMain);
 
-      if (fMode == FDECOMPRESS) {
+      if (fMode == FMode::FDECOMPRESS) {
         out->blockWrite(&blk[0u], length);
         encoder->printStatus();
       }
-      else if (fMode == FCOMPARE) {
+      else if (fMode == FMode::FCOMPARE) {
         for (std::size_t i = 0u; i < static_cast<std::size_t>(length); i++) {
           if (blk[i] != out->getchar()) {
             diffFound = offset + i;

@@ -34,9 +34,9 @@ public:
       uint64_t count = 0;
       for( uint64_t i = 0; i < size; i++, count++ ) {
         if((b = encoder->decompressByte(&encoder->predictorMain)) == NEW_LINE ) {
-          if( fMode == FDECOMPRESS ) {
+          if( fMode == FMode::FDECOMPRESS ) {
             out->putChar(CARRIAGE_RETURN);
-          } else if( fMode == FCOMPARE ) {
+          } else if( fMode == FMode::FCOMPARE ) {
             if( out->getchar() != CARRIAGE_RETURN && (diffFound == 0u)) {
               diffFound = size - i;
               break;
@@ -44,15 +44,15 @@ public:
           }
           count++;
         }
-        if( fMode == FDECOMPRESS ) {
+        if( fMode == FMode::FDECOMPRESS ) {
           out->putChar(b);
-        } else if( fMode == FCOMPARE ) {
+        } else if( fMode == FMode::FCOMPARE ) {
           if( b != out->getchar() && (diffFound == 0u)) {
             diffFound = size - i;
             break;
           }
         }
-        if( fMode == FDECOMPRESS && ((i & 0xFFFU) == 0u)) {
+        if( fMode == FMode::FDECOMPRESS && ((i & 0xFFFU) == 0u)) {
           encoder->printStatus();
         }
       }

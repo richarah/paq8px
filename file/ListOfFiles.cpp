@@ -1,7 +1,7 @@
 #include "ListOfFiles.hpp"
 #include "../CharacterNames.hpp"
 
-ListOfFiles::ListOfFiles() : state(IN_HEADER), names(0) {}
+ListOfFiles::ListOfFiles() : state(ParseState::IN_HEADER), names(0) {}
 
 ListOfFiles::~ListOfFiles() {
   for( int i = 0; i < static_cast<int>(names.size()); i++ ) {
@@ -19,18 +19,18 @@ void ListOfFiles::addChar(char c) {
     listOfFiles += c;
   }
   if( c == 10 || c == 13 || c == EOF) { //got a newline
-    state = FINISHED_A_LINE; //empty lines / extra newlines (cr, crlf or lf) are ignored
-  } else if( state == IN_HEADER ) {
+    state = ParseState::FINISHED_A_LINE; //empty lines / extra newlines (cr, crlf or lf) are ignored
+  } else if( state == ParseState::IN_HEADER ) {
     return; //ignore anything in header
   } else if( c == TAB ) { //got a tab
-    state = FINISHED_A_FILENAME; //ignore the rest (other columns)
+    state = ParseState::FINISHED_A_FILENAME; //ignore the rest (other columns)
   } else { // got a character
-    if( state == FINISHED_A_FILENAME ) {
+    if( state == ParseState::FINISHED_A_FILENAME ) {
       return; //ignore the rest (other columns)
     }
-    if( state == FINISHED_A_LINE ) {
+    if( state == ParseState::FINISHED_A_LINE ) {
       names.pushBack(new FileName(basePath.c_str()));
-      state = PROCESSING_FILENAME;
+      state = ParseState::PROCESSING_FILENAME;
       if( c == '/' || c == '\\' ) {
         quit("For security reasons absolute paths are not allowed in the file list.");
       }

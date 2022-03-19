@@ -156,10 +156,10 @@ public:
           blocksOut++;
         }
         else {
-          if (fMode == FDECOMPRESS) {
+          if (fMode == FMode::FDECOMPRESS) {
             quit("Unexpected Base64 decoding state");
           }
-          else if (fMode == FCOMPARE) {
+          else if (fMode == FMode::FCOMPARE) {
             diffFound = fle;
             break; // give up
           }
@@ -177,9 +177,9 @@ public:
         }
       }
       //Write out or compare
-      if( fMode == FDECOMPRESS ) {
+      if( fMode == FMode::FDECOMPRESS ) {
         out->blockWrite(&ptr[0], outLen);
-      } else if( fMode == FCOMPARE ) {
+      } else if( fMode == FMode::FCOMPARE ) {
         for( i = 0; i < outLen; i++ ) {
           uint8_t b = ptr[i];
           if( b != out->getchar() && (diffFound == 0u)) {

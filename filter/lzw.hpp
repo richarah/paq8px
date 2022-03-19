@@ -125,9 +125,9 @@ static inline void writeCode(File *f, const FMode mode, int *buffer, uint64_t *p
   while((*bitsUsed) > 7 ) {
     const uint8_t b = *buffer >> (*bitsUsed -= 8);
     (*pos)++;
-    if( mode == FDECOMPRESS ) {
+    if( mode == FMode::FDECOMPRESS ) {
       f->putChar(b);
-    } else if( mode == FCOMPARE && b != f->getchar()) {
+    } else if( mode == FMode::FCOMPARE && b != f->getchar()) {
       *diffFound = *pos;
     }
   }
@@ -167,9 +167,9 @@ static auto decodeLzw(File *in, File *out, FMode mode, uint64_t &diffFound) -> u
   writeCode(out, mode, &buffer, &pos, &bitsUsed, bitsPerCode, LZW_EOF_CODE, &diffFound);
   if( bitsUsed > 0 ) { // flush buffer
     pos++;
-    if( mode == FDECOMPRESS ) {
+    if( mode == FMode::FDECOMPRESS ) {
       out->putChar(uint8_t(buffer));
-    } else if( mode == FCOMPARE && uint8_t(buffer) != out->getchar()) {
+    } else if( mode == FMode::FCOMPARE && uint8_t(buffer) != out->getchar()) {
       diffFound = pos;
     }
   }

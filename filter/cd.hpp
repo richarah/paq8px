@@ -141,9 +141,9 @@ public:
       while( i < size ) {
         if( size - i == residual ) { //residual data after last sector
           in->blockRead(blk, residual);
-          if( fMode == FDECOMPRESS ) {
+          if( fMode == FMode::FDECOMPRESS ) {
             out->blockWrite(blk, residual);
-          } else if( fMode == FCOMPARE ) {
+          } else if( fMode == FMode::FCOMPARE ) {
             for( int j = 0; j < static_cast<int>(residual); ++j ) {
               if( blk[j] != out->getchar() && (diffFound == 0u)) {
                 diffFound = nextBlockPos + j + 1;
@@ -175,9 +175,9 @@ public:
           i += 4;
         }
         expandCdSector(blk, address, 0);
-        if( fMode == FDECOMPRESS ) {
+        if( fMode == FMode::FDECOMPRESS ) {
           out->blockWrite(blk, block);
-        } else if( fMode == FCOMPARE ) {
+        } else if( fMode == FMode::FCOMPARE ) {
           for( int j = 0; j < block; ++j ) {
             if( blk[j] != out->getchar() && (diffFound == 0u)) {
               diffFound = nextBlockPos + j + 1;

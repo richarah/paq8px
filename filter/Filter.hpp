@@ -4,9 +4,9 @@
 #include "../Encoder.hpp"
 #include <cstdint>
 
-typedef enum {
+enum class FMode {
     FDECOMPRESS, FCOMPARE, FDISCARD
-} FMode;
+};
 
 class Filter {
 protected:

@@ -148,9 +148,9 @@ static auto encodeGif(File *in, File *out, uint64_t len, int &headerSize) -> int
 #define GIF_WRITE_BLOCK(count) \
   { \
     output[0] = (count); \
-    if (mode == FDECOMPRESS) \
+    if (mode == FMode::FDECOMPRESS) \
       out->blockWrite(&output[0], (count) + 1); \
-    else if (mode == FCOMPARE) \
+    else if (mode == FMode::FCOMPARE) \
       for (int j = 0; j < (count) + 1; j++) \
         if (output[j] != out->getchar() && ! diffFound) { \
           diffFound = outsize + j + 1; \
@@ -210,9 +210,9 @@ static auto decodeGif(File *in, uint64_t size, File *out, FMode mode, uint64_t &
   int last = in->getchar();
   int total = static_cast<int>(size) + 1;
   int outsize = 1;
-  if( mode == FDECOMPRESS ) {
+  if( mode == FMode::FDECOMPRESS ) {
     out->putChar(codesize);
-  } else if( mode == FCOMPARE ) {
+  } else if( mode == FMode::FCOMPARE ) {
     if( codesize != out->getchar() && (diffFound == 0u)) {
       diffFound = 1;
     }
@@ -258,9 +258,9 @@ static auto decodeGif(File *in, uint64_t size, File *out, FMode mode, uint64_t &
     if( blockSize == bsize ) GIF_WRITE_BLOCK(bsize)
   }
   if( blockSize > 0 ) GIF_WRITE_BLOCK(blockSize)
-  if( mode == FDECOMPRESS ) {
+  if( mode == FMode::FDECOMPRESS ) {
     out->putChar(0);
-  } else if( mode == FCOMPARE ) {
+  } else if( mode == FMode::FCOMPARE ) {
     if( 0 != out->getchar() && (diffFound == 0u)) {
       diffFound = outsize + 1;
     }

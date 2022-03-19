@@ -7,10 +7,10 @@
 
 class ListOfFiles {
 private:
-    typedef enum {
+    enum class ParseState {
         IN_HEADER, FINISHED_A_FILENAME, FINISHED_A_LINE, PROCESSING_FILENAME
-    } State;
-    State state; /**< parsing state */
+    } ;
+    ParseState state; /**< parsing state */
     FileName basePath;
     String listOfFiles; /**< path/file list in first column, columns separated by tabs, rows separated by newlines, with header in 1st row */
     Array<FileName *> names; /**< all file names parsed from listOfFiles */

@@ -125,7 +125,7 @@ public:
     in->blockRead(&fptr[0], size);
     encodeRLE(&ptr[0], &fptr[0], size - 2 - 4 - diffcount * 4, len); //size - header
     //Write out or compare
-    if (fMode == FDECOMPRESS) {
+    if (fMode == FMode::FDECOMPRESS) {
       int diffo = diffpos[0] >> 8;
       int diffp = 0;
       for (int i = 0; i < len; i++) {
@@ -135,7 +135,7 @@ public:
       }
       out->blockWrite(&ptr[0], len);
     }
-    else if (fMode == FCOMPARE) {
+    else if (fMode == FMode::FCOMPARE) {
       int diffo = diffpos[0] >> 8;
       int diffp = 0;
       for (int i = 0; i < len; i++) {

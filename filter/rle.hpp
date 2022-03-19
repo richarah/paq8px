@@ -127,9 +127,9 @@ public:
         }
 
         uint64_t length = outPtr - (&outBuffer[0]);
-        if( fMode == FDECOMPRESS ) {
+        if( fMode == FMode::FDECOMPRESS ) {
           out->blockWrite(&outBuffer[0], length);
-        } else if( fMode == FCOMPARE ) {
+        } else if( fMode == FMode::FCOMPARE ) {
           for(uint32_t j = 0; j < length; ++j ) {
             if( outBuffer[j] != out->getchar() && (diffFound == 0u)) {
               diffFound = pos + j + 1;

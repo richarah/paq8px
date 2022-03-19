@@ -22,10 +22,10 @@ public:
       for( uint64_t i = 0, l = size >> 1U; i < l; i++ ) {
         uint8_t b1 = encoder->decompressByte(&encoder->predictorMain);
         uint8_t b2 = encoder->decompressByte(&encoder->predictorMain);
-        if( fMode == FDECOMPRESS ) {
+        if( fMode == FMode::FDECOMPRESS ) {
           out->putChar(b2);
           out->putChar(b1);
-        } else if( fMode == FCOMPARE ) {
+        } else if( fMode == FMode::FCOMPARE ) {
           bool ok = out->getchar() == b2;
           ok &= out->getchar() == b1;
           if( !ok && (diffFound == 0u)) {
@@ -33,14 +33,14 @@ public:
             break;
           }
         }
-        if( fMode == FDECOMPRESS && ((i & 0x7FFU) == 0u)) {
+        if( fMode == FMode::FDECOMPRESS && ((i & 0x7FFU) == 0u)) {
           encoder->printStatus();
         }
       }
       if((diffFound == 0u) && (size & 1U) > 0 ) {
-        if( fMode == FDECOMPRESS ) {
+        if( fMode == FMode::FDECOMPRESS ) {
           out->putChar(encoder->decompressByte(&encoder->predictorMain));
-        } else if( fMode == FCOMPARE ) {
+        } else if( fMode == FMode::FCOMPARE ) {
           if( out->getchar() != encoder->decompressByte(&encoder->predictorMain)) {
             diffFound = size - 1;
           }

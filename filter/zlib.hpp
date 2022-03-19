@@ -313,9 +313,9 @@ static auto decodeZlib(File *in, uint64_t size, File *out, FMode mode, uint64_t 
         zOut[diffPos[diffIndex] - recPos] = diffByte[diffIndex];
         diffIndex++;
       }
-      if( mode == FDECOMPRESS ) {
+      if( mode == FMode::FDECOMPRESS ) {
         out->blockWrite(&zOut[0], have);
-      } else if( mode == FCOMPARE ) {
+      } else if( mode == FMode::FCOMPARE ) {
         for( int j = 0; j < have; j++ ) {
           if( zOut[j] != out->getchar() && (diffFound == 0u)) {
             diffFound = recPos + j + 1;
@@ -327,9 +327,9 @@ static auto decodeZlib(File *in, uint64_t size, File *out, FMode mode, uint64_t 
     } while( recStrm.avail_out == 0 );
   }
   while( diffIndex <= diffCount ) {
-    if( mode == FDECOMPRESS ) {
+    if( mode == FMode::FDECOMPRESS ) {
       out->putChar(diffByte[diffIndex]);
-    } else if( mode == FCOMPARE ) {
+    } else if( mode == FMode::FCOMPARE ) {
       if( diffByte[diffIndex] != out->getchar() && (diffFound == 0u)) {
         diffFound = recPos + 1;
       }

@@ -94,12 +94,12 @@ public:
           c[1] = a >> 16U;
           c[0] = a >> 24U;
         }
-        if( fMode == FDECOMPRESS ) {
+        if( fMode == FMode::FDECOMPRESS ) {
           out->putChar(c[5]);
-        } else if( fMode == FCOMPARE && c[5] != out->getchar() && (diffFound == 0u)) {
+        } else if( fMode == FMode::FCOMPARE && c[5] != out->getchar() && (diffFound == 0u)) {
           diffFound = offset - 6 + 1;
         }
-        if( fMode == FDECOMPRESS && ((offset & 0xfffU) == 0u)) {
+        if( fMode == FMode::FDECOMPRESS && ((offset & 0xfffU) == 0u)) {
           encoder->printStatus();
         }
         offset++;

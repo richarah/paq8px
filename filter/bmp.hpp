@@ -87,14 +87,14 @@ public:
                                           (r & 7U) == ((r & 8U) - ((r >> 3U) & 1U)));
             isPossibleRGB565 = total > 0;
           }
-          if( fMode == FDECOMPRESS ) {
+          if( fMode == FMode::FDECOMPRESS ) {
             out->putChar(b);
             out->putChar(g);
             out->putChar(r);
             if((j == 0) && ((i & 0xFU) == 0)) {
               encoder->printStatus();
             }
-          } else if( fMode == FCOMPARE ) {
+          } else if( fMode == FMode::FCOMPARE ) {
             if((b & 255U) != out->getchar() && (diffFound == 0u)) {
               diffFound = p + 1;
             }
@@ -108,9 +108,9 @@ public:
           }
         }
         for( int j = 0; j < width % 3; j++ ) {
-          if( fMode == FDECOMPRESS ) {
+          if( fMode == FMode::FDECOMPRESS ) {
             out->putChar(encoder->decompressByte(&encoder->predictorMain));
-          } else if( fMode == FCOMPARE ) {
+          } else if( fMode == FMode::FCOMPARE ) {
             if( encoder->decompressByte(&encoder->predictorMain) != out->getchar() && (diffFound == 0U)) {
               diffFound = p + j + 1;
             }
@@ -118,9 +118,9 @@ public:
         }
       }
       for( int i = size % width; i > 0; i-- ) {
-        if( fMode == FDECOMPRESS ) {
+        if( fMode == FMode::FDECOMPRESS ) {
           out->putChar(encoder->decompressByte(&encoder->predictorMain));
-        } else if( fMode == FCOMPARE ) {
+        } else if( fMode == FMode::FCOMPARE ) {
           if( encoder->decompressByte(&encoder->predictorMain) != out->getchar() && (diffFound == 0u)) {
             diffFound = size - i;
             break;

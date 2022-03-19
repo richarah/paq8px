@@ -677,7 +677,7 @@ static DetectionInfo detect(File *in, uint64_t blockSize, const TransformOptions
         }
         else {
           uint32_t endPos = dbase.nRecords * dbase.RecordLength;
-          uint32_t seekpos = endPos + in->curPos();
+          uint64_t seekpos = endPos + in->curPos();
           in->setpos(seekpos);
           marker = in->getchar(); // file end marker, it must be 0x1a
           if (marker != 0x1a) {
@@ -1931,7 +1931,7 @@ transformEncodeBlock(BlockType type, File *in, uint64_t len, Encoder &en, int in
       tmp.setpos(0);
       en.setFile(&tmp);
       in->setpos(begin);
-      decodeFunc(type, en, &tmp, tmpSize, info, in, FCOMPARE, diffFound, transformOptions);
+      decodeFunc(type, en, &tmp, tmpSize, info, in, FMode::FCOMPARE, diffFound, transformOptions);
     }
     // Test fails, compress without transform
     if( diffFound > 0 || tmp.getchar() != EOF) {
@@ -2135,7 +2135,7 @@ static auto decompressRecursive(File *out, uint64_t blockSize, Encoder &en, FMod
       FileTmp tmp;
       for (uint64_t j = 0; j < len; ++j)
           tmp.putChar(en.decompressByte(&en.predictorMain));
-      if (mode != FDISCARD) {
+      if (mode != FMode::FDISCARD) {
         tmp.setpos(0);
         len = decodeFunc(type, en, &tmp, len, info, out, mode, diffFound, transformOptions);
       }
@@ -2144,8 +2144,8 @@ static auto decompressRecursive(File *out, uint64_t blockSize, Encoder &en, FMod
     else
     if( hasRecursion(type)) {
       FileTmp tmp;
-      decompressRecursive(&tmp, len, en, FDECOMPRESS, recursionLevel + 1, transformOptions);
-      if( mode != FDISCARD ) {
+      decompressRecursive(&tmp, len, en, FMode::FDECOMPRESS, recursionLevel + 1, transformOptions);
+      if( mode != FMode::FDISCARD ) {
         tmp.setpos(0);
         if( hasTransform(type, info)) {
           len = decodeFunc(type, en, &tmp, len, info, out, mode, diffFound, transformOptions);
@@ -2159,11 +2159,11 @@ static auto decompressRecursive(File *out, uint64_t blockSize, Encoder &en, FMod
         if((j & 0xfff) == 0u ) {
           en.printStatus();
         }
-        if( mode == FDECOMPRESS ) {
+        if( mode == FMode::FDECOMPRESS ) {
           out->putChar(en.decompressByte(&en.predictorMain));
-        } else if( mode == FCOMPARE ) {
+        } else if( mode == FMode::FCOMPARE ) {
           if( en.decompressByte(&en.predictorMain) != out->getchar() && (diffFound == 0u)) {
-            mode = FDISCARD;
+            mode = FMode::FDISCARD;
             diffFound = i + j + 1;
           }
         } else {
@@ -2184,7 +2184,7 @@ static void decompressFile(const Shared* const shared, const char* filename, FMo
   uint64_t fileSize = Block::DecodeBlockSize(&en);
 
   FileDisk f;
-  if( fMode == FCOMPARE ) {
+  if( fMode == FMode::FCOMPARE ) {
     f.open(filename, true);
     printf("Comparing");
   } else { //mode==FDECOMPRESS;
@@ -2196,11 +2196,11 @@ static void decompressFile(const Shared* const shared, const char* filename, FMo
   // Decompress/Compare
   TransformOptions transformOptions(shared);
   uint64_t r = decompressRecursive(&f, fileSize, en, fMode, 0, &transformOptions);
-  if( fMode == FCOMPARE && (r == 0u) && f.getchar() != EOF) {
+  if( fMode == FMode::FCOMPARE && (r == 0u) && f.getchar() != EOF) {
     printf("file is longer\n");
-  } else if( fMode == FCOMPARE && (r != 0u)) {
+  } else if( fMode == FMode::FCOMPARE && (r != 0u)) {
     printf("differ at %" PRIu64 "\n", r - 1);
-  } else if( fMode == FCOMPARE ) {
+  } else if( fMode == FMode::FCOMPARE ) {
     printf("identical\n");
   } else {
     printf("done   \n");

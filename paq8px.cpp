@@ -791,7 +791,7 @@ auto processCommandLine(int argc, char **argv) -> int {
       }
     } else { //decompress
       if( whattodo == DoExtract || whattodo == DoCompare ) {
-        FMode fMode = whattodo == DoExtract ? FDECOMPRESS : FCOMPARE;
+        FMode fMode = whattodo == DoExtract ? FMode::FDECOMPRESS : FMode::FCOMPARE;
         if(shared.GetOptionMultipleFileMode()) { //multiple file mode
           for( int i = 0; i < numberOfFiles; i++ ) {
             const char *fName = listoffiles.getfilename(i);
