@@ -1,7 +1,7 @@
 #include "WordEmbeddingDictionary.hpp"
 #include "../Hash.hpp"
 
-auto WordEmbeddingDictionary::findEntry(const short prefix, const uint8_t suffix) -> int {
+int WordEmbeddingDictionary::findEntry(const short prefix, const uint8_t suffix) {
   int i = hash(prefix, suffix) % hashSize;
   int offset = (i > 0) ? hashSize - i : 1;
   while( true ) {
@@ -53,7 +53,7 @@ void WordEmbeddingDictionary::reset() {
 #endif
 }
 
-auto WordEmbeddingDictionary::addWord(const Word *w, const uint32_t embedding) -> bool {
+bool WordEmbeddingDictionary::addWord(const Word *w, const uint32_t embedding) {
   bool res = false;
   int parent = -1;
   int code = 0;

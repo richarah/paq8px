@@ -59,7 +59,7 @@ public:
       memcpy(&this->probs[0], &output[0], (1 << Bits) * sizeof(float));
       this->top = (1 << Bits) - 1;
       this->bot = 0;
-      if ((this->shared->GetOptionTrainLSTM()) && (this->shared->State.blockPos == 0u)) {
+      if ((this->shared->GetOptionTrainLSTM()) && (this->shared->State.blockPos == 0)) {
         BlockType const blockType = static_cast<BlockType>(this->shared->State.blockType);
         if (blockType != pBlockType) {
           switch (blockType) {

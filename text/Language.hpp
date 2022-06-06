@@ -5,12 +5,12 @@
 class Language {
 public:
   enum Flags {
-      Verb = (1U << 0U), Noun = (1U << 1U)
+      Verb = (1 << 0), Noun = (1 << 1)
   };
   enum Ids {
       Unknown, English, French, German, Count
   };
 
   virtual ~Language() = default;
-  virtual auto isAbbreviation(Word *w) -> bool = 0;
+  virtual bool isAbbreviation(Word *w) = 0;
 };

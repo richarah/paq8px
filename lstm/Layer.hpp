@@ -184,25 +184,25 @@ public:
   }
 
   void Reset() {
-    for (std::size_t i = 0u; i < horizon; i++) {
+    for (std::size_t i = 0; i < horizon; i++) {
       inverse_variance[i] = 0.f;
-      for (std::size_t j = 0u; j < num_cells; j++) {
+      for (std::size_t j = 0; j < num_cells; j++) {
         state[i][j] = 0.f;
         norm[i][j] = 0.f;
       }
     }
-    for (std::size_t i = 0u; i < num_cells; i++) {
+    for (std::size_t i = 0; i < num_cells; i++) {
       error[i] = 0.f;
       gamma[i] = 1.f, gamma_u[i] = 0.f, gamma_m[i] = 0.f, gamma_v[i] = 0.f;
       beta[i] = 0.f, beta_u[i] = 0.f, beta_m[i] = 0.f, beta_v[i] = 0.f;
-      for (std::size_t j = 0u; j < input_size; j++) {
+      for (std::size_t j = 0; j < input_size; j++) {
         update[i][j] = 0.f;
         m[i][j] = 0.f;
         v[i][j] = 0.f;
       }
     }
-    for (std::size_t i = 0u; i < transpose.size(); i++) {
-      for (std::size_t j = 0u; j < num_cells; j++)
+    for (std::size_t i = 0; i < transpose.size(); i++) {
+      for (std::size_t j = 0; j < num_cells; j++)
         transpose[i][j] = 0.f;
     }
   }

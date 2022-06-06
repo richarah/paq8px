@@ -555,24 +555,24 @@ class ExeModel {
       bool mustCheckRex, decoding, o16, imm8;
   };
 
-  static constexpr int codeShift = 3U;
-  static constexpr uint32_t codeMask = 0xFFU << codeShift; /**< 0x000007F8 */
-  static constexpr uint32_t clearCodeMask = 0xFFFFFFFF ^codeMask; /**< 0xFFFFF807 */
-  static constexpr uint32_t prefixMask = (1U << codeShift) - 1; /**< 0x07 */
-  static constexpr uint32_t operandSizeOverride = 0x01U << (8 + codeShift); /**< 0x00000800 */
-  static constexpr uint32_t multiByteOpcode = 0x02U << (8 + codeShift); /**< 0x00001000 */
-  static constexpr uint32_t prefixRex = 0x04U << (8 + codeShift); /**< 0x00002000 */
-  static constexpr uint32_t prefix38 = 0x08U << (8 + codeShift); /**< 0x00004000 */
-  static constexpr uint32_t prefix3A = 0x10U << (8 + codeShift); /**< 0x00008000 */
-  static constexpr uint32_t hasExtraFlags = 0x20U << (8 + codeShift); /**< 0x00010000 */
-  static constexpr uint32_t hasModRm = 0x40U << (8 + codeShift); /**< 0x00020000 */
-  static constexpr uint32_t ModRMShift = 7 + 8 + codeShift; /**< 18 */
-  static constexpr uint32_t SIBScaleShift = ModRMShift + 8 - 6; /**< 20 */
-  static constexpr uint32_t regDWordDisplacement = 1U << (8 + SIBScaleShift); /**< 0x10000000 */
-  static constexpr uint32_t addressMode = 2U << (8 + SIBScaleShift); /**< 0x20000000 */
-  static constexpr uint32_t typeShift = 2U + 8 + SIBScaleShift; /**< 30 */
-  static constexpr uint32_t categoryShift = 5U;
-  static constexpr uint32_t categoryMask = ((1U << categoryShift) - 1); /**< 0x1F (31) */
+  static constexpr int codeShift = 3;
+  static constexpr uint32_t codeMask = 0xFF << codeShift; /**< 0x000007F8 */
+  static constexpr uint32_t clearCodeMask = 0xFFFFFFFF ^ codeMask; /**< 0xFFFFF807 */
+  static constexpr uint32_t prefixMask = (1 << codeShift) - 1; /**< 0x07 */
+  static constexpr uint32_t operandSizeOverride = 0x01 << (8 + codeShift); /**< 0x00000800 */
+  static constexpr uint32_t multiByteOpcode = 0x02 << (8 + codeShift); /**< 0x00001000 */
+  static constexpr uint32_t prefixRex = 0x04 << (8 + codeShift); /**< 0x00002000 */
+  static constexpr uint32_t prefix38 = 0x08 << (8 + codeShift); /**< 0x00004000 */
+  static constexpr uint32_t prefix3A = 0x10 << (8 + codeShift); /**< 0x00008000 */
+  static constexpr uint32_t hasExtraFlags = 0x20 << (8 + codeShift); /**< 0x00010000 */
+  static constexpr uint32_t hasModRm = 0x40 << (8 + codeShift); /**< 0x00020000 */
+  static constexpr int ModRMShift = 7 + 8 + codeShift; /**< 18 */
+  static constexpr int SIBScaleShift = ModRMShift + 8 - 6; /**< 20 */
+  static constexpr uint32_t regDWordDisplacement = 1 << (8 + SIBScaleShift); /**< 0x10000000 */
+  static constexpr uint32_t addressMode = 2 << (8 + SIBScaleShift); /**< 0x20000000 */
+  static constexpr int typeShift = 2 + 8 + SIBScaleShift; /**< 30 */
+  static constexpr uint32_t categoryShift = 5;
+  static constexpr uint32_t categoryMask = ((1 << categoryShift) - 1); /**< 0x1F (31) */
   static constexpr uint8_t ModRM_mod = 0xC0;
   static constexpr uint8_t ModRM_reg = 0x38;
   static constexpr uint8_t ModRM_rm = 0x07;
@@ -594,8 +594,8 @@ private:
   uint64_t brkCtx; /**< hash */
   bool valid;
 
-  static inline auto isInvalidX64Op(uint8_t op) -> bool;
-  static inline auto isValidX64Prefix(uint8_t prefix) -> bool;
+  static inline bool isInvalidX64Op(uint8_t op);
+  static inline bool isValidX64Prefix(uint8_t prefix);
   static void processMode(Instruction &op, ExeState &state);
   static void processFlags2(Instruction &op, ExeState &state);
   static void processFlags(Instruction &op, ExeState &state);
@@ -603,9 +603,9 @@ private:
   static void readFlags(Instruction &op, ExeState &state);
   static void processModRm(Instruction &op, ExeState &state);
   static void applyCodeAndSetFlag(Instruction &op, uint32_t flag = 0);
-  static inline auto opN(OpCache &cache, uint32_t n) -> uint32_t;
-  static inline auto opNCategory(uint32_t &mask, uint32_t n) -> uint32_t;
-  inline auto pref(int i) -> int;
+  static inline uint32_t opN(OpCache &cache, uint32_t n);
+  static inline uint32_t opNCategory(uint32_t &mask, uint32_t n);
+  inline uint32_t pref(uint32_t i);
 
   /**
     * Get context at buf(i) relevant to parsing 32-bit x86 code.
@@ -613,7 +613,7 @@ private:
     * @param x
     * @return
     */
-  auto exeCxt(int i, int x) -> uint32_t;
+  uint32_t exeCxt(uint32_t i, uint32_t x);
 
   void update();
 

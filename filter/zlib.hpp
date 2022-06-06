@@ -4,7 +4,7 @@
 #include "../Utils.hpp"
 #include <zlib.h>
 
-static auto parseZlibHeader(int header) -> int {
+static int parseZlibHeader(int header) {
   switch( header ) {
     case 0x2815:
       return 0;
@@ -59,7 +59,7 @@ static auto parseZlibHeader(int header) -> int {
   }
 }
 
-static auto zlibInflateInit(z_streamp strm, int zh) -> int {
+static int zlibInflateInit(z_streamp strm, int zh) {
   if( zh == -1 ) {
     return inflateInit2(strm, -MAX_WBITS);
   }
@@ -68,8 +68,8 @@ static auto zlibInflateInit(z_streamp strm, int zh) -> int {
 
 MTFList mtf(81);
 
-static auto encodeZlib(File *in, File *out, uint64_t len, int &headerSize) -> int {
-  const int block = 1U << 16U;
+static int encodeZlib(File *in, File *out, uint64_t len, int &headerSize) {
+  const int block = 1u << 16;
   const int limit = 128;
   uint8_t zin[block * 2];
   uint8_t zOut[block];
@@ -256,8 +256,8 @@ static auto encodeZlib(File *in, File *out, uint64_t len, int &headerSize) -> in
   return static_cast<int>(mainRet == Z_STREAM_END);
 }
 
-static auto decodeZlib(File *in, uint64_t size, File *out, FMode mode, uint64_t &diffFound) -> int {
-  const int block = 1U << 16U;
+static int decodeZlib(File *in, uint64_t size, File *out, FMode mode, uint64_t &diffFound) {
+  const int block = 1u << 16;
   const int limit = 128;
   uint8_t zin[block];
   uint8_t zOut[block];
@@ -317,7 +317,7 @@ static auto decodeZlib(File *in, uint64_t size, File *out, FMode mode, uint64_t 
         out->blockWrite(&zOut[0], have);
       } else if( mode == FMode::FCOMPARE ) {
         for( int j = 0; j < have; j++ ) {
-          if( zOut[j] != out->getchar() && (diffFound == 0u)) {
+          if( zOut[j] != out->getchar() && (diffFound == 0)) {
             diffFound = recPos + j + 1;
           }
         }
@@ -330,7 +330,7 @@ static auto decodeZlib(File *in, uint64_t size, File *out, FMode mode, uint64_t 
     if( mode == FMode::FDECOMPRESS ) {
       out->putChar(diffByte[diffIndex]);
     } else if( mode == FMode::FCOMPARE ) {
-      if( diffByte[diffIndex] != out->getchar() && (diffFound == 0u)) {
+      if( diffByte[diffIndex] != out->getchar() && (diffFound == 0)) {
         diffFound = recPos + 1;
       }
     }

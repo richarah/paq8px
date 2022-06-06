@@ -13,7 +13,7 @@
 #if (defined(__GNUC__) || defined(__clang__)) && (!defined(__ARM_FEATURE_SIMD32) && !defined(__ARM_NEON))
 __attribute__((target("avx2")))
 #endif
-static auto dotProductSimdAvx2(const short *const t, const short *const w, int n) -> int {
+static int dotProductSimdAvx2(const short *const t, const short *const w, int n) {
 #if !defined(__i386__) && !defined(__x86_64__) && !defined(_M_X64)
   return 0;
 #else
@@ -73,7 +73,7 @@ static inline int32x4_t _mm_madd_epi16(int32x4_t a, int32x4_t b) {
 }
 #endif
 
-static auto dotProductSimdNeon(const short *const t, const short *const w, int n) -> int {
+static int dotProductSimdNeon(const short *const t, const short *const w, int n) {
 #if (!defined(__ARM_FEATURE_SIMD32) && !defined(__ARM_NEON))
   return 0;
 #else
@@ -112,7 +112,7 @@ static void trainSimdNeon(const short *const t, short *const w, int n, const int
 #if (defined(__GNUC__) || defined(__clang__)) && (!defined(__ARM_FEATURE_SIMD32) && !defined(__ARM_NEON))
 __attribute__((target("sse2")))
 #endif
-static auto dotProductSimdSse2(const short *const t, const short *const w, int n) -> int {
+static int dotProductSimdSse2(const short *const t, const short *const w, int n) {
 #if !defined(__i386__) && !defined(__x86_64__) && !defined(_M_X64)
   return 0;
 #else
@@ -151,17 +151,17 @@ static void trainSimdSse2(const short *const t, short *const w, int n, const int
 #endif
 }
 
-static auto dotProductSimdNone(const short *const t, const short *const w, int n) -> int {
+static int dotProductSimdNone(const short *const t, const short *const w, int n) {
   int sum = 0;
   while((n -= 2) >= 0 ) {
-    sum += (t[n] * w[n] + t[n + 1] * w[n + 1]) >> 8U;
+    sum += (t[n] * w[n] + t[n + 1] * w[n + 1]) >> 8;
   }
   return sum;
 }
 
 static void trainSimdNone(const short *const t, short *const w, int n, const int err) {
   while((n -= 1) >= 0 ) {
-    int wt = w[n] + ((((t[n] * err * 2) >> 16U) + 1) >> 1U);
+    int wt = w[n] + ((((t[n] * err * 2) >> 16) + 1) >> 1);
     if( wt < -32768 ) {
       wt = -32768;
     } else if( wt > 32767 ) {

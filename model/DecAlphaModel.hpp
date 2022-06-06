@@ -41,8 +41,8 @@ public:
     std::uint8_t Opcode, Bit, Ra, Rb, Rc, Literal, relOpcode, Format;
   };
 private:
-  static constexpr std::uint32_t nMaps = 11u;
-  static constexpr std::uint32_t maps_mask[nMaps-1] = { 0x6FC3FFu, 0x6F0387u, 0x4E0383u, 0x440183u, 0x181u, 0x181u, 0x81u, 0x1u, 0x1u, 0x1u };
+  static constexpr std::uint32_t nMaps = 11;
+  static constexpr std::uint32_t maps_mask[nMaps-1] = { 0x6FC3FF, 0x6F0387, 0x4E0383, 0x440183, 0x181, 0x181, 0x81, 0x1, 0x1, 0x1 };
   Shared* const shared;
   RingBuffer<Instruction> cache;
   State state;
@@ -55,7 +55,7 @@ private:
   constexpr std::int32_t map_state(std::uint32_t const map, State const state) {
     assert(map < 10);
     std::int32_t r = -1;
-    if (((maps_mask[map] >> state) & 1u) != 0u)     
+    if (((maps_mask[map] >> state) & 1) != 0)     
       for (std::int32_t i = state; i >= 0; r += (maps_mask[map] >> i) & 1, i--);
     return r;
   }
@@ -64,7 +64,7 @@ public:
   static constexpr int MIXERCONTEXTS = State::Count * 26 + State::Count * 64 + 2048 + 4096 + 4096 + 8192 + 8192 + 8192 + 4096 + 4096 + 4096;
   static constexpr int MIXERCONTEXTSETS = 11;
   DECAlphaModel(Shared* const sh) : 
-    shared(sh), cache(8), op{0}, state(OpCode), count(0u), lastRc(0xFF), last{0},
+    shared(sh), cache(8), op{0}, state(OpCode), count(0), lastRc(0xFF), last{0},
     maps0 {
       {sh, 1, 6, 256, 255}, // OpCode
       {sh, 1, 5, 256, 255}, // Bra_Ra
@@ -172,13 +172,13 @@ public:
   void mix(Mixer& m) {
     INJECT_SHARED_blockPos
     INJECT_SHARED_bpos
-    if ((blockPos == 0u) && (bpos == 0)) {
+    if ((blockPos == 0) && (bpos == 0)) {
       state = State::OpCode;
-      for (std::uint32_t i = 0u; i < nMaps - 1u; i++) {
-        if (((maps_mask[i] >> State::OpCode) & 1u) != 0u)
-          maps[i][map_state(i, State::OpCode)].setDirect(0u);
+      for (std::uint32_t i = 0; i < nMaps - 1; i++) {
+        if (((maps_mask[i] >> State::OpCode) & 1) != 0)
+          maps[i][map_state(i, State::OpCode)].setDirect(0);
       }
-      count = 0u;
+      count = 0;
       cache.fill(op = { 0 });
     }
     else {
@@ -187,31 +187,31 @@ public:
       switch (state) {
         case State::OpCode: {
           op.Opcode += op.Opcode + y;
-          if (count == 6u) {
+          if (count == 6) {
             op.relOpcode = DECAlpha::rel_op[op.Opcode];
             switch (op.Format = DECAlpha::formats[op.Opcode]) {
               case DECAlpha::Bra: {
                 state = State::Bra_Ra;
-                maps1[map_state(0u, State::Bra_Ra)].setDirect(cache(1).Rc);
-                maps2[map_state(1u, State::Bra_Ra)].setDirect((cache(1).Ra << 5u) | cache(1).Rc);
-                maps3[map_state(2u, State::Bra_Ra)].setDirect((cache(1).Opcode << 10u) | (cache(1).Ra << 5u) | cache(1).Rc);
-                maps4[map_state(3u, State::Bra_Ra)].set(hash(cache(1).Ra, cache(2).Ra, cache(3).Ra, cache(4).Ra));
+                maps1[map_state(0, State::Bra_Ra)].setDirect(cache(1).Rc);
+                maps2[map_state(1, State::Bra_Ra)].setDirect((cache(1).Ra << 5) | cache(1).Rc);
+                maps3[map_state(2, State::Bra_Ra)].setDirect((cache(1).Opcode << 10) | (cache(1).Ra << 5) | cache(1).Rc);
+                maps4[map_state(3, State::Bra_Ra)].set(hash(cache(1).Ra, cache(2).Ra, cache(3).Ra, cache(4).Ra));
                 break;
               }
               case DECAlpha::F_P: {
                 state = State::F_P_Function;
-                maps1[map_state(0u, State::F_P_Function)].setDirect(op.Opcode);
+                maps1[map_state(0, State::F_P_Function)].setDirect(op.Opcode);
                 break;
               }
               case DECAlpha::Mem: {
                 state = State::Mem_Ra;
-                maps1[map_state(0u, State::Mem_Ra)].setDirect(cache(1).Ra);
-                maps2[map_state(1u, State::Mem_Ra)].setDirect((cache(1).Ra << 5u) | cache(2).Ra);
-                maps3[map_state(2u, State::Mem_Ra)].setDirect((cache(1).Ra << 10u) | (cache(2).Ra << 5u) | cache(3).Ra);
-                maps4[map_state(3u, State::Mem_Ra)].set(hash(cache(1).Ra, cache(2).Ra, cache(3).Ra, cache(4).Ra));
-                maps5[map_state(4u, State::Mem_Ra)].set(hash(op.Opcode, cache(1).Opcode, cache(1).Ra, cache(2).Opcode, cache(2).Ra));
-                maps6[map_state(5u, State::Mem_Ra)].set(hash(op.Opcode, cache(1).Ra, cache(2).Ra, cache(2).Rb, cache(3).Ra, cache(4).Ra));
-                maps7[map_state(6u, State::Mem_Ra)].set(hash(op.Opcode, cache(1).Ra, cache(1).Rb, cache(2).Ra, cache(3).Ra, cache(4).Ra, cache(5).Ra));
+                maps1[map_state(0, State::Mem_Ra)].setDirect(cache(1).Ra);
+                maps2[map_state(1, State::Mem_Ra)].setDirect((cache(1).Ra << 5) | cache(2).Ra);
+                maps3[map_state(2, State::Mem_Ra)].setDirect((cache(1).Ra << 10) | (cache(2).Ra << 5) | cache(3).Ra);
+                maps4[map_state(3, State::Mem_Ra)].set(hash(cache(1).Ra, cache(2).Ra, cache(3).Ra, cache(4).Ra));
+                maps5[map_state(4, State::Mem_Ra)].set(hash(op.Opcode, cache(1).Opcode, cache(1).Ra, cache(2).Opcode, cache(2).Ra));
+                maps6[map_state(5, State::Mem_Ra)].set(hash(op.Opcode, cache(1).Ra, cache(2).Ra, cache(2).Rb, cache(3).Ra, cache(4).Ra));
+                maps7[map_state(6, State::Mem_Ra)].set(hash(op.Opcode, cache(1).Ra, cache(1).Rb, cache(2).Ra, cache(3).Ra, cache(4).Ra, cache(5).Ra));
                 break;
               }
               case DECAlpha::Mfc: {
@@ -224,8 +224,8 @@ public:
               }
               case DECAlpha::Opr: {
                 state = State::Opr_Bit;
-                maps1[map_state(0u, State::Opr_Bit)].setDirect(op.relOpcode);
-                maps2[map_state(1u, State::Opr_Bit)].set(hash(op.Opcode, cache(1).Opcode, cache(1).Function));
+                maps1[map_state(0, State::Opr_Bit)].setDirect(op.relOpcode);
+                maps2[map_state(1, State::Opr_Bit)].set(hash(op.Opcode, cache(1).Opcode, cache(1).Function));
                 break;
               }
               case DECAlpha::Pcd: {
@@ -237,172 +237,172 @@ public:
                 break;
               }
             }
-            count = 0u;
+            count = 0;
           }
           break;
         }
         case State::Bra_Ra: {
           op.Ra += op.Ra + y;
-          if (count == 5u) {
+          if (count == 5) {
             state = State::Bra_Displacement;
-            count = 0u;
-            maps1[map_state(0u, State::Bra_Displacement)].setDirect(cache(1).Opcode);
-            maps2[map_state(1u, State::Bra_Displacement)].setDirect((cache(1).Opcode << 6u) | cache(2).Opcode);
+            count = 0;
+            maps1[map_state(0, State::Bra_Displacement)].setDirect(cache(1).Opcode);
+            maps2[map_state(1, State::Bra_Displacement)].setDirect((cache(1).Opcode << 6) | cache(2).Opcode);
           }
           break;
         }
         case State::Bra_Displacement: {
           op.Displacement += op.Displacement + y;
-          if ((count % 7u) == 0) {
-            if (count < 21u) {
-              maps0[state].setDirect(count / 7u);
-              maps1[map_state(0u, State::Bra_Displacement)].set(hash(count, cache(1).Opcode, op.Displacement) + 0x40u);
-              maps2[map_state(1u, State::Bra_Displacement)].set(hash(count, cache(1).Opcode, cache(2).Opcode, op.Displacement) + 0x1000u);
+          if ((count % 7) == 0) {
+            if (count < 21) {
+              maps0[state].setDirect(count / 7);
+              maps1[map_state(0, State::Bra_Displacement)].set(hash(count, cache(1).Opcode, op.Displacement) + 0x40);
+              maps2[map_state(1, State::Bra_Displacement)].set(hash(count, cache(1).Opcode, cache(2).Opcode, op.Displacement) + 0x1000);
             }
             else {
               state = State::OpCode;
-              count = 0u;
+              count = 0;
             }
           }
           break;
         }
         case State::F_P_Function: {
           op.Function = op.Function + y;
-          if (count == 11u) {
+          if (count == 11) {
             state = State::F_P_Ra;
-            count = 0u;
-            maps1[map_state(0u, State::F_P_Ra)].setDirect(cache(1).Rc);
+            count = 0;
+            maps1[map_state(0, State::F_P_Ra)].setDirect(cache(1).Rc);
           }
-          else if ((count % 3u) == 0u) {
-            maps0[state].setDirect(count / 3u);
-            maps1[map_state(0u, State::F_P_Function)].set(hash(count, op.Opcode, op.Function) + 0x40u);
+          else if ((count % 3) == 0) {
+            maps0[state].setDirect(count / 3);
+            maps1[map_state(0, State::F_P_Function)].set(hash(count, op.Opcode, op.Function) + 0x40);
           }
           break;
         }
         case State::F_P_Ra: {
           op.Ra += op.Ra + y;
-          if (count == 5u) {
+          if (count == 5) {
             state = State::F_P_Rb;
-            count = 0u;
-            maps1[map_state(0u, State::F_P_Rb)].setDirect((op.Ra << 5u) | cache(1).Rc);
+            count = 0;
+            maps1[map_state(0, State::F_P_Rb)].setDirect((op.Ra << 5) | cache(1).Rc);
           }
           break;
         }
         case State::F_P_Rb: {
           op.Rb += op.Rb + y;
-          if (count == 5u) {
+          if (count == 5) {
             state = State::F_P_Rc;
-            count = 0u;
-            maps1[map_state(0u, State::F_P_Rc)].setDirect((op.Ra << 5u) | op.Rb);
+            count = 0;
+            maps1[map_state(0, State::F_P_Rc)].setDirect((op.Ra << 5) | op.Rb);
           }
           break;
         }
         case State::F_P_Rc: {
           op.Rc += op.Rc + y;
-          if (count == 5u) {
+          if (count == 5) {
             lastRc = op.Rc;
             state = State::OpCode;
-            count = 0u;
+            count = 0;
           }
           break;
         }
         case State::Mem_Ra: {
           op.Ra += op.Ra + y;
-          if (count == 5u) {
+          if (count == 5) {
             state = State::Mem_Rb;
-            count = 0u;
-            maps1[map_state(0u, State::Mem_Rb)].setDirect(op.relOpcode);
-            maps2[map_state(1u, State::Mem_Rb)].setDirect((op.relOpcode << 5u) | cache(1).Rb);           
-            maps3[map_state(2u, State::Mem_Rb)].setDirect((op.relOpcode << 10u) | (cache(1).Rb << 5u) | cache(2).Rb);           
-            maps4[map_state(3u, State::Mem_Rb)].set(hash(op.Opcode, cache(1).Rb, cache(2).Rb, cache(3).Rb));
-            maps5[map_state(4u, State::Mem_Rb)].set(hash(op.Opcode, cache(1).Rb, cache(2).Ra, cache(3).Ra));
-            maps6[map_state(5u, State::Mem_Rb)].set(hash(op.Opcode, cache(1).Opcode, cache(1).Ra, cache(1).Rb));
+            count = 0;
+            maps1[map_state(0, State::Mem_Rb)].setDirect(op.relOpcode);
+            maps2[map_state(1, State::Mem_Rb)].setDirect((op.relOpcode << 5) | cache(1).Rb);           
+            maps3[map_state(2, State::Mem_Rb)].setDirect((op.relOpcode << 10) | (cache(1).Rb << 5) | cache(2).Rb);           
+            maps4[map_state(3, State::Mem_Rb)].set(hash(op.Opcode, cache(1).Rb, cache(2).Rb, cache(3).Rb));
+            maps5[map_state(4, State::Mem_Rb)].set(hash(op.Opcode, cache(1).Rb, cache(2).Ra, cache(3).Ra));
+            maps6[map_state(5, State::Mem_Rb)].set(hash(op.Opcode, cache(1).Opcode, cache(1).Ra, cache(1).Rb));
           }
           break;
         }
         case State::Mem_Rb: {
           op.Rb += op.Rb + y;
-          if (count == 5u) {
+          if (count == 5) {
             state = State::Mem_Displacement;
-            count = 0u;
-            maps1[map_state(0u, State::Mem_Displacement)].setDirect(op.Opcode);
-            maps2[map_state(1u, State::Mem_Displacement)].set(hash(op.Opcode, op.Rb));
-            maps3[map_state(2u, State::Mem_Displacement)].set(hash(op.Opcode, op.Rb, cache(1).Literal));
+            count = 0;
+            maps1[map_state(0, State::Mem_Displacement)].setDirect(op.Opcode);
+            maps2[map_state(1, State::Mem_Displacement)].set(hash(op.Opcode, op.Rb));
+            maps3[map_state(2, State::Mem_Displacement)].set(hash(op.Opcode, op.Rb, cache(1).Literal));
           }
           break;
         }
         case State::Mem_Displacement: {
           op.Displacement += op.Displacement + y;
-          if ((count & 3u) == 0) {
-            if (count < 16u) {
-              maps0[state].setDirect(count / 4u);
-              maps1[map_state(0u, State::Mem_Displacement)].set(hash(count, op.Opcode, op.Displacement));
-              maps2[map_state(1u, State::Mem_Displacement)].set(hash(count, op.Opcode, op.Rb, op.Displacement));
-              maps3[map_state(2u, State::Mem_Displacement)].set(hash(count, op.Opcode, op.Rb, cache(1).Literal, op.Displacement));
+          if ((count & 3) == 0) {
+            if (count < 16) {
+              maps0[state].setDirect(count / 4);
+              maps1[map_state(0, State::Mem_Displacement)].set(hash(count, op.Opcode, op.Displacement));
+              maps2[map_state(1, State::Mem_Displacement)].set(hash(count, op.Opcode, op.Rb, op.Displacement));
+              maps3[map_state(2, State::Mem_Displacement)].set(hash(count, op.Opcode, op.Rb, cache(1).Literal, op.Displacement));
             }
             else {
               state = State::OpCode;
-              count = 0u;
+              count = 0;
             }
           }
           break;
         }
         case State::Mfc_Function: {
           op.Function += op.Function + y;
-          if ((count & 3u) == 0) {
-            if (count < 16u)
-              maps0[state].setDirect(count / 4u);
+          if ((count & 3) == 0) {
+            if (count < 16)
+              maps0[state].setDirect(count / 4);
             else {
               state = State::Mfc_Ra; // usually R31
-              count = 0u;
+              count = 0;
             }            
           }
           break;
         }
         case State::Mfc_Ra: {
           op.Ra += op.Ra + y;
-          if (count == 5u) {
+          if (count == 5) {
             state = State::Mfc_Rb; // usually R31
-            count = 0u;
+            count = 0;
           }
           break;
         }
         case State::Mfc_Rb: {
           op.Rb += op.Rb + y;
-          if (count == 5u) {
+          if (count == 5) {
             state = State::OpCode;
-            count = 0u;
+            count = 0;
           }
           break;
         }
         case State::Mbr_Ra: {
           op.Ra += op.Ra + y;
-          if (count == 5u) {
+          if (count == 5) {
             state = State::Mbr_Rb;
-            count = 0u;
-            maps1[map_state(0u, State::Mbr_Rb)].setDirect(op.relOpcode);
+            count = 0;
+            maps1[map_state(0, State::Mbr_Rb)].setDirect(op.relOpcode);
           }
           break;
         }
         case State::Mbr_Rb: {
           op.Rb += op.Rb + y;
-          if (count == 5u) {
+          if (count == 5) {
             state = State::Mbr_Displacement;
-            count = 0u;
-            maps1[map_state(0u, State::Mbr_Displacement)].setDirect(op.relOpcode);
+            count = 0;
+            maps1[map_state(0, State::Mbr_Displacement)].setDirect(op.relOpcode);
           }
           break;
         }
         case State::Mbr_Displacement: {
           op.Displacement += op.Displacement + y;
-          if ((count & 3u) == 0) {
-            if (count < 16u) {
-              maps0[state].setDirect(count / 4u);
-              maps1[map_state(0u, State::Mbr_Displacement)].setDirect(((count >> 1u) & 0x6u) | op.relOpcode);
+          if ((count & 3) == 0) {
+            if (count < 16) {
+              maps0[state].setDirect(count / 4);
+              maps1[map_state(0, State::Mbr_Displacement)].setDirect(((count >> 1) & 0x6) | op.relOpcode);
             }
             else {
               state = State::OpCode;
-              count = 0u;
+              count = 0;
             }
           }
           break;
@@ -410,109 +410,109 @@ public:
         case State::Opr_Bit: {
           op.Bit = y;
           state = State::Opr_Function;
-          count = 0u;
-          maps1[map_state(0u, State::Opr_Function)].setDirect((op.relOpcode << 1u) | op.Bit);
-          maps2[map_state(1u, State::Opr_Function)].set(hash(op.Opcode, op.Bit, cache(1).Opcode, cache(1).Function));
-          maps3[map_state(2u, State::Opr_Function)].set(hash(op.Opcode, op.Bit, cache(1).Opcode, cache(2).Opcode, cache(3).Opcode));
+          count = 0;
+          maps1[map_state(0, State::Opr_Function)].setDirect((op.relOpcode << 1) | op.Bit);
+          maps2[map_state(1, State::Opr_Function)].set(hash(op.Opcode, op.Bit, cache(1).Opcode, cache(1).Function));
+          maps3[map_state(2, State::Opr_Function)].set(hash(op.Opcode, op.Bit, cache(1).Opcode, cache(2).Opcode, cache(3).Opcode));
           break;
         }
         case State::Opr_Function: {
           op.Function += op.Function + y;
-          if (count == 7u) {
+          if (count == 7) {
             state = State::Opr_Ra;
-            count = 0u;
-            maps1[map_state(0u, State::Opr_Ra)].setDirect(cache(1).Ra);
-            maps2[map_state(1u, State::Opr_Ra)].setDirect(cache(1).Rc);
-            maps3[map_state(2u, State::Opr_Ra)].setDirect((cache(1).Ra << 5u) | cache(2).Ra);
-            maps4[map_state(3u, State::Opr_Ra)].set(hash(op.Bit, cache(1).Ra, cache(2).Ra, cache(3).Ra, cache(4).Ra));
+            count = 0;
+            maps1[map_state(0, State::Opr_Ra)].setDirect(cache(1).Ra);
+            maps2[map_state(1, State::Opr_Ra)].setDirect(cache(1).Rc);
+            maps3[map_state(2, State::Opr_Ra)].setDirect((cache(1).Ra << 5) | cache(2).Ra);
+            maps4[map_state(3, State::Opr_Ra)].set(hash(op.Bit, cache(1).Ra, cache(2).Ra, cache(3).Ra, cache(4).Ra));
           }
           break;
         }
         case State::Opr_Ra: {
           op.Ra += op.Ra + y;
-          if (count == 5u) {
-            count = 0u;
-            if (op.Bit == 0u) {
+          if (count == 5) {
+            count = 0;
+            if (op.Bit == 0) {
               state = State::Opr_Rb;
-              maps1[map_state(0u, State::Opr_Rb)].setDirect((cache(1).Ra << 5u) | cache(1).Rb);
-              maps2[map_state(1u, State::Opr_Rb)].setDirect((cache(1).Rb << 5u) | cache(2).Ra);
-              maps3[map_state(2u, State::Opr_Rb)].setDirect((op.Ra << 10u) | (cache(1).Ra << 5u) | cache(2).Ra);
+              maps1[map_state(0, State::Opr_Rb)].setDirect((cache(1).Ra << 5) | cache(1).Rb);
+              maps2[map_state(1, State::Opr_Rb)].setDirect((cache(1).Rb << 5) | cache(2).Ra);
+              maps3[map_state(2, State::Opr_Rb)].setDirect((op.Ra << 10) | (cache(1).Ra << 5) | cache(2).Ra);
             }
             else {
               state = State::Opr_Literal;
-              maps1[map_state(0u, State::Opr_Literal)].setDirect((op.relOpcode << 7u) | op.Function);
-              maps2[map_state(1u, State::Opr_Literal)].set(hash(op.Opcode, op.Function, cache(1).Opcode, cache(1).Function));
+              maps1[map_state(0, State::Opr_Literal)].setDirect((op.relOpcode << 7) | op.Function);
+              maps2[map_state(1, State::Opr_Literal)].set(hash(op.Opcode, op.Function, cache(1).Opcode, cache(1).Function));
             }
           }
           break;
         }
         case State::Opr_Rb: {
           op.Rb += op.Rb + y;
-          if (count == 5u) {
+          if (count == 5) {
             state = State::Opr_Unused;
-            count = 0u;
+            count = 0;
           }
           break;
         }
         case State::Opr_Unused: {
-          if (count == 3u) {
+          if (count == 3) {
             state = State::Opr_Rc;
-            count = 0u;
-            maps1[map_state(0u, State::Opr_Rc)].setDirect((op.Ra << 1u) | op.Bit);
-            maps2[map_state(1u, State::Opr_Rc)].setDirect((op.Ra << 10u) | (op.Rb << 5u) | cache(1).Ra);
-            maps3[map_state(2u, State::Opr_Rc)].setDirect((cache(1).Ra << 5u) | cache(2).Ra);
-            maps4[map_state(3u, State::Opr_Rc)].setDirect((cache(1).Ra << 10u) | (cache(2).Ra << 5u) | cache(3).Ra);
+            count = 0;
+            maps1[map_state(0, State::Opr_Rc)].setDirect((op.Ra << 1) | op.Bit);
+            maps2[map_state(1, State::Opr_Rc)].setDirect((op.Ra << 10) | (op.Rb << 5) | cache(1).Ra);
+            maps3[map_state(2, State::Opr_Rc)].setDirect((cache(1).Ra << 5) | cache(2).Ra);
+            maps4[map_state(3, State::Opr_Rc)].setDirect((cache(1).Ra << 10) | (cache(2).Ra << 5) | cache(3).Ra);
           }
           break;
         }
         case State::Opr_Literal: {
           op.Literal += op.Literal + y;
-          if (count == 8u) {
+          if (count == 8) {
             state = State::Opr_Rc;
-            count = 0u;
-            maps1[map_state(0u, State::Opr_Rc)].setDirect((op.Ra << 1u) | op.Bit);
-            maps2[map_state(1u, State::Opr_Rc)].setDirect(0x8000u | (op.Ra << 10u) | (cache(1).Ra << 5u) | cache(1).Rc);
-            maps3[map_state(2u, State::Opr_Rc)].setDirect(0x400u | (cache(1).Ra << 5u) | cache(2).Ra);
-            maps4[map_state(3u, State::Opr_Rc)].setDirect(0x8000u | (cache(1).Ra << 10u) | (cache(2).Ra << 5u) | cache(3).Ra);
+            count = 0;
+            maps1[map_state(0, State::Opr_Rc)].setDirect((op.Ra << 1) | op.Bit);
+            maps2[map_state(1, State::Opr_Rc)].setDirect(0x8000 | (op.Ra << 10) | (cache(1).Ra << 5) | cache(1).Rc);
+            maps3[map_state(2, State::Opr_Rc)].setDirect(0x0400 | (cache(1).Ra << 5) | cache(2).Ra);
+            maps4[map_state(3, State::Opr_Rc)].setDirect(0x8000 | (cache(1).Ra << 10) | (cache(2).Ra << 5) | cache(3).Ra);
           }
           break;
         }
         case State::Opr_Rc: {
           op.Rc += op.Rc + y;
-          if (count == 5u) {
+          if (count == 5) {
             lastRc = op.Rc;
             state = State::OpCode;
-            count = 0u;
+            count = 0;
           }
           break;
         }
         case State::Pcd_Function:
         case State::Nop_Skip: {
           op.Function += op.Function + y;
-          if (count == 26u) {
+          if (count == 26) {
             state = State::OpCode;
-            count = 0u;
+            count = 0;
           }
-          else if ((count % 3) == 0u)
-            maps0[state].setDirect(count / 3u);
+          else if ((count % 3) == 0)
+            maps0[state].setDirect(count / 3);
           break;
         }
       }
     }
-    if (count == 0u) {
-      maps0[state].setDirect(0u);
+    if (count == 0) {
+      maps0[state].setDirect(0);
       if (state == State::OpCode) {
         std::uint64_t ctx = hash(op.Opcode, op.Function);
-        maps1[map_state(0u, State::OpCode)].set(ctx);
-        maps2[map_state(1u, State::OpCode)].set(hash(ctx, cache(1).Opcode, cache(1).Function));
-        maps3[map_state(2u, State::OpCode)].set(ctx = hash(ctx, cache(1).Opcode, cache(2).Opcode));
-        maps4[map_state(3u, State::OpCode)].set(ctx = hash(ctx, cache(3).Opcode));
-        maps5[map_state(4u, State::OpCode)].set(hash(ctx, cache(4).Opcode));
-        maps6[map_state(5u, State::OpCode)].set(ctx = hash(op.Opcode, cache(1).Opcode, cache(2).Opcode, cache(3).Opcode, cache(4).Opcode, cache(5).Opcode));
-        maps7[map_state(6u, State::OpCode)].set(ctx = hash(ctx, cache(6).Opcode));
-        maps8[map_state(7u, State::OpCode)].set(ctx = hash(ctx, cache(7).Opcode));
-        maps9[map_state(8u, State::OpCode)].set(hash(op.Opcode, op.Ra, cache(1).Opcode, cache(1).Ra, cache(2).Opcode, cache(2).Ra));
-        maps10[map_state(9u, State::OpCode)].set(hash(op.Opcode, op.Rb, lastRc, cache(2).Opcode, cache(2).Rb, cache(3).Opcode, cache(3).Ra));
+        maps1[map_state(0, State::OpCode)].set(ctx);
+        maps2[map_state(1, State::OpCode)].set(hash(ctx, cache(1).Opcode, cache(1).Function));
+        maps3[map_state(2, State::OpCode)].set(ctx = hash(ctx, cache(1).Opcode, cache(2).Opcode));
+        maps4[map_state(3, State::OpCode)].set(ctx = hash(ctx, cache(3).Opcode));
+        maps5[map_state(4, State::OpCode)].set(hash(ctx, cache(4).Opcode));
+        maps6[map_state(5, State::OpCode)].set(ctx = hash(op.Opcode, cache(1).Opcode, cache(2).Opcode, cache(3).Opcode, cache(4).Opcode, cache(5).Opcode));
+        maps7[map_state(6, State::OpCode)].set(ctx = hash(ctx, cache(6).Opcode));
+        maps8[map_state(7, State::OpCode)].set(ctx = hash(ctx, cache(7).Opcode));
+        maps9[map_state(8, State::OpCode)].set(hash(op.Opcode, op.Ra, cache(1).Opcode, cache(1).Ra, cache(2).Opcode, cache(2).Ra));
+        maps10[map_state(9, State::OpCode)].set(hash(op.Opcode, op.Rb, lastRc, cache(2).Opcode, cache(2).Rb, cache(3).Opcode, cache(3).Ra));
         last[op.Format] = op;
         cache.add(op);
         op = { 0 };
@@ -520,8 +520,8 @@ public:
     }    
    
     maps0[state].mix(m);
-    for (std::uint32_t i = 0u; i < nMaps - 1u; i++) {
-      if (((maps_mask[i] >> state) & 1u) != 0u)
+    for (std::uint32_t i = 0; i < nMaps - 1; i++) {
+      if (((maps_mask[i] >> state) & 1) != 0)
         maps[i][map_state(i, state)].mix(m);
       else
         for (int j = 0; j < IndirectMap::MIXERINPUTS; j++)
@@ -530,17 +530,17 @@ public:
 
     std::uint8_t const opcode = (state != State::OpCode) ? op.Opcode : cache(1).Opcode;
 
-    m.set(static_cast<std::uint32_t>(state) * 26u + count, State::Count * 26u);
-    m.set((state << 6u) | opcode, State::Count * 64u);
-    m.set(finalize64(hash(state, count, opcode), 11), 2048u);
-    m.set(finalize64(hash(state, count, op.Opcode, cache(1).Opcode), 12), 4096u);
-    m.set(finalize64(hash(state, count, cache(1).Opcode, cache(2).Opcode), 12), 4096u);
-    m.set(finalize64(hash(state, count, cache(1).Opcode, cache(2).Opcode, cache(3).Opcode), 13), 8192u);
-    m.set(finalize64(hash(state, count, op.Opcode, cache(1).Opcode, cache(2).Opcode, cache(3).Opcode), 13), 8192u);
-    m.set(finalize64(hash(state, opcode, cache(1).Format, cache(2).Format, cache(3).Format, cache(4).Format), 13), 8192u);
-    m.set(finalize64(hash(state, count, op.Opcode, op.Bit, op.Ra), 12), 4096u);
-    m.set(finalize64(hash(state, op.Ra, op.Rb, op.Bit), 12), 4096u);
-    m.set(finalize64(hash(state, op.Ra, last[DECAlpha::Mem].Ra, cache(1).Format), 12), 4096u);
+    m.set(static_cast<std::uint32_t>(state) * 26 + count, State::Count * 26);
+    m.set((state << 6) | opcode, State::Count * 64);
+    m.set(finalize64(hash(state, count, opcode), 11), 2048);
+    m.set(finalize64(hash(state, count, op.Opcode, cache(1).Opcode), 12), 4096);
+    m.set(finalize64(hash(state, count, cache(1).Opcode, cache(2).Opcode), 12), 4096);
+    m.set(finalize64(hash(state, count, cache(1).Opcode, cache(2).Opcode, cache(3).Opcode), 13), 8192);
+    m.set(finalize64(hash(state, count, op.Opcode, cache(1).Opcode, cache(2).Opcode, cache(3).Opcode), 13), 8192);
+    m.set(finalize64(hash(state, opcode, cache(1).Format, cache(2).Format, cache(3).Format, cache(4).Format), 13), 8192);
+    m.set(finalize64(hash(state, count, op.Opcode, op.Bit, op.Ra), 12), 4096);
+    m.set(finalize64(hash(state, op.Ra, op.Rb, op.Bit), 12), 4096);
+    m.set(finalize64(hash(state, op.Ra, last[DECAlpha::Mem].Ra, cache(1).Format), 12), 4096);
 
     shared->State.DEC.state = state;
     shared->State.DEC.bcount = count;

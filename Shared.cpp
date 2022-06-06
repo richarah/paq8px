@@ -37,16 +37,16 @@ void Shared::init(uint8_t level, uint32_t bufMem) {
 void Shared::update(int y, bool isMissed) {
   State.y = y;
   State.c0 += State.c0 + y;
-  State.bitPosition = (State.bitPosition + 1U) & 7U;
+  State.bitPosition = (State.bitPosition + 1) & 7;
   if(State.bitPosition == 0 ) {
     State.c1 = State.c0;
     buf.add(State.c1);
-    State.c8 = (State.c8 << 8U) | (State.c4 >> 24U);
-    State.c4 = (State.c4 << 8U) | State.c0;
+    State.c8 = (State.c8 << 8) | (State.c4 >> 24);
+    State.c4 = (State.c4 << 8) | State.c0;
     State.c0 = 1;
   }
   static constexpr uint8_t asciiGroup[254] = { 0, 10, 0, 1, 10, 10, 0, 4, 2, 3, 10, 10, 10, 10, 0, 0, 5, 4, 2, 2, 3, 3, 10, 10, 10, 10, 10, 10, 10, 10, 0, 0, 0, 0, 5, 5, 9, 4, 2, 2, 2, 2, 3, 3, 3, 3, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 0, 0, 0, 0, 0, 0, 0, 0, 5, 8, 8, 5, 9, 9, 6, 5, 2, 2, 2, 2, 2, 2, 2, 8, 3, 3, 3, 3, 3, 3, 3, 8, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 7, 8, 8, 8, 8, 8, 5, 5, 9, 9, 9, 9, 9, 7, 8, 5, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 8, 8, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 8, 8, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10 };
-  State.Text.characterGroup = (State.bitPosition > 0) ? asciiGroup[(1U << State.bitPosition) - 2 + (State.c0 & ((1U << State.bitPosition) - 1))] : 0;
+  State.Text.characterGroup = (State.bitPosition > 0) ? asciiGroup[(1u << State.bitPosition) - 2 + (State.c0 & ((1 << State.bitPosition) - 1))] : 0;
   
   State.misses = (State.misses << 1) | static_cast<uint32_t>(isMissed);
 
@@ -65,7 +65,7 @@ UpdateBroadcaster *Shared::GetUpdateBroadcaster() const {
   return updater;
 }
 
-auto Shared::isOutputRedirected() -> bool {
+bool Shared::isOutputRedirected() {
 #ifdef WINDOWS
   DWORD FileType = GetFileType(GetStdHandle(STD_OUTPUT_HANDLE));
   return (FileType == FILE_TYPE_PIPE) || (FileType == FILE_TYPE_DISK);

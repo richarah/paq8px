@@ -17,8 +17,8 @@ private:
   static constexpr int maxLastLetter = 16;
   Shared * const shared;
   ContextMap2 &cm;
-  Array<uint32_t> wordPositions {1U << wPosBits}; /**< last positions of whole words/numbers */
-  Array<uint16_t> checksums {1U << wPosBits}; /**< checksums for whole words/numbers */
+  Array<uint32_t> wordPositions {1 << wPosBits}; /**< last positions of whole words/numbers */
+  Array<uint16_t> checksums {1 << wPosBits}; /**< checksums for whole words/numbers */
   uint32_t c4 {}; /**< last 4 processed characters */
   uint8_t c {}; /**< last char */
   uint8_t pC {}; /**< previous char */

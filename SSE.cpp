@@ -65,13 +65,13 @@ uint32_t SSE::p(const uint32_t pr_orig) {
   INJECT_SHARED_blockPos
   INJECT_SHARED_blockType
 
-  assert(shared->State.NormalModel.order <= 7u);
-  assert(shared->State.WordModel.order <= 31u);
-  assert(shared->State.Text.order <= 15u);
+  assert(shared->State.NormalModel.order <= 7);
+  assert(shared->State.WordModel.order <= 31);
+  assert(shared->State.Text.order <= 15);
 
-  assert(shared->State.x86_64.state <= 255u);
-  assert(shared->State.Audio <= 255u);
-  assert(shared->State.JPEG.state <= 4095u + 1u);
+  assert(shared->State.x86_64.state <= 255);
+  assert(shared->State.Audio <= 255);
+  assert(shared->State.JPEG.state <= 4095 + 1);
 
   //uint32_t misses4 = shared->State.misses & 15u;
   uint32_t misses = shared->State.misses << ((8 - bpos) & 7); //byte-aligned
@@ -168,14 +168,14 @@ uint32_t SSE::p(const uint32_t pr_orig) {
       break;
     }
     case BlockType::DEC_ALPHA: {
-      uint32_t pr0 = DEC.APMs[0].p(pr_orig, (shared->State.DEC.state * 26u) + shared->State.DEC.bcount);
-      uint32_t pr = (DEC.APMPostA.p(pr_orig, 0) + DEC.APMPostB.p(pr0, 0)+1) >> 1;
+      uint32_t pr0 = DEC.APMs[0].p(pr_orig, (shared->State.DEC.state * 26) + shared->State.DEC.bcount);
+      uint32_t pr = (DEC.APMPostA.p(pr_orig, 0) + DEC.APMPostB.p(pr0, 0) + 1) >> 1;
       return pr;
       break;
     }
     case BlockType::EXE: {
       uint32_t pr0 = x86_64.APMs[0].p(pr_orig, shared->State.x86_64.state << 6 | misses3 << 3 | bpos);//14
-      uint32_t pr1 = x86_64.APMs[1].p(pr_orig, shared->State.x86_64.state<<8 | c0); // 16
+      uint32_t pr1 = x86_64.APMs[1].p(pr_orig, shared->State.x86_64.state << 8 | c0); // 16
       uint32_t pr2 = x86_64.APMs[2].p((pr0 + pr1 + 1) >> 1, finalize64(hash(c4 & 0xFF, bpos, misses3 & 1, shared->State.x86_64.state >> 3), 16)); //16
 
       uint32_t prA = (pr_orig + pr0 + pr1 + pr2 + 2) >> 2;

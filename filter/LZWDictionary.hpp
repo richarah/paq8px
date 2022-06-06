@@ -15,7 +15,7 @@ public:
   int index;
   LZWDictionary();
   void reset();
-  auto findEntry(int prefix, int suffix) -> int;
+  int findEntry(int prefix, int suffix);
   void addEntry(int prefix, int suffix, int offset = -1);
-  auto dumpEntry(File *f, int code) -> int;
+  int dumpEntry(File *f, int code);
 };

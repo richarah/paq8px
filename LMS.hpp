@@ -54,7 +54,7 @@ public:
     delete weights, delete eg, delete buffer;
   }
 
-  auto rsqrt(const float x) -> float {
+  float rsqrt(const float x) {
 #if defined(__ARM_FEATURE_SIMD32) || defined(__ARM_NEON)
     float r = vgetq_lane_f32(vrsqrteq_f32(vdupq_n_f32(x)), 0); //NEON
 #else
@@ -68,7 +68,7 @@ public:
     * @param sample
     * @return
     */
-  auto predict(const T sample) -> F {
+  F predict(const T sample) {
     memmove(&buffer[s + 1], &buffer[s], (d - 1) * sizeof(F));
     buffer[s] = sample;
     prediction = 0.;

@@ -15,10 +15,10 @@ private:
 
 public:
   uint16_t c0, c1;
-  [[nodiscard]] auto getState() const -> uint8_t;
+  uint8_t getState() const;
   void setState(uint8_t state);
-  [[nodiscard]] auto getNx0() const -> uint32_t;
+  uint32_t getNx0() const;
   void setNx0(uint32_t nx0);
-  [[nodiscard]] auto getNx1() const -> uint32_t;
+  uint32_t getNx1() const;
   void setNx1(uint32_t nx1);
 };

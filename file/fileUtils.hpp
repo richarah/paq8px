@@ -91,7 +91,7 @@ static constexpr int APPEND = 2;
  * @param mode
  * @return
  */
-static auto openFile(const char *filename, const int mode) -> FILE * {
+static FILE* openFile(const char *filename, const int mode) {
   FILE *file = nullptr;
 #ifdef WINDOWS
   file = _wfopen(WcharStr(filename).wchar_str, mode == READ ? L"rb" : mode == WRITE ? L"wb+" : L"a");
@@ -107,7 +107,7 @@ static auto openFile(const char *filename, const int mode) -> FILE * {
  * @param status
  * @return
  */
-static auto statPath(const char *path, struct STAT &status) -> bool {
+static bool statPath(const char *path, struct STAT &status) {
 #ifdef WINDOWS
   return _wstat64(WcharStr(path).wchar_str, &status);
 #else
@@ -125,7 +125,7 @@ static auto statPath(const char *path, struct STAT &status) -> bool {
  * @param path
  * @return
  */
-static auto examinePath(const char *path) -> int {
+static int examinePath(const char *path) {
   struct STAT status {};
   const bool success = static_cast<int>(statPath(path, status)) == 0;
   if( !success ) {
@@ -157,7 +157,7 @@ static auto examinePath(const char *path) -> int {
  * @param dir
  * @return
  */
-static auto makeDir(const char *dir) -> int {
+static int makeDir(const char *dir) {
   if( examinePath(dir) == 2 ) { //existing directory
     return 2; //2: directory already exists, no need to create
   }

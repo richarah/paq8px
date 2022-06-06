@@ -15,20 +15,20 @@ protected:
   void chk_consistency() const;
 #endif
 public:
-  [[nodiscard]] auto c_str() const -> const char *;
+  const char* c_str() const;
   /**
     * Does not include the NUL terminator
     * @return length of the string
     */
-  [[nodiscard]] auto strsize() const -> uint64_t;
+  uint64_t strsize() const;
   void operator=(const char *s);
   void operator+=(const char *s);
   void operator+=(char c);
   void operator+=(uint64_t x);
-  auto endsWith(const char *ending) const -> bool;
+  bool endsWith(const char *ending) const;
   void stripEnd(uint64_t count);
-  auto beginsWith(const char *beginning) const -> bool;
+  bool beginsWith(const char *beginning) const;
   void stripStart(uint64_t count);
-  [[nodiscard]] auto findLast(char c) const -> int;
+  int findLast(char c) const;
   explicit String(const char *s = "");
 };

@@ -28,12 +28,12 @@ private:
   void convertUtf8(Word *w);
   static void replaceSharpS(Word *w);
   void markVowelsAsConsonants(Word *w);
-  static inline auto isValidEnding(char c, bool includeR = false) -> bool;
-  auto step1(Word *w, uint32_t r1) -> bool;
-  auto step2(Word *w, uint32_t r1) -> bool;
-  auto step3(Word *w, uint32_t r1, uint32_t r2) -> bool;
+  static inline bool isValidEnding(char c, bool includeR = false);
+  bool step1(Word *w, uint32_t r1);
+  bool step2(Word *w, uint32_t r1);
+  bool step3(Word *w, uint32_t r1, uint32_t r2);
 
 public:
-  auto isVowel(char c) -> bool final;
-  auto stem(Word *w) -> bool override;
+  bool isVowel(char c) final;
+  bool  stem(Word *w) override;
 };

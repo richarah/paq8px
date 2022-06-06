@@ -11,5 +11,5 @@ class Random {
 
 public:
   Random();
-  auto operator()(int numberOfBits) -> uint32_t;
+  uint32_t operator()(int numberOfBits);
 };

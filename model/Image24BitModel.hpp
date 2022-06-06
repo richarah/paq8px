@@ -53,7 +53,8 @@ public:
   int color = -1;
   int stride = 3;
   int col = 0;
-  int ctx[2] {}, padding = 0, filter = 0, x = 0, w = 0, line = 0, R1 = 0, R2 = 0;
+  uint32_t ctx[2]{}, padding = 0, filter = 0, x = 0, w = 0, line = 0;
+  int R1 = 0, R2 = 0;
   uint32_t lastPos = 0, lastWasPNG = 0;
   bool filterOn = false;
   int columns[2] = {1, 1}, column[2] {};

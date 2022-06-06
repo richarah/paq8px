@@ -4,7 +4,7 @@ DummyMixer::DummyMixer(const Shared* const sh, const int n, const int m, const i
 
 void DummyMixer::update() { reset(); }
 
-auto DummyMixer::p() -> int {
+int DummyMixer::p() {
   shared->GetUpdateBroadcaster()->subscribe(this);
   return 2048;
 }

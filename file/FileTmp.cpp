@@ -37,7 +37,7 @@ FileTmp::FileTmp() {
 
 FileTmp::~FileTmp() { close(); }
 
-auto FileTmp::open(const char * /*filename*/, bool /*mustSucceed*/) -> bool {
+bool FileTmp::open(const char * /*filename*/, bool /*mustSucceed*/) {
   assert(false);
   return false;
 }
@@ -49,7 +49,7 @@ void FileTmp::close() {
   forgetFileOnDisk();
 }
 
-auto FileTmp::getchar() -> int {
+int FileTmp::getchar() {
   if( contentInRam != nullptr ) {
     if( filePos >= fileSize ) {
       return EOF;
@@ -78,7 +78,7 @@ void FileTmp::putChar(uint8_t c) {
   fileOnDisk->putChar(c);
 }
 
-auto FileTmp::blockRead(uint8_t *ptr, uint64_t count) -> uint64_t {
+uint64_t FileTmp::blockRead(uint8_t *ptr, uint64_t count) {
   if( contentInRam != nullptr ) {
     const uint64_t available = fileSize - filePos;
     if( available < count ) {
@@ -129,7 +129,7 @@ void FileTmp::setEnd() {
   }
 }
 
-auto FileTmp::curPos() -> uint64_t {
+uint64_t FileTmp::curPos() {
   if( contentInRam != nullptr ) {
     return filePos;
   }
@@ -137,7 +137,7 @@ auto FileTmp::curPos() -> uint64_t {
   return fileOnDisk->curPos();
 }
 
-auto FileTmp::eof() -> bool {
+bool FileTmp::eof() {
   if( contentInRam != nullptr ) {
     return filePos >= fileSize;
   }

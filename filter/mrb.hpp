@@ -110,7 +110,7 @@ public:
     out->blockWrite(&ptrin[0], totalSize);
   }
 
-  auto decode(File* in, File* out, FMode fMode, uint64_t  size, uint64_t& diffFound) -> uint64_t override {
+  uint64_t decode(File* in, File* out, FMode fMode, uint64_t  size, uint64_t& diffFound) override {
     if (size == 0) {
       diffFound = 1;
       return 0;

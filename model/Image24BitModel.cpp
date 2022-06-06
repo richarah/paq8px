@@ -34,7 +34,7 @@ void Image24BitModel::update() {
   INJECT_SHARED_c1
   if( bpos == 0 ) {
     INJECT_SHARED_buf
-    if( x == 1 && (isPNG != 0u)) {
+    if( x == 1 && (isPNG != 0)) {
       filter = c1;
     } else {
       if( x + padding < w ) {
@@ -49,7 +49,7 @@ void Image24BitModel::update() {
           color = 0;
         }
       }
-      if( isPNG != 0u ) {
+      if( isPNG != 0 ) {
         switch( filter ) {
           case 1: {
             buffer.add(static_cast<uint8_t>(c1 + buffer(stride) * static_cast<int>(x > stride + 1 || (x == 0))));
@@ -93,7 +93,7 @@ void Image24BitModel::update() {
       }
     }
 
-    if( x > 0 || (isPNG == 0u)) {
+    if( x > 0 || (isPNG == 0)) {
       column[0] = (x - isPNG) / columns[0];
       column[1] = (x - isPNG) / columns[1];
       WWWWWW = buffer(6 * stride), WWWWW = buffer(5 * stride), WWWW = buffer(4 * stride), WWW = buffer(3 * stride), WW = buffer(2 * stride), W = buffer(stride);
@@ -251,7 +251,7 @@ void Image24BitModel::update() {
         ols[j][k].update(p1);
       }
 
-      if( isPNG == 0u ) {
+      if( isPNG == 0 ) {
         int mean = (W + NW + N + NE + 2) >> 2;
         int diff4 =
           DiffQt(W, N, 4) << 12 | 
@@ -309,26 +309,26 @@ void Image24BitModel::update() {
         cm.set(__, hash(++i, mean, diff4));
 
         ctx[0] = (min(color, 
-          stride - 1) << 9U) | 
-          (static_cast<int>(abs(W - N) > 3) << 8U) | 
-          (static_cast<int>(W > N) << 7U) |
-          (static_cast<int>(W > NW) << 6U) | 
-          (static_cast<int>(abs(N - NW) > 3) << 5U) | 
-          (static_cast<int>(N > NW) << 4U) |
-          (static_cast<int>(abs(N - NE) > 3) << 3U) | 
-          (static_cast<int>(N > NE) << 2U) | 
-          (static_cast<int>(W > WW) << 1U) |
+          stride - 1) << 9) | 
+          (static_cast<int>(abs(W - N) > 3) << 8) | 
+          (static_cast<int>(W > N) << 7) |
+          (static_cast<int>(W > NW) << 6) | 
+          (static_cast<int>(abs(N - NW) > 3) << 5) | 
+          (static_cast<int>(N > NW) << 4) |
+          (static_cast<int>(abs(N - NE) > 3) << 3) | 
+          (static_cast<int>(N > NE) << 2) | 
+          (static_cast<int>(W > WW) << 1) |
           static_cast<int>(N > NN);
-        ctx[1] = ((DiffQt(p1, (Np1 + NEp1 - buffer(w * 2 - stride + 1))) >> 1U) << 5U) |
-                 ((DiffQt((N + NE - NNE), (N + NW - NNW)) >> 1U) << 2U) | 
+        ctx[1] = ((DiffQt(p1, (Np1 + NEp1 - buffer(w * 2 - stride + 1))) >> 1) << 5) |
+                 ((DiffQt((N + NE - NNE), (N + NW - NNW)) >> 1) << 2) | 
                  min(color, stride - 1);
       } else {
         //for png
-        int residuals[5] = {(static_cast<int8_t>(buf(stride + static_cast<int>(x <= stride)))) + 128,
-                            (static_cast<int8_t>(buf(1 + static_cast<int>(x < 2)))) + 128,
-                            (static_cast<int8_t>(buf(stride + 1 + static_cast<int>(x <= stride)))) + 128,
-                            (static_cast<int8_t>(buf(2 + static_cast<int>(x < 3)))) + 128,
-                            (static_cast<int8_t>(buf(stride + 2 + static_cast<int>(x <= stride)))) + 128};
+        int32_t residuals[5] = {(static_cast<int8_t>(buf(stride + static_cast<int32_t>(x <= stride)))) + 128,
+                            (static_cast<int8_t>(buf(1 + static_cast<int32_t>(x < 2)))) + 128,
+                            (static_cast<int8_t>(buf(stride + 1 + static_cast<int32_t>(x <= stride)))) + 128,
+                            (static_cast<int8_t>(buf(2 + static_cast<int32_t>(x < 3)))) + 128,
+                            (static_cast<int8_t>(buf(stride + 2 + static_cast<int32_t>(x <= stride)))) + 128};
         R1 = (residuals[1] * residuals[0]) / max(1, residuals[2]);
         R2 = (residuals[3] * residuals[0]) / max(1, residuals[4]);
 
@@ -372,22 +372,22 @@ void Image24BitModel::update() {
         cm.set(__, hash(++i, color, buf(stride + static_cast<int>(x <= stride)), buf(1 + static_cast<int>(x < 2)), buf(2 + static_cast<int>(x < 3))));
         cm.set(__, hash(++i, color, buf(1 + static_cast<int>(x < 2)), px));
         cm.set(__, hash(++i, buf(w + 1), buf((w + 1) * 2), buf((w + 1) * 3), px));
-        ctx[0] = (min(color, stride - 1) << 9U) | 
-          (static_cast<int>(abs(W - N) > 3) << 8U) | 
-          (static_cast<int>(W > N) << 7U) |
-          (static_cast<int>(W > NW) << 6U) |
-          (static_cast<int>(abs(N - NW) > 3) << 5U) | 
-          (static_cast<int>(N > NW) << 4U) |
-          (static_cast<int>(N > NE) << 3U) | 
+        ctx[0] = (min(color, stride - 1) << 9) | 
+          (static_cast<int>(abs(W - N) > 3) << 8) | 
+          (static_cast<int>(W > N) << 7) |
+          (static_cast<int>(W > NW) << 6) |
+          (static_cast<int>(abs(N - NW) > 3) << 5) | 
+          (static_cast<int>(N > NW) << 4) |
+          (static_cast<int>(N > NE) << 3) | 
           min(5, filterOn ? filter + 1 : 0);
-        ctx[1] = ((DiffQt(p1, clip(Np1 + NEp1 - buffer(w * 2 - stride + 1))) >> 1) << 5U) |
-                 ((DiffQt(clip(N + NE - NNE), clip(N + NW - NNW)) >> 1) << 2U) | min(color, stride - 1);
+        ctx[1] = ((DiffQt(p1, clip(Np1 + NEp1 - buffer(w * 2 - stride + 1))) >> 1) << 5) |
+                 ((DiffQt(clip(N + NE - NNE), clip(N + NW - NNW)) >> 1) << 2) | min(color, stride - 1);
       }
 
       int i = -1;
-      map[++i].set((W & 0xC0U) | ((N & 0xC0U) >> 2U) | ((WW & 0xC0U) >> 4U) | (NN >> 6U));
-      map[++i].set((N & 0xC0U) | ((NN & 0xC0U) >> 2U) | ((NE & 0xC0U) >> 4U) | (NEE >> 6U));
-      map[++i].set(buf(1 + static_cast<int>((isPNG != 0u) && x < 2)));
+      map[++i].set((W & 0xC0) | ((N & 0xC0) >> 2) | ((WW & 0xC0) >> 4) | (NN >> 6));
+      map[++i].set((N & 0xC0) | ((NN & 0xC0) >> 2) | ((NE & 0xC0) >> 4) | (NEE >> 6));
+      map[++i].set(buf(1 + static_cast<int>((isPNG != 0) && x < 2)));
       map[++i].set(min(color, stride - 1));
       shared->State.Image.plane = min(color, stride - 1);
       shared->State.Image.pixels.W = W;
@@ -396,10 +396,10 @@ void Image24BitModel::update() {
       shared->State.Image.pixels.WW = WW;
       shared->State.Image.pixels.Wp1 = Wp1;
       shared->State.Image.pixels.Np1 = Np1;
-      shared->State.Image.ctx = ctx[0] >> 3U;
+      shared->State.Image.ctx = ctx[0] >> 3;
     }
   }
-  if( x > 0 || (isPNG == 0u)) {
+  if( x > 0 || (isPNG == 0)) {
     INJECT_SHARED_c0
     uint8_t b = (c0 << (8 - bpos));
     int i = 3;
@@ -414,10 +414,10 @@ void Image24BitModel::update() {
                        (DiffQt(p1, (Wp1 + Np1 - NWp1)) << 11));
     map[++i].set(((static_cast<uint8_t>((W + N - NW) - px - b)) << 3 | bpos) |
                        (DiffQt(p2, (Wp2 + Np2 - NWp2)) << 11));
-    map[++i].set((min(color, stride - 1) << 11U) | ((static_cast<uint8_t>((N + p1 - Np1) - px - b)) << 3 | bpos));
-    map[++i].set((min(color, stride - 1) << 11U) | ((static_cast<uint8_t>((N + p2 - Np2) - px - b)) << 3 | bpos));
-    map[++i].set((min(color, stride - 1) << 11U) | ((static_cast<uint8_t>((W + p1 - Wp1) - px - b)) << 3 | bpos));
-    map[++i].set((min(color, stride - 1) << 11U) | ((static_cast<uint8_t>((W + p2 - Wp2) - px - b)) << 3 | bpos));
+    map[++i].set((min(color, stride - 1) << 11) | ((static_cast<uint8_t>((N + p1 - Np1) - px - b)) << 3 | bpos));
+    map[++i].set((min(color, stride - 1) << 11) | ((static_cast<uint8_t>((N + p2 - Np2) - px - b)) << 3 | bpos));
+    map[++i].set((min(color, stride - 1) << 11) | ((static_cast<uint8_t>((W + p1 - Wp1) - px - b)) << 3 | bpos));
+    map[++i].set((min(color, stride - 1) << 11) | ((static_cast<uint8_t>((W + p2 - Wp2) - px - b)) << 3 | bpos));
     mapL.set(hash(0 << 3 | bpos, static_cast<uint8_t>(W - px - b), static_cast<uint8_t>(N - px - b)));
     mapL.set(hash(1 << 3 | bpos, static_cast<uint8_t>(W - px - b), static_cast<uint8_t>(WW - px - b)));
     mapL.set(hash(2 << 3 | bpos, static_cast<uint8_t>(N - px - b), static_cast<uint8_t>(NN - px - b)));
@@ -483,7 +483,7 @@ void Image24BitModel::mix(Mixer &m) {
   update();
 
   // predict next bit
-  if( x > 0 || (isPNG == 0u)) {
+  if( x > 0 || (isPNG == 0)) {
     cm.mix(m);
 
     const int order = max(0, cm.order - (nCM - 31)); //0-31
@@ -503,15 +503,15 @@ void Image24BitModel::mix(Mixer &m) {
     if( ++col >= stride * 8 ) {
       col = 0;
     }
-    m.set(5 + (((line & 0x7u) << 5u) | col), 5 + 256);
-    m.set(min(63, column[0]) + ((ctx[0] >> 3U) & 0xC0U), 256);
-    m.set(min(127, column[1]) + ((ctx[0] >> 2U) & 0x180U), 512);
-    m.set((ctx[0] & 0x7FCU) | (bpos >> 1), 2048);
+    m.set(5 + (((line & 0x7) << 5) | col), 5 + 256);
+    m.set(min(63, column[0]) + ((ctx[0] >> 3) & 0xC0), 256);
+    m.set(min(127, column[1]) + ((ctx[0] >> 2) & 0x180), 512);
+    m.set((ctx[0] & 0x7FC) | (bpos >> 1), 2048);
     INJECT_SHARED_c0
-    m.set(col + (isPNG != 0u ? (ctx[0] & 7) + 1 : static_cast<int>(c0 == ((0x100U | ((N + W + 1)>>1)) >> (8 - bpos)))) * 32, 8 * 32);
-    m.set(((isPNG != 0u ? p1 : 0) >> 4U) * stride + (x % stride) + min(5, filterOn ? filter + 1 : 0) * 64, 6 * 64);
-    m.set(c0 + 256 * static_cast<int>((isPNG != 0u) && abs(R1 - 128) > 8), 256 * 2);
-    m.set((ctx[1] << 2U) | (bpos >> 1U), 1024);
+    m.set(col + (isPNG != 0 ? (ctx[0] & 7) + 1 : static_cast<int>(c0 == ((0x100 | ((N + W + 1)>>1)) >> (8 - bpos)))) * 32, 8 * 32);
+    m.set(((isPNG != 0 ? p1 : 0) >> 4) * stride + (x % stride) + min(5, filterOn ? filter + 1 : 0) * 64, 6 * 64);
+    m.set(c0 + 256 * static_cast<int>((isPNG != 0) && abs(R1 - 128) > 8), 256 * 2);
+    m.set((ctx[1] << 2) | (bpos >> 1), 1024);
 
     int trendN = (N >= NN && NN >= NNN) || (N <= NN && NN <= NNN);
     int trendW = (W >= WW && WW >= WWW) || (W <= WW && WW <= WWW);
@@ -522,7 +522,7 @@ void Image24BitModel::mix(Mixer &m) {
     m.set(finalize64(hash(logQt(W, 5), DiffQt(W, WW) >> 1, c0), 13), 8192);
     m.set(min(255, (x + line) >> 5), 256);
   } else {
-    m.add(-2048 + ((filter >> (7 - bpos)) & 1U) * 4096);
+    m.add(-2048 + ((filter >> (7 - bpos)) & 1) * 4096);
     m.set(min(4, filter), MIXERCONTEXTS);
   }
 }

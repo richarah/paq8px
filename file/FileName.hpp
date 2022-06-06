@@ -9,7 +9,7 @@
 class FileName : public String {
 public:
   explicit FileName(const char *s = "");
-  [[nodiscard]] auto lastSlashPos() const -> int;
+  int lastSlashPos() const;
   void keepFilename();
   void keepPath();
 

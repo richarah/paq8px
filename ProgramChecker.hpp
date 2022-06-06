@@ -31,15 +31,15 @@ private:
   /**
     * Assignment operator is private so that it cannot be called
     */
-  auto operator=(ProgramChecker const & /*unused*/) -> ProgramChecker & { return *this; }
+  ProgramChecker& operator=(ProgramChecker const & /*unused*/) { return *this; }
 
   static ProgramChecker *instance;
 
 public:
-  static auto getInstance() -> ProgramChecker *;
+  static ProgramChecker* getInstance();
   void alloc(uint64_t n);
   void free(uint64_t n);
-  [[nodiscard]] auto getRuntime() const -> double;
+  double getRuntime() const;
 
   /**
     * Print elapsed time and used memory

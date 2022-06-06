@@ -32,7 +32,7 @@ namespace Block {
     encoder->predictorBlock.shared->State.blockStateID = 0x10;
     encoder->compressByte(&encoder->predictorBlock, uint8_t(blocktype));
     encoder->predictorBlock.shared->State.blockTypeHistory <<= 8;
-    encoder->predictorBlock.shared->State.blockTypeHistory |= uint8_t(blocktype);
+    encoder->predictorBlock.shared->State.blockTypeHistory |= uint32_t(blocktype);
   }
 
   BlockType DecodeBlockType(Encoder* const encoder) {
@@ -84,7 +84,7 @@ namespace Block {
   }
 
   int DecodeInfo(Encoder* const encoder) {
-    int info = 0;
+    uint32_t info = 0;
     uint8_t b;
     encoder->predictorBlock.shared->State.blockStateID = 0x30;
     b = encoder->decompressByte(&encoder->predictorBlock);

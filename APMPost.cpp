@@ -12,9 +12,9 @@ APMPost::APMPost(const Shared* const sh, const uint32_t n) : shared(sh), index(0
 }
 
 
-auto APMPost::p(const uint32_t pr, const uint32_t cxt) -> uint32_t {
+uint32_t APMPost::p(const uint32_t pr, const uint32_t cxt) {
   shared->GetUpdateBroadcaster()->subscribe(this);
-  assert(pr < 4096u && cxt < n);
+  assert(pr < 4096 && cxt < n);
   index = cxt * 4096 + pr;
   uint64_t n0 = t[index] >> 32;
   uint64_t n1 = t[index] &0xffffffff;

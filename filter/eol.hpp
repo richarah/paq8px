@@ -29,7 +29,7 @@ public:
     }
   }
 
-  auto decode(File * /*in*/, File *out, FMode fMode, uint64_t size, uint64_t &diffFound) -> uint64_t override {
+  uint64_t decode(File * /*in*/, File *out, FMode fMode, uint64_t size, uint64_t &diffFound) override {
     uint8_t b = 0;
     uint64_t count = 0;
     for( uint64_t i = 0; i < size; i++, count++ ) {
@@ -37,7 +37,7 @@ public:
         if( fMode == FMode::FDECOMPRESS ) {
           out->putChar(CARRIAGE_RETURN);
         } else if( fMode == FMode::FCOMPARE ) {
-          if( out->getchar() != CARRIAGE_RETURN && (diffFound == 0u)) {
+          if( out->getchar() != CARRIAGE_RETURN && (diffFound == 0)) {
             diffFound = size - i;
             break;
           }
@@ -47,12 +47,12 @@ public:
       if( fMode == FMode::FDECOMPRESS ) {
         out->putChar(b);
       } else if( fMode == FMode::FCOMPARE ) {
-        if( b != out->getchar() && (diffFound == 0u)) {
+        if( b != out->getchar() && (diffFound == 0)) {
           diffFound = size - i;
           break;
         }
       }
-      if( fMode == FMode::FDECOMPRESS && ((i & 0xFFFU) == 0u)) {
+      if( fMode == FMode::FDECOMPRESS && ((i & 0xFFF) == 0)) {
         encoder->printStatus();
       }
     }

@@ -115,18 +115,18 @@ private:
   static constexpr uint32_t typesExceptions2[numExceptions2] = {English::Noun, English::Noun, English::Noun, English::Noun, English::Noun,
                                                                 English::Verb, English::Verb, English::Verb};
 
-  inline auto isConsonant(char c) -> bool;
-  static inline auto isShortConsonant(char c) -> bool;
-  static inline auto isDouble(char c) -> bool;
-  static inline auto isLiEnding(char c) -> bool;
-  auto getRegion1(const Word *w) -> uint32_t;
-  auto endsInShortSyllable(const Word *w) -> bool;
-  auto isShortWord(const Word *w) -> bool;
-  inline auto hasVowels(const Word *w) -> bool;
-  static auto trimApostrophes(Word *w) -> bool;
+  inline bool isConsonant(char c);
+  static inline bool isShortConsonant(char c);
+  static inline bool isDouble(char c);
+  static inline bool isLiEnding(char c);
+  uint32_t getRegion1(const Word *w);
+  bool endsInShortSyllable(const Word *w);
+  bool isShortWord(const Word *w);
+  inline bool hasVowels(const Word *w);
+  static bool trimApostrophes(Word *w);
   void markYsAsConsonants(Word *w);
-  static auto processPrefixes(Word *w) -> bool;
-  auto processSuperlatives(Word *w) -> bool;
+  static bool processPrefixes(Word *w);
+  bool processSuperlatives(Word *w);
 
   /**
     * Search for the longest among the suffixes, 's' or 's or ' and remove if found.
@@ -134,14 +134,14 @@ private:
     * @param w
     * @return
     */
-  auto step0(Word *w) -> bool;
+  bool step0(Word *w);
 
   /**
     * Search for the longest among the following suffixes, and perform the action indicated.
     * @param w
     * @return
     */
-  auto step1A(Word *w) -> bool;
+  bool step1A(Word *w);
 
   /**
     * Search for the longest among the following suffixes, and perform the action indicated.
@@ -149,13 +149,13 @@ private:
     * @param r1
     * @return
     */
-  auto step1B(Word *w, uint32_t r1) -> bool;
+  bool step1B(Word *w, uint32_t r1);
 
-  auto step1C(Word *w) -> bool;
+  bool step1C(Word *w);
 
-  auto step2(Word *w, uint32_t r1) -> bool;
+  bool step2(Word *w, uint32_t r1);
 
-  auto step3(Word *w, uint32_t r1, uint32_t r2) -> bool;
+  bool step3(Word *w, uint32_t r1, uint32_t r2);
 
   /**
     * Search for the longest among the following suffixes, and, if found and in r2, perform the action indicated.
@@ -163,7 +163,7 @@ private:
     * @param r2
     * @return
     */
-  auto step4(Word *w, uint32_t r2) -> bool;
+  bool step4(Word *w, uint32_t r2);
 
   /**
     * Search for the the following suffixes, and, if found, perform the action indicated.
@@ -172,9 +172,9 @@ private:
     * @param r2
     * @return
     */
-  auto step5(Word *w, uint32_t r1, uint32_t r2) -> bool;
+  bool step5(Word *w, uint32_t r1, uint32_t r2);
 
 public:
-  auto isVowel(char c) -> bool final;
-  auto stem(Word *w) -> bool override;
+  bool isVowel(char c) final;
+  bool stem(Word *w) override;
 };

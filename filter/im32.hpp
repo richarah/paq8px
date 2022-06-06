@@ -31,15 +31,15 @@ static void encodeIm32(File *in, File *out, uint64_t len, int width, bool skipRg
   }
 }
 
-static auto decodeIm32(Encoder &en, uint64_t size, int width, File *out, FMode mode, uint64_t &diffFound, bool skipRgb) -> uint64_t {
+static uint64_t decodeIm32(Encoder &en, uint64_t size, int width, File *out, FMode mode, uint64_t &diffFound, bool skipRgb) {
   int r = 0;
   int g = 0;
   int b = 0;
   int a = 0;
   int p = 0;
-  bool rgb = (width & (1U << 31U)) > 0;
+  bool rgb = (width & (1u << 31)) > 0;
   if( rgb ) {
-    width ^= (1U << 31U);
+    width ^= (1u << 31);
   }
   for( int i = 0; i < static_cast<int>(size / width); i++ ) {
     p = i * width;
@@ -54,16 +54,16 @@ static auto decodeIm32(Encoder &en, uint64_t size, int width, File *out, FMode m
           en.printStatus();
         }
       } else if( mode == FMode::FCOMPARE ) {
-        if(((skipRgb ? r : b - r) & 255U) != out->getchar() && (diffFound == 0u)) {
+        if(((skipRgb ? r : b - r) & 255) != out->getchar() && (diffFound == 0)) {
           diffFound = p + 1;
         }
-        if( b != out->getchar() && (diffFound == 0u)) {
+        if( b != out->getchar() && (diffFound == 0)) {
           diffFound = p + 2;
         }
-        if(((skipRgb ? g : b - g) & 255U) != out->getchar() && (diffFound == 0u)) {
+        if(((skipRgb ? g : b - g) & 255) != out->getchar() && (diffFound == 0)) {
           diffFound = p + 3;
         }
-        if(((a) & 255) != out->getchar() && (diffFound == 0u)) {
+        if(((a) & 255) != out->getchar() && (diffFound == 0)) {
           diffFound = p + 4;
         }
         p += 4;
@@ -73,7 +73,7 @@ static auto decodeIm32(Encoder &en, uint64_t size, int width, File *out, FMode m
       if( mode == FMode::FDECOMPRESS ) {
         out->putChar(en.decompressByte(&en.predictorMain));
       } else if( mode == FMode::FCOMPARE ) {
-        if( en.decompressByte(&en.predictorMain) != out->getchar() && (diffFound == 0u)) {
+        if( en.decompressByte(&en.predictorMain) != out->getchar() && (diffFound == 0)) {
           diffFound = p + j + 1;
         }
       }
@@ -83,7 +83,7 @@ static auto decodeIm32(Encoder &en, uint64_t size, int width, File *out, FMode m
     if( mode == FMode::FDECOMPRESS ) {
       out->putChar(en.decompressByte(&en.predictorMain));
     } else if( mode == FMode::FCOMPARE ) {
-      if( en.decompressByte(&en.predictorMain) != out->getchar() && (diffFound == 0u)) {
+      if( en.decompressByte(&en.predictorMain) != out->getchar() && (diffFound == 0)) {
         diffFound = size - i;
         break;
       }

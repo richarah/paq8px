@@ -24,5 +24,5 @@ private:
   /**
     * Assignment operator is private so that it cannot be called
     */
-  auto operator=(UpdateBroadcaster const & /*unused*/) -> UpdateBroadcaster & { return *this; }
+  UpdateBroadcaster& operator=(UpdateBroadcaster const & /*unused*/) { return *this; }
 };

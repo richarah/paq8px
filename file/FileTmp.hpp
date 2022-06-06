@@ -35,19 +35,19 @@ public:
   /**
     *  This method is forbidden for temporary files.
     */
-  auto open(const char * /*filename*/, bool /*mustSucceed*/) -> bool override;
+  bool open(const char * /*filename*/, bool /*mustSucceed*/) override;
 
   /**
     *  This method is forbidden for temporary files.
     */
   void create(const char * /*filename*/) override;
   void close() override;
-  auto getchar() -> int override;
+  int getchar() override;
   void putChar(uint8_t c) override;
-  auto blockRead(uint8_t *ptr, uint64_t count) -> uint64_t override;
+  uint64_t  blockRead(uint8_t *ptr, uint64_t count) override;
   void blockWrite(uint8_t *ptr, uint64_t count) override;
   void setpos(uint64_t newPos) override;
   void setEnd() override;
-  auto curPos() -> uint64_t override;
-  auto eof() -> bool override;
+  uint64_t curPos() override;
+  bool  eof() override;
 };

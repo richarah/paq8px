@@ -45,15 +45,15 @@ void setBegin(int info) {
         quit("encodeExe read error");
       }
       for( int i = bytesRead - 1; i >= 5; --i ) {
-        if((blk[i - 4] == 0xe8 || blk[i - 4] == 0xe9 || (blk[i - 5] == 0x0f && (blk[i - 4] & 0xf0U) == 0x80)) &&
+        if((blk[i - 4] == 0xe8 || blk[i - 4] == 0xe9 || (blk[i - 5] == 0x0f && (blk[i - 4] & 0xf0) == 0x80)) &&
             (blk[i] == 0 || blk[i] == 0xff)) {
-          int a = (blk[i - 3] | blk[i - 2] << 8U | blk[i - 1] << 16U | blk[i] << 24U) + static_cast<int>(offset + info) + i + 1;
-          a <<= 7U;
-          a >>= 7U;
-          blk[i] = a >> 24U;
-          blk[i - 1] = a ^ 176U;
-          blk[i - 2] = (a >> 8U) ^ 176U;
-          blk[i - 3] = (a >> 16U) ^ 176U;
+          int a = (blk[i - 3] | blk[i - 2] << 8 | blk[i - 1] << 16 | blk[i] << 24) + static_cast<int>(offset + info) + i + 1;
+          a <<= 7;
+          a >>= 7;
+          blk[i] = a >> 24;
+          blk[i - 1] = a ^ 176;
+          blk[i - 2] = (a >> 8) ^ 176;
+          blk[i - 3] = (a >> 16) ^ 176;
         }
       }
       out->blockWrite(&blk[0], bytesRead);
@@ -84,22 +84,22 @@ void setBegin(int info) {
         c[0] = encoder->decompressByte(&encoder->predictorMain);
       }
       // E8E9 transform: E8/E9 xx xx xx 00/FF -> subtract location from x
-      if((c[0] == 0x00 || c[0] == 0xFF) && (c[4] == 0xE8 || c[4] == 0xE9 || (c[5] == 0x0F && (c[4] & 0xF0U) == 0x80)) &&
+      if((c[0] == 0x00 || c[0] == 0xFF) && (c[4] == 0xE8 || c[4] == 0xE9 || (c[5] == 0x0F && (c[4] & 0xF0) == 0x80)) &&
           (((offset - 1) ^ (offset - 6)) & -block) == 0 && offset <= static_cast<int>(size)) { // not crossing block boundary
-        a = ((c[1] ^ 176U) | (c[2] ^ 176U) << 8 | (c[3] ^ 176U) << 16U | c[0] << 24U) - offset - static_cast<int>(begin);
-        a <<= 7U;
-        a >>= 7U;
+        a = ((c[1] ^ 176) | (c[2] ^ 176) << 8 | (c[3] ^ 176) << 16 | c[0] << 24) - offset - static_cast<int>(begin);
+        a <<= 7;
+        a >>= 7;
         c[3] = a;
-        c[2] = a >> 8U;
-        c[1] = a >> 16U;
-        c[0] = a >> 24U;
+        c[2] = a >> 8;
+        c[1] = a >> 16;
+        c[0] = a >> 24;
       }
       if( fMode == FMode::FDECOMPRESS ) {
         out->putChar(c[5]);
-      } else if( fMode == FMode::FCOMPARE && c[5] != out->getchar() && (diffFound == 0u)) {
+      } else if( fMode == FMode::FCOMPARE && c[5] != out->getchar() && (diffFound == 0)) {
         diffFound = offset - 6 + 1;
       }
-      if( fMode == FMode::FDECOMPRESS && ((offset & 0xfffU) == 0u)) {
+      if( fMode == FMode::FDECOMPRESS && ((offset & 0x0fff) == 0)) {
         encoder->printStatus();
       }
       offset++;

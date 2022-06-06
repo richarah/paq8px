@@ -13,7 +13,7 @@ private:
   Array<int, 16> next;
 public:
   explicit MTFList(uint16_t n);
-  auto getFirst() -> int;
-  auto getNext() -> int;
+  int getFirst();
+  int getNext();
   void moveToFront(int i);
 };

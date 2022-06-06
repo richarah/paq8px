@@ -9,11 +9,11 @@ MTFList::MTFList(const uint16_t n) : root(0), Index(0), previous(n), next(n) {
   next[n - 1] = -1;
 }
 
-auto MTFList::getFirst() -> int {
+int MTFList::getFirst() {
   return Index = root;
 }
 
-auto MTFList::getNext() -> int {
+int MTFList::getNext() {
   if( Index >= 0 ) {
     Index = next[Index];
   }

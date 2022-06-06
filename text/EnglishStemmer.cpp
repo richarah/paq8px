@@ -1,23 +1,23 @@
 #include "EnglishStemmer.hpp"
 #include "../CharacterNames.hpp"
 
-auto EnglishStemmer::isConsonant(const char c) -> bool {
+bool EnglishStemmer::isConsonant(const char c) {
   return !isVowel(c);
 }
 
-auto EnglishStemmer::isShortConsonant(const char c) -> bool {
+bool EnglishStemmer::isShortConsonant(const char c) {
   return !charInArray(c, nonShortConsonants, numNonShortConsonants);
 }
 
-auto EnglishStemmer::isDouble(const char c) -> bool {
+bool EnglishStemmer::isDouble(const char c) {
   return charInArray(c, doubles, numDoubles);
 }
 
-auto EnglishStemmer::isLiEnding(const char c) -> bool {
+bool EnglishStemmer::isLiEnding(const char c) {
   return charInArray(c, liEndings, numLiEndings);
 }
 
-auto EnglishStemmer::getRegion1(const Word *w) -> uint32_t {
+uint32_t EnglishStemmer::getRegion1(const Word *w) {
   for( int i = 0; i < numExceptionRegion1; i++ ) {
     if( w->startsWith(exceptionsRegion1[i])) {
       return uint32_t(strlen(exceptionsRegion1[i]));
@@ -26,7 +26,7 @@ auto EnglishStemmer::getRegion1(const Word *w) -> uint32_t {
   return getRegion(w, 0);
 }
 
-auto EnglishStemmer::endsInShortSyllable(const Word *w) -> bool {
+bool EnglishStemmer::endsInShortSyllable(const Word *w) {
   if( w->end == w->start ) {
     return false;
   }
@@ -37,11 +37,11 @@ auto EnglishStemmer::endsInShortSyllable(const Word *w) -> bool {
 
 }
 
-auto EnglishStemmer::isShortWord(const Word *w) -> bool {
+bool EnglishStemmer::isShortWord(const Word *w) {
   return (endsInShortSyllable(w) && getRegion1(w) == w->length());
 }
 
-auto EnglishStemmer::hasVowels(const Word *w) -> bool {
+bool EnglishStemmer::hasVowels(const Word *w) {
   for( int i = w->start; i <= w->end; i++ ) {
     if( isVowel(w->letters[i])) {
       return true;
@@ -50,7 +50,7 @@ auto EnglishStemmer::hasVowels(const Word *w) -> bool {
   return false;
 }
 
-auto EnglishStemmer::trimApostrophes(Word *w) -> bool {
+bool EnglishStemmer::trimApostrophes(Word *w) {
   bool result = false;
   //trim all apostrophes from the beginning
   int cnt = 0;
@@ -81,7 +81,7 @@ void EnglishStemmer::markYsAsConsonants(Word *w) {
   }
 }
 
-auto EnglishStemmer::processPrefixes(Word *w) -> bool {
+bool EnglishStemmer::processPrefixes(Word *w) {
   if( w->startsWith("irr") && w->length() > 5 && ((*w)[3] == 'a' || (*w)[3] == 'e')) {
     w->start += 2, w->type |= English::Negation;
   } else if( w->startsWith("over") && w->length() > 5 ) {
@@ -98,7 +98,7 @@ auto EnglishStemmer::processPrefixes(Word *w) -> bool {
   return true;
 }
 
-auto EnglishStemmer::processSuperlatives(Word *w) -> bool {
+bool EnglishStemmer::processSuperlatives(Word *w) {
   if( w->endsWith("est") && w->length() > 4 ) {
     uint8_t i = w->end;
     w->end -= 3;
@@ -178,7 +178,7 @@ auto EnglishStemmer::processSuperlatives(Word *w) -> bool {
   return (w->type & English::AdjectiveSuperlative) > 0;
 }
 
-auto EnglishStemmer::step0(Word *w) -> bool {
+bool EnglishStemmer::step0(Word *w) {
   for( int i = 0; i < numSuffixesStep0; i++ ) {
     if( w->endsWith(suffixesStep0[i])) {
       w->end -= uint8_t(strlen(suffixesStep0[i]));
@@ -189,7 +189,7 @@ auto EnglishStemmer::step0(Word *w) -> bool {
   return false;
 }
 
-auto EnglishStemmer::step1A(Word *w) -> bool {
+bool EnglishStemmer::step1A(Word *w) {
   //sses -> replace by ss
   if( w->endsWith("sses")) {
     w->end -= 2;
@@ -256,7 +256,7 @@ auto EnglishStemmer::step1A(Word *w) -> bool {
   return false;
 }
 
-auto EnglishStemmer::step1B(Word *w, const uint32_t r1) -> bool {
+bool EnglishStemmer::step1B(Word *w, const uint32_t r1) {
   for( int i = 0; i < numSuffixesStep1B; i++ ) {
     if( w->endsWith(suffixesStep1B[i])) {
       switch( i ) {
@@ -389,7 +389,7 @@ auto EnglishStemmer::step1B(Word *w, const uint32_t r1) -> bool {
   return false;
 }
 
-auto EnglishStemmer::step1C(Word *w) -> bool {
+bool EnglishStemmer::step1C(Word *w) {
   if( w->length() > 2 && tolower((*w)(0)) == 'y' && isConsonant((*w)(1))) {
     w->letters[w->end] = 'i';
     return true;
@@ -397,7 +397,7 @@ auto EnglishStemmer::step1C(Word *w) -> bool {
   return false;
 }
 
-auto EnglishStemmer::step2(Word *w, const uint32_t r1) -> bool {
+bool EnglishStemmer::step2(Word *w, const uint32_t r1) {
   for( int i = 0; i < numSuffixesStep2; i++ ) {
     if( w->endsWith(suffixesStep2[i][0]) && suffixInRn(w, r1, suffixesStep2[i][0])) {
       w->changeSuffix(suffixesStep2[i][0], suffixesStep2[i][1]);
@@ -461,7 +461,7 @@ auto EnglishStemmer::step2(Word *w, const uint32_t r1) -> bool {
   return false;
 }
 
-auto EnglishStemmer::step3(Word *w, const uint32_t r1, const uint32_t r2) -> bool {
+bool EnglishStemmer::step3(Word *w, const uint32_t r1, const uint32_t r2) {
   bool res = false;
   for( int i = 0; i < numSuffixesStep3; i++ ) {
     if( w->endsWith(suffixesStep3[i][0]) && suffixInRn(w, r1, suffixesStep3[i][0])) {
@@ -484,7 +484,7 @@ auto EnglishStemmer::step3(Word *w, const uint32_t r1, const uint32_t r2) -> boo
   return res;
 }
 
-auto EnglishStemmer::step4(Word *w, const uint32_t r2) -> bool {
+bool EnglishStemmer::step4(Word *w, const uint32_t r2) {
   bool res = false;
   for( int i = 0; i < numSuffixesStep4; i++ ) {
     if( w->endsWith(suffixesStep4[i]) && suffixInRn(w, r2, suffixesStep4[i])) {
@@ -504,7 +504,7 @@ auto EnglishStemmer::step4(Word *w, const uint32_t r2) -> bool {
   return res;
 }
 
-auto EnglishStemmer::step5(Word *w, const uint32_t r1, const uint32_t r2) -> bool {
+bool EnglishStemmer::step5(Word *w, const uint32_t r1, const uint32_t r2) {
   if((*w)(0) == 'e' && (*w) != "here" ) {
     if( suffixInRn(w, r2, "e")) {
       w->end--; //e -> delete if in r2, or in r1 and not preceded by a short syllable
@@ -523,11 +523,11 @@ auto EnglishStemmer::step5(Word *w, const uint32_t r1, const uint32_t r2) -> boo
   return false;
 }
 
-auto EnglishStemmer::isVowel(const char c) -> bool {
+bool EnglishStemmer::isVowel(const char c) {
   return charInArray(c, vowels, numVowels);
 }
 
-auto EnglishStemmer::stem(Word *w) -> bool {
+bool EnglishStemmer::stem(Word *w) {
   if( w->length() < 2 ) {
     w->calculateStemHash();
     //w->print(); //for debugging
@@ -578,7 +578,7 @@ auto EnglishStemmer::stem(Word *w) -> bool {
       w->letters[i] = 'y';
     }
   }
-  if((w->type == 0u) || w->type == English::Plural ) {
+  if((w->type == 0) || w->type == English::Plural ) {
     if( w->matchesAny(maleWords, numMaleWords)) {
       res = true, w->type |= English::Male;
     } else if( w->matchesAny(femaleWords, numFemaleWords)) {

@@ -46,11 +46,11 @@ public:
     * @param ctx bucket selector
     * @return pointer to the ctx'th element
     */
-  auto operator[](uint64_t ctx) -> uint8_t *;
+  uint8_t* operator[](uint64_t ctx);
 };
 
 template<uint64_t B>
-inline auto BH<B>::operator[](const uint64_t ctx) -> uint8_t * {
+inline uint8_t* BH<B>::operator[](const uint64_t ctx) {
   const uint16_t chk = checksum16(ctx, hashBits);
   const uint32_t i = finalize64(ctx, hashBits) * searchLimit & mask;
   uint8_t *p = nullptr;

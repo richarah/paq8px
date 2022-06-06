@@ -44,7 +44,7 @@ public:
     ctx = &data[i & ctxMask];
   }
 
-  auto operator()() -> T & {
+  T& operator()() {
     return *ctx;
   };
 };

@@ -16,7 +16,7 @@ public:
 
   explicit Cache() : data(Size) { Index = 0; }
 
-  auto operator()(uint32_t i) -> T & {
+  T& operator()(uint32_t i) {
     return data[(Index - i) & (Size - 1)];
   }
 
@@ -28,7 +28,7 @@ public:
     Index--;
   }
 
-  auto next() -> T & {
+  T& next() {
     return Index++, *((T *) memset(&data[Index & (Size - 1)], 0, sizeof(T)));
   }
 };

@@ -8,18 +8,18 @@
 class EndiannessFilter : public Filter {
 public:
   void encode(File *in, File *out, uint64_t size, int  /*info*/, int & /*headerSize*/) override {
-    for( uint64_t i = 0, l = size >> 1U; i < l; i++ ) {
+    for( uint64_t i = 0, l = size >> 1; i < l; i++ ) {
       uint8_t b = in->getchar();
       out->putChar(in->getchar());
       out->putChar(b);
     }
-    if((size & 1U) > 0 ) {
+    if((size & 1) > 0 ) {
       out->putChar(in->getchar());
     }
   }
 
-  auto decode(File * /*in*/, File *out, FMode fMode, uint64_t size, uint64_t &diffFound) -> uint64_t override {
-    for( uint64_t i = 0, l = size >> 1U; i < l; i++ ) {
+  uint64_t decode(File * /*in*/, File *out, FMode fMode, uint64_t size, uint64_t &diffFound) override {
+    for( uint64_t i = 0, l = size >> 1; i < l; i++ ) {
       uint8_t b1 = encoder->decompressByte(&encoder->predictorMain);
       uint8_t b2 = encoder->decompressByte(&encoder->predictorMain);
       if( fMode == FMode::FDECOMPRESS ) {
@@ -28,16 +28,16 @@ public:
       } else if( fMode == FMode::FCOMPARE ) {
         bool ok = out->getchar() == b2;
         ok &= out->getchar() == b1;
-        if( !ok && (diffFound == 0u)) {
+        if( !ok && (diffFound == 0)) {
           diffFound = size - i * 2;
           break;
         }
       }
-      if( fMode == FMode::FDECOMPRESS && ((i & 0x7FFU) == 0u)) {
+      if( fMode == FMode::FDECOMPRESS && ((i & 0x7FF) == 0)) {
         encoder->printStatus();
       }
     }
-    if((diffFound == 0u) && (size & 1U) > 0 ) {
+    if((diffFound == 0) && (size & 1) > 0 ) {
       if( fMode == FMode::FDECOMPRESS ) {
         out->putChar(encoder->decompressByte(&encoder->predictorMain));
       } else if( fMode == FMode::FCOMPARE ) {

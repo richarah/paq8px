@@ -40,13 +40,13 @@ public:
     * @param f the file to read from or write to
     */
   Encoder(Shared* const sh, bool doEncoding, Mode m, File *f);
-  auto getMode() const -> Mode;
+  Mode getMode() const;
 
   /**
     * Returns current length of archive
     * @return length of archive so far
     */
-  auto size() const -> uint64_t;
+  uint64_t size() const;
 
   /**
     * Should be called exactly once after compression is done and

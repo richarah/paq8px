@@ -61,34 +61,34 @@ void NormalModel::mix(Mixer &m) {
 
   const int order = max(0, cm.order - (nCM - 7)); //0-7
   assert(0 <= order && order <= 7);
-  m.set(order << 3U | bpos, 64);
+  m.set(order << 3 | bpos, 64);
   shared->State.NormalModel.order = order;
 }
 
 void NormalModel::mixPost(Mixer &m) {
   INJECT_SHARED_c4
-  uint32_t c2 = (c4 >> 8U) & 0xffU;
-  uint32_t c3 = (c4 >> 16U) & 0xffU;
+  uint32_t c2 = (c4 >> 8) & 0xff;
+  uint32_t c3 = (c4 >> 16) & 0xff;
   uint32_t c;
 
   INJECT_SHARED_c0
   INJECT_SHARED_c1
   INJECT_SHARED_bpos
   INJECT_SHARED_blockType
-  m.set((c1 | static_cast<int>(bpos > 5) << 8U | static_cast<int>(((c0 & ((1U << bpos) - 1)) == 0) || (c0 == ((2 << bpos) - 1))) << 9U), 1024);
+  m.set((c1 | (bpos > 5) << 8 | (((c0 & ((1u << bpos) - 1)) == 0) || (c0 == ((2u << bpos) - 1))) << 9), 1024);
   m.set(c0, 256);
   uint32_t bt = blockType == BlockType::DEFAULT ? 0 : isTEXT(blockType) ? 1 : blockType == BlockType::EXE || blockType == BlockType::DEC_ALPHA ? 2 : 3;
-  m.set(shared->State.NormalModel.order | ((c1 >> 6U) & 3U) << 3U | static_cast<int>(bpos == 0) << 5U | static_cast<int>(c1 == c2) << 6U | bt << 7U, 512);
+  m.set(shared->State.NormalModel.order | ((c1 >> 6) & 3) << 3 | (bpos == 0) << 5 | (c1 == c2) << 6 | bt << 7, 512);
   m.set(c2, 256);
   m.set(c3, 256);
   if( bpos != 0 ) {
     c = c0 << (8 - bpos);
     if( bpos == 1 ) {
-      c |= c3 >> 1U;
+      c |= c3 >> 1;
     }
-    c = min(bpos, 5) << 8U | c1 >> 5U | (c2 >> 5U) << 3U | (c & 192U);
+    c = min(bpos, 5) << 8 | c1 >> 5 | (c2 >> 5) << 3 | (c & 192);
   } else {
-    c = c3 >> 7U | (c4 >> 31U) << 1U | (c2 >> 6U) << 2U | (c1 & 240U);
+    c = c3 >> 7 | (c4 >> 31) << 1 | (c2 >> 6) << 2 | (c1 & 240);
   }
   m.set(c, 1536);
 }

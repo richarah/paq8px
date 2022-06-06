@@ -17,23 +17,23 @@ void ContextMap::set(const uint64_t cx) {
   // update pending bit histories for bits 2-7
   if( base[3] == 2 ) {
     const int c = base[4] + 256;
-    uint8_t *p = &t[(ctx + (c >> 6U)) & mask].find(checksum, &rnd)->bitState;
-    p[0] = 1 + ((c >> 5U) & 1U);
-    p[1 + ((c >> 5U) & 1U)] = 1 + ((c >> 4U) & 1U);
-    p[3 + ((c >> 4U) & 3U)] = 1 + ((c >> 3U) & 1U);
-    p = &t[(ctx + (c >> 3U)) & mask].find(checksum, &rnd)->bitState;
-    p[0] = 1 + ((c >> 2U) & 1U);
-    p[1 + ((c >> 2U) & 1U)] = 1 + ((c >> 1U) & 1U);
-    p[3 + ((c >> 1U) & 3U)] = 1 + (c & 1U);
+    uint8_t *p = &t[(ctx + (c >> 6)) & mask].find(checksum, &rnd)->bitState;
+    p[0] = 1 + ((c >> 5) & 1);
+    p[1 + ((c >> 5) & 1)] = 1 + ((c >> 4) & 1);
+    p[3 + ((c >> 4) & 3)] = 1 + ((c >> 3) & 1);
+    p = &t[(ctx + (c >> 3)) & mask].find(checksum, &rnd)->bitState;
+    p[0] = 1 + ((c >> 2) & 1);
+    p[1 + ((c >> 2) & 1)] = 1 + ((c >> 1) & 1);
+    p[3 + ((c >> 1) & 3)] = 1 + (c & 1);
   }
   cn++;
-  validFlags = (validFlags << 1U) + 1;
+  validFlags = (validFlags << 1) + 1;
 }
 
 void ContextMap::skip() {
   assert(cn >= 0 && cn < C);
   cn++;
-  validFlags <<= 1U;
+  validFlags <<= 1;
 }
 
 void ContextMap::update() {
@@ -85,12 +85,12 @@ void ContextMap::mix(Mixer &m) {
   INJECT_SHARED_bpos
   INJECT_SHARED_c0
   for( int i = 0; i < cn; ++i ) {
-    if(((validFlags >> (cn - 1 - i)) & 1U) != 0 ) {
+    if(((validFlags >> (cn - 1 - i)) & 1) != 0 ) {
       // predict from last byte in context
       if((runP[i][1] + 256) >> (8 - bpos) == c0 ) {
         int rc = runP[i][0]; // count*2, +1 if 2 different bytes seen
-        int sign = (runP[i][1] >> (7 - bpos) & 1U) * 2 - 1; // predicted bit + for 1, - for 0
-        int c = ilog->log(rc + 1) << (2 + (~rc & 1U));
+        int sign = (runP[i][1] >> (7 - bpos) & 1) * 2 - 1; // predicted bit + for 1, - for 0
+        int c = ilog->log(rc + 1) << (2 + (~rc & 1));
         m.add(sign * c);
       } else {
         m.add(0); //p=0.5
@@ -107,15 +107,15 @@ void ContextMap::mix(Mixer &m) {
         m.add(0);
       } else {
         const int p1 = sm.p2(i, s);
-        const int st = stretch(p1) >> 2U;
+        const int st = stretch(p1) >> 2;
         const int contextIsYoung = int(s <= 2);
         m.add(st >> contextIsYoung);
-        m.add((p1 - 2048) >> 3U);
-        const int n0 = -!StateTable::next(s, 2);
-        const int n1 = -!StateTable::next(s, 3);
+        m.add((p1 - 2048) >> 3);
+        const int n0 = -!StateTable::getNextState(s, 2);
+        const int n1 = -!StateTable::getNextState(s, 3);
         m.add((n0 | n1) & st); // when both counts are nonzero add(0) otherwise add(st)
         const int p0 = 4095 - p1;
-        m.add(((p1 & n0) - (p0 & n1)) >> 4U);
+        m.add(((p1 & n0) - (p0 & n1)) >> 4);
       }
     } else { //skipped context
       sm.skip(i);

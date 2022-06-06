@@ -28,7 +28,7 @@ private:
                                     {{2450, 8,   1.6e-5f, 1e-6f}, {2450, 8,   1.6e-5f, 1e-6f}}};
   int prd[nSSM][2][2] {0};
   int residuals[nSSM][2] {0};
-  int ch = 0;
+  uint32_t ch = 0;
   uint32_t mask = 0;
   uint32_t errLog = 0;
   uint32_t mxCtx = 0;

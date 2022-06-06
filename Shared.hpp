@@ -27,13 +27,13 @@ private:
   UpdateBroadcaster updateBroadcaster;
 
   // compression/decompression options (these flags are stored in the archive)
-  static constexpr uint8_t OPTION_MULTIPLE_FILE_MODE = 1U;
-  static constexpr uint8_t OPTION_TRAINEXE = 2U;
-  static constexpr uint8_t OPTION_TRAINTXT = 4U;
-  static constexpr uint8_t OPTION_ADAPTIVE = 8U;
-  static constexpr uint8_t OPTION_SKIPRGB = 16U;
-  static constexpr uint8_t OPTION_USELSTM = 32U;
-  static constexpr uint8_t OPTION_TRAINLSTM = 64U;
+  static constexpr uint8_t OPTION_MULTIPLE_FILE_MODE = 1;
+  static constexpr uint8_t OPTION_TRAINEXE  = 2;
+  static constexpr uint8_t OPTION_TRAINTXT  = 4;
+  static constexpr uint8_t OPTION_ADAPTIVE  = 8;
+  static constexpr uint8_t OPTION_SKIPRGB   = 16;
+  static constexpr uint8_t OPTION_USELSTM   = 32;
+  static constexpr uint8_t OPTION_TRAINLSTM = 64;
 
   // block detection related options (these flags are not stored in the archive)
   static constexpr uint8_t OPTION_BRUTEFORCE_DEFLATE_DETECTION = 1U;
@@ -192,11 +192,11 @@ private:
   /**
     * Assignment operator is private so that it cannot be called
     */
-  auto operator=(Shared const & /*unused*/) -> Shared & { return *this; }
+  Shared& operator=(Shared const & /*unused*/) { return *this; }
 
   /**
     * Determine if output is redirected
     * @return
     */
-  static auto isOutputRedirected() -> bool;
+  static bool isOutputRedirected();
 };

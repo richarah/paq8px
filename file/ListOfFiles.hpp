@@ -19,7 +19,7 @@ public:
   ~ListOfFiles();
   void setBasePath(const char *s);
   void addChar(char c);
-  auto getCount() -> int;
-  auto getfilename(int i) -> const char *;
-  auto getString() -> String *;
+  int getCount();
+  const char* getfilename(int i);
+  String* getString();
 };

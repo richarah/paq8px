@@ -23,13 +23,13 @@ private:
   uint32_t hits{};
   const Shared * const shared;
 #endif
-  auto findEntry(short prefix, uint8_t suffix) -> int;
+  int findEntry(short prefix, uint8_t suffix);
   void addEntry(short prefix, uint8_t suffix, int offset);
 public:
   WordEmbeddingDictionary();
   ~WordEmbeddingDictionary();
   void reset();
-  auto addWord(const Word *w, uint32_t embedding) -> bool;
+  bool addWord(const Word *w, uint32_t embedding);
   void getWordEmbedding(Word *w);
   void loadFromFile(const char *filename);
 };

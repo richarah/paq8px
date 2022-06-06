@@ -10,7 +10,7 @@ private:
 
 public:
   enum Flags {
-      Adjective = (1U << 2U), Plural = (1U << 3U)
+      Adjective = (1 << 2), Plural = (1 << 3)
   };
-  auto isAbbreviation(Word *w) -> bool override;
+  bool  isAbbreviation(Word *w) override;
 };

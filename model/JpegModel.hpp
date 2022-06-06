@@ -94,15 +94,15 @@ private:
 
   // Huffman decode state
   uint32_t huffcode = 0; // Current Huffman code including extra bits
-  int huffBits = 0; // Number of valid bits in huffcode
-  int huffSize = 0; // Number of bits without extra bits
+  uint32_t huffBits = 0; // Number of valid bits in huffcode
+  uint32_t huffSize = 0; // Number of bits without extra bits
   int rs = -1; // Decoded huffcode without extra bits.  It represents
   // 2 packed 4-bit numbers, r=run of zeros, s=number of extra bits for
   // first nonzero code.  huffcode is complete when rs >= 0.
   // rs is -1 prior to decoding incomplete huffcode.
   int hbCount = 2;
 
-  int mcuPos = 0; // position in MCU (0-639).  The low 6 bits mark
+  uint32_t mcuPos = 0; // position in MCU (0-639).  The low 6 bits mark
   // the coefficient in zigzag scan order (0=DC, 1-63=AC).  The high
   // bits mark the block within the MCU, used to select Huffman tables.
 
@@ -113,7 +113,7 @@ private:
   Array<uint8_t> hBuf {2048}; // Tc*1024+Th*256+hufCode -> RS
 
   // Image state
-  Array<int> color {10}; // block -> component (0-3)
+  Array<uint32_t> color {10}; // block -> component (0-3)
   Array<int> pred {4}; // component -> last DC value
   int dc = 0; // DC value of the current block
   int width = 0; // Image width in MCU
@@ -160,5 +160,5 @@ private:
 public:
   explicit JpegModel(Shared* const sh, const MixerFactory* const mf, uint64_t size);
   ~JpegModel();
-  auto mix(Mixer &m) -> int;
+  int mix(Mixer &m);
 };

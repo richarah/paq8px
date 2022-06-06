@@ -56,7 +56,7 @@ static constexpr uint64_t hashes[14] = {UINT64_C(0x9E3779B97F4A7C15), UINT64_C(0
  * @return
  */
 static ALWAYS_INLINE
-auto finalize64(const uint64_t hash, const int hashBits) -> uint32_t {
+uint32_t finalize64(const uint64_t hash, const int hashBits) {
   assert(hashBits>=0 && hashBits <= 32); // just a reasonable upper limit
   return static_cast<uint32_t>(hash >> (64 - hashBits));
 }
@@ -70,13 +70,13 @@ auto finalize64(const uint64_t hash, const int hashBits) -> uint32_t {
 static ALWAYS_INLINE
 uint8_t checksum8(const uint64_t hash, const int hashBits) {
   constexpr int checksumBits = 8;
-  return static_cast<uint8_t>(hash >> (64 - hashBits - checksumBits)) & ((1U << checksumBits) - 1);
+  return static_cast<uint8_t>(hash >> (64 - hashBits - checksumBits)) & ((1 << checksumBits) - 1);
 }
 
 static ALWAYS_INLINE
 uint16_t checksum16(const uint64_t hash, const int hashBits) {
   constexpr int checksumBits = 16;
-  return static_cast<uint16_t>(hash >> (64 - hashBits - checksumBits)) & ((1U << checksumBits) - 1);
+  return static_cast<uint16_t>(hash >> (64 - hashBits - checksumBits)) & ((1 << checksumBits) - 1);
 }
 
 //

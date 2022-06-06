@@ -51,7 +51,7 @@ public:
           }
           bitsUsed = 0;
           code = 0;
-          if((1U << bitsPerCode) == dic.index + 1 && dic.index < 4096 ) {
+          if((1u << bitsPerCode) == dic.index + 1 && dic.index < 4096 ) {
             bitsPerCode++;
           }
         }
@@ -60,13 +60,13 @@ public:
     // return 1;
   }
 
-  auto decode(File * /*in*/, File * /*out*/, FMode  /*fMode*/, uint64_t  /*size*/, uint64_t & /*diffFound*/) -> uint64_t override {
+  uint64_t decode(File * /*in*/, File * /*out*/, FMode  /*fMode*/, uint64_t  /*size*/, uint64_t & /*diffFound*/) override {
     return 0;
   }
 
 };
 
-static auto encodeLzw(File *in, File *out, uint64_t size, int &headerSize) -> int {
+static int encodeLzw(File *in, File *out, uint64_t size, int &headerSize) {
   LZWDictionary dic;
   int parent = -1;
   int code = 0;
@@ -80,7 +80,7 @@ static auto encodeLzw(File *in, File *out, uint64_t size, int &headerSize) -> in
       return 0;
     }
     for( int j = 0; j < 8; j++ ) {
-      code += code + ((buffer >> (7 - j)) & 1U), bitsUsed++;
+      code += code + ((buffer >> (7 - j)) & 1), bitsUsed++;
       if( bitsUsed >= bitsPerCode ) {
         if( code == LZW_EOF_CODE ) {
           done = true;
@@ -133,7 +133,7 @@ static inline void writeCode(File *f, const FMode mode, int *buffer, uint64_t *p
   }
 }
 
-static auto decodeLzw(File *in, File *out, FMode mode, uint64_t &diffFound) -> uint64_t {
+static uint64_t decodeLzw(File *in, File *out, FMode mode, uint64_t &diffFound) {
   LZWDictionary dic;
   uint64_t pos = 0;
   int parent = -1;

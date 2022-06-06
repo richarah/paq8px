@@ -34,9 +34,9 @@ void RecordModel::mix(Mixer &m) {
     INJECT_SHARED_buf
     INJECT_SHARED_c4
     INJECT_SHARED_pos
-    int w = c4 & 0xffffU;
-    int c = w & 255U;
-    int d = w >> 8U;
+    uint32_t w = c4 & 0xffff;
+    uint32_t c = w & 0xff;
+    uint32_t d = w >> 8;
     if(fixedRecordLength != 0) {
       rLength[0] = fixedRecordLength;
       rCount[0] = rCount[1] = rLength[1] = rLength[2] = 0;
@@ -61,8 +61,8 @@ void RecordModel::mix(Mixer &m) {
         if( static_cast<int>(rCount[i]) > max(0, 12 - static_cast<int>(ilog2(rLength[i + 1])))) {
           if( rLength[0] != rLength[i + 1] ) {
             if( mayBeImg24B && rLength[i + 1] == 3 ) {
-              rCount[0] >>= 1U;
-              rCount[1] >>= 1U;
+              rCount[0] >>= 1;
+              rCount[1] >>= 1;
               continue;
             }
             if((rLength[i + 1] > rLength[0]) && (rLength[i + 1] % rLength[0] == 0)) {
@@ -71,8 +71,8 @@ void RecordModel::mix(Mixer &m) {
               // that is probably more likely the bigger the length, so
               // check for small lengths too
               if((rLength[0] > 32) && (rLength[i + 1] == rLength[0] * 2)) {
-                rCount[0] >>= 1U;
-                rCount[1] >>= 1U;
+                rCount[0] >>= 1;
+                rCount[1] >>= 1;
                 continue;
               }
             }
@@ -84,7 +84,7 @@ void RecordModel::mix(Mixer &m) {
           } else {
             // we found the same length again, that's positive reinforcement that
             // this really is the correct record size, so give it a little boost
-            rCount[i] >>= 2U;
+            rCount[i] >>= 2;
           }
 
           // if the other candidate record length is orders of
@@ -93,8 +93,8 @@ void RecordModel::mix(Mixer &m) {
           // this length is not a multiple of the other, than it might
           // really be worthwhile to investigate it, so we won't set its
           // counter to 0
-          if( rLength[i + 1] << 4U > rLength[1 + (i ^ 1U)] ) {
-            rCount[i ^ 1U] = 0;
+          if( rLength[i + 1] << 4 > rLength[1 + (i ^ 1)] ) {
+            rCount[i ^ 1] = 0;
           }
         }
       }
@@ -109,9 +109,9 @@ void RecordModel::mix(Mixer &m) {
     NNNN = buf(rLength[0] * 4);
     for( int i = 0; i < nIndContexts - 1; iCtx[i] += c, i++ ) { ;
     }
-    iCtx[0] = (c << 8U) | N;
-    iCtx[1] = (buf(rLength[0] - 1) << 8U) | N;
-    iCtx[2] = (c << 8U) | buf(rLength[0] - 1);
+    iCtx[0] = (c << 8) | N;
+    iCtx[1] = (buf(rLength[0] - 1) << 8) | N;
+    iCtx[2] = (c << 8) | buf(rLength[0] - 1);
     iCtx[3] = finalize64(hash(c, N, buf(rLength[0] + 1)), 20);
 
     /*
@@ -133,11 +133,11 @@ void RecordModel::mix(Mixer &m) {
     anyway.
     */
 
-    if( col == 0u ) {
+    if( col == 0 ) {
       nTransition = 0;
     }
-    if((((c4 >> 8U) == SPACE * 0x010101) && (c != SPACE)) ||
-       (((c4 >> 8U) == 0u) && (c != 0) && ((padding != SPACE) || (pos - prevTransition > rLength[0])))) {
+    if((((c4 >> 8) == SPACE * 0x010101) && (c != SPACE)) ||
+       (((c4 >> 8) == 0) && (c != 0) && ((padding != SPACE) || (pos - prevTransition > rLength[0])))) {
       prevTransition = pos;
       nTransition += static_cast<uint32_t>(nTransition < 31);
       padding = static_cast<uint8_t>(d);
@@ -147,50 +147,50 @@ void RecordModel::mix(Mixer &m) {
 
     // Set 2-3 dimensional contexts
     // assuming runLength[0]<1024; col<4096
-    cm.set(hash(++i, c << 8U | (min(255, pos - cPos1[c]) >> 2U)));
-    cm.set(hash(++i, w << 9U | llog(pos - wPos1[w]) >> 2));
-    cm.set(hash(++i, rLength[0] | N << 10U | NN << 18U));
+    cm.set(hash(++i, c << 8 | (min(255, pos - cPos1[c]) >> 2)));
+    cm.set(hash(++i, w << 9 | llog(pos - wPos1[w]) >> 2));
+    cm.set(hash(++i, rLength[0] | N << 10 | NN << 18));
 
-    cn.set(hash(++i, w | rLength[0] << 16U));
-    cn.set(hash(++i, d | rLength[0] << 8U));
-    cn.set(hash(++i, c | rLength[0] << 8U));
+    cn.set(hash(++i, w | rLength[0] << 16));
+    cn.set(hash(++i, d | rLength[0] << 8));
+    cn.set(hash(++i, c | rLength[0] << 8));
 
-    co.set(hash(++i, c << 8U | min(255, pos - cPos1[c])));
-    co.set(hash(++i, c << 17U | d << 9U | llog(pos - wPos1[w]) >> 2U));
-    co.set(hash(++i, c << 8U | N));
+    co.set(hash(++i, c << 8 | min(255, pos - cPos1[c])));
+    co.set(hash(++i, c << 17 | d << 9 | llog(pos - wPos1[w]) >> 2));
+    co.set(hash(++i, c << 8 | N));
 
-    cp.set(hash(++i, rLength[0] | N << 10U | col << 18U));
-    cp.set(hash(++i, rLength[0] | c << 10U | col << 18U));
+    cp.set(hash(++i, rLength[0] | N << 10 | col << 18));
+    cp.set(hash(++i, rLength[0] | c << 10 | col << 18));
     cp.set(hash(++i, col | rLength[0] << 12));
 
     if( rLength[0] > 8 ) {
       cp.set(hash(++i, min(min(0xFF, rLength[0]), pos - prevTransition), min(0x3FF, col),
-                  (w & 0xF0F0U) | static_cast<uint32_t>(w == ((padding << 8U) | padding)), nTransition));
+                  (w & 0xF0F0) | static_cast<uint32_t>(w == ((padding << 8) | padding)), nTransition));
       cp.set(hash(++i, w, static_cast<uint64_t>(buf(rLength[0] + 1) == padding && N == padding), col / max(1, rLength[0] / 32)));
     } else {
       cp.set(0), cp.set(0);
     }
 
-    cp.set(hash(++i, N | ((NN & 0xF0U) << 4U) | ((NNN & 0xE0U) << 7U) | ((NNNN & 0xE0U) << 10U) | ((col / max(1, rLength[0] / 16)) << 18U)));
-    cp.set(hash(++i, (N & 0xF8U) | ((NN & 0xF8U) << 8U) | (col << 16U)));
+    cp.set(hash(++i, N | ((NN & 0xF0) << 4) | ((NNN & 0xE0) << 7) | ((NNNN & 0xE0) << 10) | ((col / max(1, rLength[0] / 16)) << 18)));
+    cp.set(hash(++i, (N & 0xF8) | ((NN & 0xF8) << 8) | (col << 16)));
     cp.set(hash(++i, N, NN));
 
     cp.set(hash(++i, col, iCtx[0]()));
     cp.set(hash(++i, col, iCtx[1]()));
-    cp.set(hash(++i, col, iCtx[0]() & 0xFFU, iCtx[1]() & 0xFFU));
+    cp.set(hash(++i, col, iCtx[0]() & 0xFF, iCtx[1]() & 0xFF));
 
     cp.set(hash(++i, iCtx[2]()));
     cp.set(hash(++i, iCtx[3]()));
-    cp.set(hash(++i, iCtx[1]() & 0xFFU, iCtx[3]() & 0xFFU));
+    cp.set(hash(++i, iCtx[1]() & 0xFF, iCtx[3]() & 0xFF));
 
     cp.set(hash(++i, N, (WxNW = c ^ buf(rLength[0] + 1))));
-    cp.set(hash(++i, static_cast<int>(shared->State.Match.length2 != 0) << 8U | shared->State.Match.expectedByte, uint8_t(iCtx[1]()), N, WxNW));
+    cp.set(hash(++i, (shared->State.Match.length2 != 0) << 8 | shared->State.Match.expectedByte, uint8_t(iCtx[1]()), N, WxNW));
 
     if (!isText) {
       int k = 0x300;
       if (mayBeImg24B) {
-        k = (col % 3) << 8U;
-        maps[0].set(clip((static_cast<uint8_t>(c4 >> 16U)) + c - (c4 >> 24U)) | k);
+        k = (col % 3) << 8;
+        maps[0].set(clip((static_cast<uint8_t>(c4 >> 16)) + c - (c4 >> 24)) | k);
       }
       else {
         maps[0].set(clip(c * 2 - d) | k);
@@ -204,7 +204,7 @@ void RecordModel::mix(Mixer &m) {
       iMap[2].setDirect(N * 3 - NN * 3 + NNN);
 
       INJECT_SHARED_blockPos
-      sMap[3].set(blockPos & 255U); // mozilla
+      sMap[3].set(blockPos & 255); // mozilla
     }
 
     // update last context positions
@@ -218,7 +218,7 @@ void RecordModel::mix(Mixer &m) {
   }
   INJECT_SHARED_c0
   uint8_t B = c0 << (8 - bpos);
-  uint32_t ctx = (N ^ B) | (bpos << 8U); // 11 bits
+  uint32_t ctx = (N ^ B) | (bpos << 8); // 11 bits
   INJECT_SHARED_y
   iCtx[nIndContexts - 1] += y;
   iCtx[nIndContexts - 1] = ctx;
@@ -227,7 +227,7 @@ void RecordModel::mix(Mixer &m) {
 
   sMap[0].set(ctx);
   sMap[1].set(iCtx[nIndContexts - 1]());
-  sMap[2].set((ctx << 8U) | WxNW);
+  sMap[2].set((ctx << 8) | WxNW);
   sMap[0].mix(m);
   sMap[1].mix(m);
   sMap[2].mix(m);
@@ -249,7 +249,7 @@ void RecordModel::mix(Mixer &m) {
     sMap[3].mix(m);
   }
   
-  m.set(static_cast<uint32_t>(rLength[0] > 2) * ((bpos << 7U) | mxCtx), 1024);
-  m.set(((N ^ B) >> 4U) | (x << 4U), 512);
-  m.set(((shared->State.Text.characterGroup) << 5U) | x, 11 * 32);
+  m.set(static_cast<uint32_t>(rLength[0] > 2) * ((bpos << 7) | mxCtx), 1024);
+  m.set(((N ^ B) >> 4) | (x << 4), 512);
+  m.set(((shared->State.Text.characterGroup) << 5) | x, 11 * 32);
 }

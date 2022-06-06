@@ -41,16 +41,16 @@ private:
   ProgramChecker *programChecker = ProgramChecker::getInstance();
   void create(uint64_t requestedSize);
 
-  [[nodiscard]] inline uint64_t padding() const { return Align - 1; }
+  inline uint64_t getPadding() const { return Align - 1; }
 
-  [[nodiscard]] inline uint64_t allocatedBytes() const {
-    return (reservedSize == 0) ? 0 : reservedSize * sizeof(T) + padding();
+  inline uint64_t getAllocatedBytes() const {
+    return (reservedSize == 0) ? 0 : reservedSize * sizeof(T) + getPadding();
   }
 
   /**
     * Assignment operator is private so that it cannot be called
     */
-  auto operator=(Array const& /*unused*/) -> Array& { return *this; }
+  Array& operator=(Array const& /*unused*/) { return *this; }
 
 public:
   explicit Array(uint64_t requestedSize) { create(requestedSize); }
@@ -70,7 +70,7 @@ public:
   /**
     * @return the number of T elements currently in the array.
     */
-  [[nodiscard]] uint64_t size() const { return usedSize; }
+  uint64_t size() const { return usedSize; }
 
   /**
     * Grows or shrinks the array.
@@ -111,12 +111,12 @@ void Array<T, Align>::create(uint64_t requestedSize) {
     ptr = nullptr;
     return;
   }
-  const uint64_t bytesToAllocate = allocatedBytes();
+  const uint64_t bytesToAllocate = getAllocatedBytes();
   ptr = (char *) calloc(bytesToAllocate, 1);
   if( ptr == nullptr ) {
     quit("Out of memory.");
   }
-  uint64_t pad = padding();
+  uint64_t pad = getPadding();
   data = (T *) (((uintptr_t) ptr + pad) & ~(uintptr_t) pad);
   assert(ptr <= (char *) data && (char *) data <= ptr + Align);
   assert(((uintptr_t) data & (Align - 1)) == 0); //aligned as expected?
@@ -132,7 +132,7 @@ void Array<T, Align>::resize(uint64_t newSize) {
   char *oldPtr = ptr;
   T *oldData = data;
   const uint64_t oldSize = usedSize;
-  programChecker->free(allocatedBytes());
+  programChecker->free(getAllocatedBytes());
   create(newSize);
   if( oldSize > 0 ) {
     assert(oldPtr != nullptr && oldData != nullptr);
@@ -156,7 +156,7 @@ void Array<T, Align>::pushBack(const T &x) {
 
 template<class T, const int Align>
 Array<T, Align>::~Array() {
-  programChecker->free(allocatedBytes());
+  programChecker->free(getAllocatedBytes());
   free(ptr);
   usedSize = reservedSize = 0;
   data = nullptr;

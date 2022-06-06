@@ -28,12 +28,12 @@ public:
     mask = newSize - 1;
   }
 
-  [[nodiscard]] auto getpos() const -> uint32_t {
+  uint32_t getpos() const {
     return offset;
   }
 
   void fill(const T B) {
-    const auto n = (uint32_t) b.size();
+    const uint32_t n = (uint32_t) b.size();
     for( uint32_t i = 0; i < n; i++ ) {
       b[i] = B;
     }
@@ -49,7 +49,7 @@ public:
     * @param i
     * @return
     */
-  auto operator[](const uint32_t i) const -> T {
+  T operator[](const uint32_t i) const {
     return b[i & mask];
   }
 
@@ -62,7 +62,7 @@ public:
     * @param i
     * @return
     */
-  auto operator()(const uint32_t i) const -> T {
+  T operator()(const uint32_t i) const {
     //assert(i!=0);
     return b[(offset - i) & mask];
   }
@@ -75,14 +75,14 @@ public:
   /**
     * @return the size of the RingBuffer
     */
-  auto size() -> uint32_t {
+  uint32_t size() {
     return (uint32_t) b.size();
   }
 
   void copyTo(RingBuffer &dst) {
     dst.setSize(size());
     dst.offset = offset;
-    auto n = (uint32_t) b.size();
+    uint32_t n = (uint32_t) b.size();
     for( uint32_t i = 0; i < n; i++ ) {
       dst.b[i] = b[i];
     }

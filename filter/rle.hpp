@@ -17,7 +17,7 @@ private:
         *outPtr++ = 0xFF, *outPtr++ = byte;
         run -= 128;
     }
-      *outPtr++ = (uint8_t)(0x80U | (run - 1)), *outPtr++ = byte;
+      *outPtr++ = (uint8_t)(0x80 | (run - 1)), *outPtr++ = byte;
   }
 
 
@@ -44,7 +44,7 @@ private:
     }
   }
 
-  auto handleLiteralRun(uint8_t *outPtr, uint8_t *lastLiteral) -> uint8_t {
+  uint8_t handleLiteralRun(uint8_t *outPtr, uint8_t *lastLiteral) {
     uint8_t loop = 0;
     if( outPtr[-2] == 0x81 && *lastLiteral < (125)) {
       state = (((*lastLiteral) += 2) == 127) ? RleState::BASE : RleState::LITERAL;
@@ -76,7 +76,7 @@ public:
         continue;
       }
       if( c > 0x7F ) {
-        for( uint32_t j = 0; j <= (c & 0x7FU); j++ ) {
+        for( uint32_t j = 0; j <= (c & 0x7F); j++ ) {
           out->putChar(b);
         }
         c = in->getchar(), i++;
@@ -89,7 +89,7 @@ public:
     }
   }
 
-  auto decode(File *in, File *out, FMode fMode, uint64_t  /*size*/, uint64_t &diffFound) -> uint64_t override {
+  uint64_t decode(File *in, File *out, FMode fMode, uint64_t  /*size*/, uint64_t &diffFound) override {
     uint8_t inBuffer[0x10000] = {0};
     uint8_t outBuffer[0x10200] = {0};
     uint64_t pos = 0;
@@ -97,8 +97,8 @@ public:
 
     do {
       uint64_t remaining = in->blockRead(&inBuffer[0], scanLineSize);
-      auto *inPtr = (uint8_t *) inBuffer;
-      auto *outPtr = (uint8_t *) outBuffer;
+      uint8_t *inPtr = (uint8_t *) inBuffer;
+      uint8_t *outPtr = (uint8_t *) outBuffer;
       uint8_t *lastLiteral = nullptr;
       state = RleState::BASE;
       while( remaining > 0 ) {
@@ -123,7 +123,7 @@ public:
               loop = handleLiteralRun(outPtr, lastLiteral);
             }
           }
-        } while( loop != 0u );
+        } while( loop != 0 );
       }
 
       uint64_t length = outPtr - (&outBuffer[0]);
@@ -131,14 +131,14 @@ public:
         out->blockWrite(&outBuffer[0], length);
       } else if( fMode == FMode::FCOMPARE ) {
         for(uint32_t j = 0; j < length; ++j ) {
-          if( outBuffer[j] != out->getchar() && (diffFound == 0u)) {
+          if( outBuffer[j] != out->getchar() && (diffFound == 0)) {
             diffFound = pos + j + 1;
             break;
           }
         }
       }
       pos += length;
-    } while( !in->eof() && (diffFound == 0u));
+    } while( !in->eof() && (diffFound == 0));
     return pos;
   }
 };

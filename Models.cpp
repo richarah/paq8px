@@ -66,7 +66,7 @@ void Models::trainText(const char* const dictionary, int iterations) {
           normalModel.mix(mDummy); //update (train) model
           wordModel.mix(mDummy); //update (train) model
           mDummy.p();
-          int y = (c1 >> (7 - bpos)) & 1U;
+          int y = (c1 >> (7 - bpos)) & 1;
           shared->update(y, false);
         }
       }
@@ -79,7 +79,7 @@ void Models::trainText(const char* const dictionary, int iterations) {
           normalModel.mix(mDummy); //update (train) model
           wordModel.mix(mDummy); //update (train) model
           mDummy.p();
-          int y = (c1 >> (7 - bpos)) & 1U;
+          int y = (c1 >> (7 - bpos)) & 1;
           shared->update(y, false);
         }
       }
@@ -108,7 +108,7 @@ void Models::trainExe() {
     for (uint32_t bpos = 0; bpos < 8; bpos++) {
       exeModel.mix(mDummy); //update (train) model
       mDummy.p();
-      int y = (c >> (7 - bpos)) & 1U;
+      int y = (c >> (7 - bpos)) & 1;
       shared->update(y, false);
     }
   } while ((c = f.getchar()) != EOF);

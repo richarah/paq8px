@@ -138,7 +138,7 @@ class StateTable {
   };
 
 public:
-  static auto next(uint8_t state, int y) -> uint8_t;
+  static uint8_t getNextState(uint8_t state, int y);
 
   /**
     * Next state with probabilistic increment
@@ -147,11 +147,11 @@ public:
     * @param rnd
     * @return
     */
-  static auto next(uint8_t oldState, int y, Random &rnd) -> uint8_t;
+  static uint8_t getNextState(uint8_t oldState, int y, Random &rnd);
 
   static void update(uint8_t *state, int y, Random &rnd);
 
-  static auto group(uint8_t state) -> uint8_t;
+  static uint8_t group(uint8_t state) ;
 
-  static auto prio(uint8_t state) -> uint8_t;
+  static uint8_t prio(uint8_t state);
 };

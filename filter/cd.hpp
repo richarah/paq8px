@@ -8,7 +8,7 @@
  */
 class CdFilter : Filter {
 public:
-  static auto expandCdSector(uint8_t *data, int address, int test) -> int {
+  static int expandCdSector(uint8_t *data, int address, int test) {
     uint8_t d2[2352];
     eccedcInit();
     //sync pattern: 00 FF FF FF FF FF FF FF FF FF FF 00
@@ -25,9 +25,9 @@ public:
         d2[i] = data[i];
       }
     } else {
-      int c1 = (address & 15U) + ((address >> 4U) & 15U) * 10;
-      int c2 = ((address >> 8U) & 15U) + ((address >> 12U) & 15U) * 10;
-      int c3 = ((address >> 16U) & 15U) + ((address >> 20U) & 15U) * 10;
+      int c1 = (address & 15) + ((address >> 4) & 15) * 10;
+      int c2 = ((address >> 8) & 15) + ((address >> 12) & 15) * 10;
+      int c3 = ((address >> 16) & 15) + ((address >> 20) & 15) * 10;
       c1 = (c1 + 1) % 75;
       if( c1 == 0 ) {
         c2 = (c2 + 1) % 60;
@@ -59,7 +59,7 @@ public:
       }
       uint32_t edc = edcCompute(d2 + 16 * static_cast<int>(fMode == 2), 2064 - 8 * static_cast<int>(fMode == 2));
       for( int i = 0; i < 4; i++ ) {
-        d2[2064 + 8 * static_cast<int>(fMode == 2) + i] = (edc >> (8 * i)) & 0xffU;
+        d2[2064 + 8 * static_cast<int>(fMode == 2) + i] = (edc >> (8 * i)) & 0xff;
       }
       eccCompute(d2 + 12, 86, 24, 2, 86, d2 + 2076);
       eccCompute(d2 + 12, 52, 43, 86, 88, d2 + 2248);
@@ -79,7 +79,7 @@ public:
       }
       uint32_t edc = edcCompute(d2 + 16, 2332);
       for( int i = 0; i < 4; i++ ) {
-        d2[2348 + i] = (edc >> (8 * i)) & 0xffu; //EDC
+        d2[2348 + i] = (edc >> (8 * i)) & 0xff; //EDC
       }
     }
     for( int i = 0; i < 2352; i++ ) {
@@ -96,8 +96,8 @@ public:
     uint8_t blk[block];
     uint64_t blockResidual = size % block;
     assert(blockResidual < 65536);
-    out->putChar((blockResidual >> 8U) & 255U);
-    out->putChar(blockResidual & 255U);
+    out->putChar((blockResidual >> 8) & 255);
+    out->putChar(blockResidual & 255);
     for( uint64_t offset = 0; offset < size; offset += block ) {
       if( offset + block > size ) { //residual
         in->blockRead(&blk[0], size - offset);
@@ -108,8 +108,7 @@ public:
           blk[15] = 3; //indicate Mode2/Form2
         }
         if( offset == 0 ) {
-          out->blockWrite(&blk[12], 4 + 4 * static_cast<int>(blk[15] !=
-                                                              1)); //4-byte address + 4 bytes from the 8-byte subheader goes only to the first sector
+          out->blockWrite(&blk[12], 4 + 4 * static_cast<int>(blk[15] != 1)); //4-byte address + 4 bytes from the 8-byte subheader goes only to the first sector
         }
         out->blockWrite(&blk[16 + 8 * static_cast<int>(blk[15] != 1)],
                         2048 + 276 * static_cast<int>(info == 3)); //user data goes to all sectors
@@ -129,14 +128,14 @@ public:
     * @param diffFound
     * @return
     */
-  auto decode(File *in, File *out, FMode fMode, uint64_t size, uint64_t &diffFound) -> uint64_t override {
+  uint64_t decode(File *in, File *out, FMode fMode, uint64_t size, uint64_t &diffFound) override {
     const int block = 2352;
     uint8_t blk[block];
     uint64_t i = 0; //*in position
     uint64_t nextBlockPos = 0;
     int address = -1;
     int dataSize = 0;
-    uint64_t residual = (in->getchar() << 8U) + in->getchar();
+    uint64_t residual = (static_cast<uint64_t>(in->getchar()) << 8) + in->getchar();
     size -= 2;
     while( i < size ) {
       if( size - i == residual ) { //residual data after last sector
@@ -145,7 +144,7 @@ public:
           out->blockWrite(blk, residual);
         } else if( fMode == FMode::FCOMPARE ) {
           for( int j = 0; j < static_cast<int>(residual); ++j ) {
-            if( blk[j] != out->getchar() && (diffFound == 0u)) {
+            if( blk[j] != out->getchar() && (diffFound == 0)) {
               diffFound = nextBlockPos + j + 1;
             }
           }
@@ -153,13 +152,11 @@ public:
         return nextBlockPos + residual;
       }
       if( i == 0 ) { //first sector
-        in->blockRead(blk + 12,
-                      4); //header (4 bytes) consisting of address (Minutes, Seconds, Sectors) and fMode (1 = Mode1, 2 = Mode2/Form1, 3 = Mode2/Form2)
+        in->blockRead(blk + 12, 4); //header (4 bytes) consisting of address (Minutes, Seconds, Sectors) and fMode (1 = Mode1, 2 = Mode2/Form1, 3 = Mode2/Form2)
         if( blk[15] != 1 ) {
           in->blockRead(blk + 16, 4); //Mode2: 4 bytes from the read 8-byte subheader
         }
-        dataSize = 2048 + static_cast<int>(blk[15] == 3) *
-                          276; //user data bytes: Mode1 and Mode2/Form1: 2048 (ECC is present) or Mode2/Form2: 2048+276=2324 bytes (ECC is not present)
+        dataSize = 2048 + static_cast<int>(blk[15] == 3) * 276; //user data bytes: Mode1 and Mode2/Form1: 2048 (ECC is present) or Mode2/Form2: 2048+276=2324 bytes (ECC is not present)
         i += 4 + 4 * static_cast<int>(blk[15] != 1); //4 byte header + ( Mode2: 4 bytes from the 8-byte subheader )
       } else { //normal sector
         address = (blk[12] << 16) + (blk[13] << 8) + blk[14]; //3-byte address (Minutes, Seconds, Sectors)
@@ -179,7 +176,7 @@ public:
         out->blockWrite(blk, block);
       } else if( fMode == FMode::FCOMPARE ) {
         for( int j = 0; j < block; ++j ) {
-          if( blk[j] != out->getchar() && (diffFound == 0u)) {
+          if( blk[j] != out->getchar() && (diffFound == 0)) {
             diffFound = nextBlockPos + j + 1;
           }
         }

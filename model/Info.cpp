@@ -6,8 +6,8 @@ Info::Info(Shared* const sh, ContextMap2 &contextmap) : shared(sh), cm(contextma
 }
 
 void Info::reset() {
-  memset(&wordPositions[0], 0, (1U << wPosBits) * sizeof(uint32_t));
-  memset(&checksums[0], 0, (1U << wPosBits) * sizeof(uint16_t));
+  memset(&wordPositions[0], 0, (1 << wPosBits) * sizeof(uint32_t));
+  memset(&checksums[0], 0, (1 << wPosBits) * sizeof(uint16_t));
   c4 = 0;
   c = pC = ppC = 0;
   isLetter = isLetterPc = isLetterPpC = false;
@@ -46,7 +46,7 @@ void Info::processChar(const bool isExtendedChar) {
   isLetterPpC = isLetterPc;
   isLetterPc = isLetter;
   INJECT_SHARED_c1
-  c4 = c4 << 8U | c1;
+  c4 = c4 << 8 | c1;
   c = c1;
   if( c >= 'A' && c <= 'Z' ) {
     c += 'a' - 'A';
@@ -62,7 +62,7 @@ void Info::processChar(const bool isExtendedChar) {
   lastUpper = min(lastUpper + 1, maxLastUpper);
   lastLetter = min(lastLetter + 1, maxLastLetter);
 
-  mask2 <<= 8U;
+  mask2 <<= 8;
 
   if( isLetter || isNumber ) {
     if( wordLen0 == 0 ) { // the beginning of a new word
@@ -88,7 +88,7 @@ void Info::processChar(const bool isExtendedChar) {
     word0 = combine64(word0, c);
     w = static_cast<uint16_t>(finalize64(word0, wPosBits));
     chk = checksum16(word0, wPosBits);
-    text0 = (text0 << 8U | c) & 0xffffffffffu; // last 5 alphanumeric chars (other chars are ignored)
+    text0 = (text0 << 8 | c) & 0xffffffffff; // last 5 alphanumeric chars (other chars are ignored)
     wordLen0 = min(wordLen0 + 1, maxWordLen);
     //last letter types
     if( isLetter ) {
@@ -100,13 +100,13 @@ void Info::processChar(const bool isExtendedChar) {
         if( c == 'y' ) {
           mask2 |= 'y'; // y
         } else if( pC == 't' && c == 'h' ) {
-          mask2 = ((mask2 >> 8U) & 0x00ffff00u) | 't';
+          mask2 = ((mask2 >> 8) & 0x00ffff00) | 't';
         } // consonant/th
         else {
           mask2 |= 'b'; // consonant
         }
       } else {
-        mask2 |= 128u; // extended_char: c>=128
+        mask2 |= 128; // extended_char: c>=128
       }
     } else { // isNumber
       if( c == '.' ) {
@@ -169,19 +169,19 @@ void Info::processChar(const bool isExtendedChar) {
   uint8_t g = c1;
   if( g >= 128 ) {
     //utf8 code points (weak context)
-    if((g & 0xf8u) == 0xf0 ) {
+    if((g & 0xf8) == 0xf0 ) {
       g = 1;
-    } else if((g & 0xf0u) == 0xe0 ) {
+    } else if((g & 0xf0) == 0xe0 ) {
       g = 2;
-    } else if((g & 0xe0u) == 0xc0 ) {
+    } else if((g & 0xe0) == 0xc0 ) {
       g = 3;
-    } else if((g & 0xc0u) == 0x80 ) {
+    } else if((g & 0xc0) == 0x80 ) {
       g = 4;
       //the rest of the values
     } else if( g == 0xff ) {
       g = 5;
     } else {
-      g = c1 & 0xf0u;
+      g = c1 & 0xf0;
     }
   } else if( g >= '0' && g <= '9' ) {
     g = '0';
@@ -192,14 +192,14 @@ void Info::processChar(const bool isExtendedChar) {
   } else if( g < 32 && !isNewline ) {
     g = 6;
   }
-  groups = groups << 8U | g;
+  groups = groups << 8 | g;
 
   // Expressions (pure words separated by single spaces)
   //
   // Remarks: (1) formatted text files may contain SPACE+NEW_LINE (dickens) or NEW_LINE+SPACE (world95.txt)
   // or just a NEW_LINE instead of a SPACE. (2) quotes and apostrophes are ignored during processing
   if( isLetter ) {
-    expr0Chars = expr0Chars << 8U | c; // last 4 consecutive letters
+    expr0Chars = expr0Chars << 8 | c; // last 4 consecutive letters
     expr0 = combine64(expr0, c);
     exprLen0 = min(exprLen0 + 1, maxWordLen);
   } else {
@@ -222,7 +222,7 @@ void Info::processChar(const bool isExtendedChar) {
 void Info::lineModelPredict() {
   const uint8_t RH = CM_USE_RUN_STATS | CM_USE_BYTE_HISTORY;
   uint64_t i = 1024;
-  const auto isNewline = c == NEW_LINE || c == 0;
+  const bool isNewline = c == NEW_LINE || c == 0;
   INJECT_SHARED_pos
   if( isNewline ) { // a new line has just started (or: zero in asciiz or in binary data)
     nl4 = nl3;
@@ -239,15 +239,15 @@ void Info::lineModelPredict() {
 
   uint32_t col = pos - nl1;
   if( col == 1 ) {
-    firstChar = groups & 0xffU;
+    firstChar = groups & 0xff;
   }
   INJECT_SHARED_buf
   const uint8_t cAbove = buf[nl2 + col]; // N
   const uint8_t pCAbove = buf[nl2 + col - 1]; // NW
 
-  const auto isNewLineStart = col == 0 && nl2 > 0;
-  const auto isPrevCharMatchAbove = c1 == pCAbove && col != 0 && nl2 != 0;
-  const uint32_t aboveCtx = cAbove << 1U | uint32_t(isPrevCharMatchAbove);
+  const bool isNewLineStart = col == 0 && nl2 > 0;
+  const bool isPrevCharMatchAbove = c1 == pCAbove && col != 0 && nl2 != 0;
+  const uint32_t aboveCtx = cAbove << 1 | uint32_t(isPrevCharMatchAbove);
   if (isNewLineStart) {
     lineMatch = 0; //first char not yet known = nothing to match
   }
@@ -267,9 +267,9 @@ void Info::lineModelPredict() {
     i++;
   }
   cm.set(RH, hash(++i, aboveCtx, c1));
-  cm.set(RH, hash(++i, col << 9U | aboveCtx, c1));
+  cm.set(RH, hash(++i, col << 9 | aboveCtx, c1));
   const int lineLength = nl1 - nl2;
-  cm.set(RH, hash(++i, nl1 - nl2, col, aboveCtx, groups & 0xffu)); // english_mc
+  cm.set(RH, hash(++i, nl1 - nl2, col, aboveCtx, groups & 0xff)); // english_mc
   cm.set(RH, hash(++i, nl1 - nl2, col, aboveCtx, c1)); // english_mc
 
 
@@ -303,10 +303,10 @@ void Info::lineModelPredict() {
   // modeling line content per column (and NEW_LINE in some extent)
   cm.set(RH, hash(++i, static_cast<uint64_t>(col << 1 | (c1 == SPACE)))); // after space vs after other char in this column // world95.txt
   cm.set(RH, hash(++i, col << 8 | c1));
-  cm.set(RH, hash(++i, col, mask & 0x1ffU));
+  cm.set(RH, hash(++i, col, mask & 0x1ff));
   cm.set(RH, hash(++i, col, lineLength)); // the length of the previous line may foretell the content of columns
 
-  cm.set(RH, hash(++i, col, firstChar, static_cast<uint64_t>(lastUpper < col) << 8 | (groups & 0xffu))); // book1 book2 news
+  cm.set(RH, hash(++i, col, firstChar, static_cast<uint64_t>(lastUpper < col) << 8 | (groups & 0xff))); // book1 book2 news
 
   // content of lines, paragraphs
   cm.set(RH, hash(++i, nl1)); //chars occurring in this paragraph (order 0)
@@ -328,7 +328,7 @@ void Info::predict(const uint8_t pdfTextParserState) {
   const uint32_t lastPos = checksums[w] != chk ? 0 : wordPositions[w]; //last occurrence (position) of a whole word or number
   const uint32_t dist = lastPos == 0 ? 0 : min(llog(pos - lastPos + 120) >> 4, 20);
   const bool word0MayEndNow = lastPos != 0;
-  const uint8_t mayBeCaps = static_cast<const uint8_t>(uint8_t(c4 >> 8U) >= 'A' && uint8_t(c4 >> 8U) <= 'Z' && uint8_t(c4) >= 'A' && uint8_t(c4) <= 'Z');
+  const uint8_t mayBeCaps = static_cast<const uint8_t>(uint8_t(c4 >> 8) >= 'A' && uint8_t(c4 >> 8) <= 'Z' && uint8_t(c4) >= 'A' && uint8_t(c4) <= 'Z');
                                                        
   INJECT_SHARED_blockType
   const bool isTextBlock = isTEXT(blockType);
@@ -347,25 +347,23 @@ void Info::predict(const uint8_t pdfTextParserState) {
   }
 
   // sections introduced by keywords (enwik world95.txt html/xml)
-  cm.set(RH, hash(++i, gapToken0,
-              keyword0)); // chars occurring in a section introduced by "keyword:" or "keyword=" (order 0 and variable order for the gap)
-  cm.set(RH, hash(++i, word0, c,
-              keyword0)); // tokens occurring in a section introduced by "keyword:" or "keyword=" (order 1 and variable order for a word)
+  cm.set(RH, hash(++i, gapToken0, keyword0)); // chars occurring in a section introduced by "keyword:" or "keyword=" (order 0 and variable order for the gap)
+  cm.set(RH, hash(++i, word0, c, keyword0)); // tokens occurring in a section introduced by "keyword:" or "keyword=" (order 1 and variable order for a word)
 
   cm.set(RH, hash(++i, word0, dist));
   cm.set(RH, hash(++i, word1, gapToken0, dist));
 
-  cm.set(RH, hash(++i, pos >> 10U, word0)); //word/number tokens and characters occurring in this 1K block
+  cm.set(RH, hash(++i, pos >> 10, word0)); //word/number tokens and characters occurring in this 1K block
 
   // Simple word morphology (order 1-4)
 
-  const int wmeMbc = static_cast<int>(word0MayEndNow) << 1U | mayBeCaps;
-  const int wl = min(wordLen0, 6);
-  const int wlWmeMbc = wl << 2U | wmeMbc;
+  const uint32_t wmeMbc = static_cast<uint32_t>(word0MayEndNow) << 1 | mayBeCaps;
+  const uint32_t wl = min(wordLen0, 6);
+  const uint32_t wlWmeMbc = wl << 2 | wmeMbc;
   cm.set(RH, hash(++i, wlWmeMbc, mask2 /*last 1-4 char types*/));
 
   if( exprLen0 >= 1 ) {
-    const int wlWmeMbc = min(exprLen0, 1 + 3) << 2U | wmeMbc;
+    const uint32_t wlWmeMbc = min(exprLen0, 1 + 3) << 2 | wmeMbc;
     cm.set(RH, hash(++i, wlWmeMbc, c));
   } else {
     cm.skip(RH);
@@ -373,23 +371,23 @@ void Info::predict(const uint8_t pdfTextParserState) {
   }
 
   if( exprLen0 >= 2 ) {
-    const int wlWmeMbc = min(exprLen0, 2 + 3) << 2U | wmeMbc;
-    cm.set(RH, hash(++i, wlWmeMbc, expr0Chars & 0xffffu));
+    const uint32_t wlWmeMbc = min(exprLen0, 2 + 3) << 2 | wmeMbc;
+    cm.set(RH, hash(++i, wlWmeMbc, expr0Chars & 0xffff));
   } else {
     cm.skip(RH);
     i++;
   }
 
   if( exprLen0 >= 3 ) {
-    const int wlWmeMbc = min(exprLen0, 3 + 3) << 2 | wmeMbc;
-    cm.set(RH, hash(++i, wlWmeMbc, expr0Chars & 0xffffffu));
+    const uint32_t wlWmeMbc = min(exprLen0, 3 + 3) << 2 | wmeMbc;
+    cm.set(RH, hash(++i, wlWmeMbc, expr0Chars & 0xffffff));
   } else {
     cm.skip(RH);
     i++;
   }
 
   if( exprLen0 >= 4 ) {
-    const int wlWmeMbc = min(exprLen0, 4 + 3) << 2U | wmeMbc;
+    const uint32_t wlWmeMbc = min(exprLen0, 4 + 3) << 2 | wmeMbc;
     cm.set(RH, hash(++i, wlWmeMbc, expr0Chars));
   } else {
     cm.skip(RH);
@@ -407,7 +405,7 @@ void Info::predict(const uint8_t pdfTextParserState) {
   cm.set(RH, hash(++i, word0, word1, gapToken1, word2)); // weaker
   cm.set(RH, hash(++i, word0, word1, gapToken1)); // weaker
 
-  const uint8_t c1 = c4 & 0xffu;
+  const uint8_t c1 = c4 & 0xff;
   if( isTextBlock ) {
     cm.set(RH, hash(++i, word0, c1, word2));
     cm.set(RH, hash(++i, word0, c1, word3));
@@ -419,7 +417,7 @@ void Info::predict(const uint8_t pdfTextParserState) {
     i += 6;
   }
 
-  const uint8_t g = groups & 0xffu;
+  const uint8_t g = groups & 0xff;
   cm.set(RH, hash(++i, opened, wlWmeMbc, g, pdfTextParserState));
   cm.set(RH, hash(++i, opened, c, static_cast<uint64_t>(dist != 0), pdfTextParserState));
   cm.set(RH, hash(++i, opened, word0)); // book1, book2, dickens, enwik
@@ -429,8 +427,8 @@ void Info::predict(const uint8_t pdfTextParserState) {
   cm.set(RH, hash(++i, groups, c));
   cm.set(RH, hash(++i, groups, c4 & 0x0000ffff));
 
-  f4 = (f4 << 4U) | (c1 == ' ' ? 0 : c1 >> 4U);
-  cm.set(RH, hash(++i, f4 & 0xfffu));
+  f4 = (f4 << 4) | (c1 == ' ' ? 0 : c1 >> 4);
+  cm.set(RH, hash(++i, f4 & 0x0fff));
   cm.set(RH, hash(++i, f4));
 
   int fl = 0;
@@ -451,17 +449,18 @@ void Info::predict(const uint8_t pdfTextParserState) {
       fl = 7;
     }
   }
-  mask = (mask << 3U) | fl;
+  mask = (mask << 3) | fl;
 
   cm.set(RH, hash(++i, mask));
   cm.set(RH, hash(++i, mask, c1));
-  cm.set(RH, hash(++i, mask, c4 & 0x00ffff00u));
-  cm.set(RH, hash(++i, mask & 0x1ffu, f4 & 0x00fff0u)); // for some binary files
+  cm.set(RH, hash(++i, mask, c4 & 0x00ffff00));
+  cm.set(RH, hash(++i, mask & 0x1ff, f4 & 0x00fff0)); // for some binary files
 
   if( isTextBlock ) {
-    cm.set(RH, hash(++i, word0, c1, llog(wordGap), mask & 0x1FFU,
-                (static_cast<int>(wordLen1 > 3) << 2U) | (static_cast<int>(lastUpper < lastLetter + wordLen1) << 1U) |
-                static_cast<int>(lastUpper < wordLen0 + wordLen1 + wordGap))); //weak
+    cm.set(RH, hash(++i, word0, c1, llog(wordGap), mask & 0x01ff,
+                (static_cast<uint32_t>(wordLen1 > 3) << 2) |
+                (static_cast<uint32_t>(lastUpper < lastLetter + wordLen1) << 1) |
+                (static_cast<uint32_t>(lastUpper < wordLen0 + wordLen1 + wordGap)))); //weak
   } else {
     i++;
   }

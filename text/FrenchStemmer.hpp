@@ -54,18 +54,18 @@ private:
   static constexpr int numSuffixesStep5 = 5;
   const char *suffixesStep5[numSuffixesStep5] = {"enn", "onn", "ett", "ell", "eill"};
 
-  inline auto isConsonant(char c) -> bool;
+  inline bool isConsonant(char c);
   void convertUtf8(Word *w);
   void markVowelsAsConsonants(Word *w);
-  auto getRv(Word *w) -> uint32_t;
-  auto step1(Word *w, uint32_t rv, uint32_t r1, uint32_t r2, bool *forceStep2A) -> bool;
-  auto step2A(Word *w, uint32_t rv) -> bool;
-  auto step2B(Word *w, uint32_t rv, uint32_t r2) -> bool;
+  uint32_t getRv(Word *w);
+  bool step1(Word *w, uint32_t rv, uint32_t r1, uint32_t r2, bool *forceStep2A);
+  bool step2A(Word *w, uint32_t rv);
+  bool step2B(Word *w, uint32_t rv, uint32_t r2);
   static void step3(Word *w);
-  auto step4(Word *w, uint32_t rv, uint32_t r2) -> bool;
-  auto step5(Word *w) -> bool;
-  auto step6(Word *w) -> bool;
+  bool step4(Word *w, uint32_t rv, uint32_t r2);
+  bool step5(Word *w);
+  bool step6(Word *w);
 public:
-  auto isVowel(char c) -> bool final;
-  auto stem(Word *w) -> bool override;
+  bool isVowel(char c) final;
+  bool stem(Word *w) override;
 };

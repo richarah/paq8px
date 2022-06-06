@@ -49,10 +49,10 @@ float dot256_ps_fma3(float const* x1, float const* x2, std::size_t const len, fl
 #if !defined(__i386__) && !defined(__x86_64__) && !defined(_M_X64)
   return 0.f;
 #else
-  static constexpr std::size_t SIMDW = 8, CACHELINE = 64u;
+  static constexpr std::size_t SIMDW = 8, CACHELINE = 64;
   std::size_t const limit = len & static_cast<std::size_t>(-static_cast<std::ptrdiff_t>(SIMDW));
-  std::size_t const limit_x2 = len & static_cast<std::size_t>(-static_cast<std::ptrdiff_t>(SIMDW * 2u));
-  std::size_t remainder = len & (SIMDW - 1u), i = SIMDW * 2u;
+  std::size_t const limit_x2 = len & static_cast<std::size_t>(-static_cast<std::ptrdiff_t>(SIMDW * 2));
+  std::size_t remainder = len & (SIMDW - 1), i = SIMDW * 2;
   __m256 sum0 = _mm256_setzero_ps();
   __m256 sum1 = _mm256_setzero_ps();
   _mm_prefetch((char*)(x1 + (CACHELINE / sizeof(float))), _MM_HINT_NTA);
@@ -61,7 +61,7 @@ float dot256_ps_fma3(float const* x1, float const* x2, std::size_t const len, fl
     sum0 = _mm256_mul_ps(_mm256_loadu_ps(x1), _mm256_loadu_ps(x2));
     sum1 = _mm256_mul_ps(_mm256_loadu_ps(x1 + SIMDW), _mm256_loadu_ps(x2 + SIMDW));
   }
-  for (; i < limit_x2; i += SIMDW * 2u) {
+  for (; i < limit_x2; i += SIMDW * 2) {
     sum0 = _mm256_fmadd_ps(_mm256_loadu_ps(x1 + i), _mm256_loadu_ps(x2 + i), sum0);
     sum1 = _mm256_fmadd_ps(_mm256_loadu_ps(x1 + i + SIMDW), _mm256_loadu_ps(x2 + i + SIMDW), sum1);
   }

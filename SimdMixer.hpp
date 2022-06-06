@@ -14,7 +14,7 @@ private:
   /**
     * Define SIMD padding requirements.
     */
-  [[nodiscard]] constexpr inline auto simdWidth() const -> int {
+  constexpr inline int simdWidth() const {
     if( simd == SIMDType::SIMD_AVX2 ) {
       return 32 / sizeof(short); // 256 bit (32 byte) data size
     }
@@ -119,7 +119,7 @@ public:
     * Predict next bit
     * @return prediction
     */
-  auto p() -> int override {
+  int p() override {
     shared->GetUpdateBroadcaster()->subscribe(this);
     assert(scaleFactor > 0);
     //if(mp)printf("nx: %d, numContexts: %d, base: %d\n",nx, numContexts, base); //for debugging: how many inputs do we have?

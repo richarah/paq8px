@@ -21,22 +21,22 @@ void WordModel::mix(Mixer &m) {
     //extract text from pdf
     INJECT_SHARED_c4
     const uint8_t c1 = c4;
-    if( c4 == 0x0a42540aU /* "\nBT\n" */) {
+    if( c4 == 0x0a42540a /* "\nBT\n" */) {
       pdfTextParserState = 1; // Begin Text
-    } else if( c4 == 0x0a45540aU /* "\nET\n" */) {
+    } else if( c4 == 0x0a45540a /* "\nET\n" */) {
       pdfTextParserState = 0;
     } // end Text
     bool doPdfProcess = true;
     if( pdfTextParserState != 0 ) {
-      const uint8_t pC = c4 >> 8U;
+      const uint8_t pC = c4 >> 8;
       if( pC != '\\' ) {
         if( c1 == '[' ) {
-          pdfTextParserState |= 2U;
+          pdfTextParserState |= 2;
         } //array begins
         else if( c1 == ']' ) {
           pdfTextParserState &= (255 - 2);
         } else if( c1 == '(' ) {
-          pdfTextParserState |= 4U;
+          pdfTextParserState |= 4;
           doPdfProcess = false;
         } //signal: start text extraction from the next char
         else if( c1 == ')' ) {
@@ -45,7 +45,7 @@ void WordModel::mix(Mixer &m) {
       }
     }
 
-    const bool isPdfText = (pdfTextParserState & 4U) != 0;
+    const bool isPdfText = (pdfTextParserState & 4) != 0;
     if( isPdfText ) {
       const bool isExtendedChar = false;
       //predict the chars after "(", but the "(" must not be processed

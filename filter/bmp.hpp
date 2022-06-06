@@ -29,7 +29,7 @@ public:
     uint32_t g = 0;
     uint32_t b = 0;
     uint32_t total = 0;
-    auto isPossibleRgb565 = true;
+    bool isPossibleRgb565 = true;
     for( int i = 0; i < static_cast<int>(size / width); i++ ) {
       for( int j = 0; j < width / 3; j++ ) {
         b = in->getchar();
@@ -38,12 +38,12 @@ public:
         if( isPossibleRgb565 ) {
           int pTotal = total;
           total = min(total + 1, 0xFFFF) *
-                  static_cast<int>((b & 7U) == ((b & 8U) - ((b >> 3U) & 1U)) && (g & 3U) == ((g & 4U) - ((g >> 2U) & 1U)) &&
-                                    (r & 7U) == ((r & 8U) - ((r >> 3U) & 1U)));
+                  static_cast<int>((b & 7) == ((b & 8) - ((b >> 3) & 1)) && (g & 3) == ((g & 4) - ((g >> 2) & 1)) &&
+                                    (r & 7) == ((r & 8) - ((r >> 3) & 1)));
           if( total > rgb565MinRun || pTotal >= rgb565MinRun ) {
-            b ^= (b & 8U) - ((b >> 3U) & 1U);
-            g ^= (g & 4U) - ((g >> 2U) & 1U);
-            r ^= (r & 8U) - ((r >> 3U) & 1U);
+            b ^= (b & 8) - ((b >> 3) & 1);
+            g ^= (g & 4) - ((g >> 2) & 1);
+            r ^= (r & 8) - ((r >> 3) & 1);
           }
           isPossibleRgb565 = total > 0;
         }
@@ -60,7 +60,7 @@ public:
     }
   }
 
-  auto decode(File * /*in*/, File *out, FMode fMode, uint64_t size, uint64_t &diffFound) -> uint64_t override {
+  uint64_t decode(File * /*in*/, File *out, FMode fMode, uint64_t size, uint64_t &diffFound) override {
     uint32_t r = 0;
     uint32_t g = 0;
     uint32_t b = 0;
@@ -78,30 +78,30 @@ public:
         }
         if( isPossibleRGB565 ) {
           if( total >= rgb565MinRun ) {
-            b ^= (b & 8U) - ((b >> 3U) & 1U);
-            g ^= (g & 4U) - ((g >> 2U) & 1U);
-            r ^= (r & 8U) - ((r >> 3U) & 1U);
+            b ^= (b & 8) - ((b >> 3) & 1);
+            g ^= (g & 4) - ((g >> 2) & 1);
+            r ^= (r & 8) - ((r >> 3) & 1);
           }
           total = min(total + 1, 0xFFFF) *
-                  static_cast<uint32_t>((b & 7U) == ((b & 8U) - ((b >> 3U) & 1U)) && (g & 3U) == ((g & 4U) - ((g >> 2U) & 1U)) &&
-                                        (r & 7U) == ((r & 8U) - ((r >> 3U) & 1U)));
+                  static_cast<uint32_t>((b & 7) == ((b & 8) - ((b >> 3) & 1)) && (g & 3) == ((g & 4) - ((g >> 2) & 1)) &&
+                                        (r & 7) == ((r & 8) - ((r >> 3) & 1)));
           isPossibleRGB565 = total > 0;
         }
         if( fMode == FMode::FDECOMPRESS ) {
           out->putChar(b);
           out->putChar(g);
           out->putChar(r);
-          if((j == 0) && ((i & 0xFU) == 0)) {
+          if((j == 0) && ((i & 0xF) == 0)) {
             encoder->printStatus();
           }
         } else if( fMode == FMode::FCOMPARE ) {
-          if((b & 255U) != out->getchar() && (diffFound == 0u)) {
+          if((b & 255) != out->getchar() && (diffFound == 0)) {
             diffFound = p + 1;
           }
-          if( g != out->getchar() && (diffFound == 0u)) {
+          if( g != out->getchar() && (diffFound == 0)) {
             diffFound = p + 2;
           }
-          if((r & 255U) != out->getchar() && (diffFound == 0u)) {
+          if((r & 255) != out->getchar() && (diffFound == 0)) {
             diffFound = p + 3;
           }
           p += 3;
@@ -111,7 +111,7 @@ public:
         if( fMode == FMode::FDECOMPRESS ) {
           out->putChar(encoder->decompressByte(&encoder->predictorMain));
         } else if( fMode == FMode::FCOMPARE ) {
-          if( encoder->decompressByte(&encoder->predictorMain) != out->getchar() && (diffFound == 0U)) {
+          if( encoder->decompressByte(&encoder->predictorMain) != out->getchar() && (diffFound == 0)) {
             diffFound = p + j + 1;
           }
         }
@@ -121,7 +121,7 @@ public:
       if( fMode == FMode::FDECOMPRESS ) {
         out->putChar(encoder->decompressByte(&encoder->predictorMain));
       } else if( fMode == FMode::FCOMPARE ) {
-        if( encoder->decompressByte(&encoder->predictorMain) != out->getchar() && (diffFound == 0u)) {
+        if( encoder->decompressByte(&encoder->predictorMain) != out->getchar() && (diffFound == 0)) {
           diffFound = size - i;
           break;
         }

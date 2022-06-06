@@ -24,7 +24,7 @@ private:
   Array<F,32> mCovariance;
   Array<F,32> mCholesky;
 
-  auto factor() -> int {
+  int factor() {
     // copy the matrix
     memcpy(&mCholesky[0], &mCovariance[0], n * n * sizeof(F));
 
@@ -93,7 +93,7 @@ public:
     x[index++] = val - sub;
   }
 
-  auto predict(const T **p) -> F {
+  F predict(const T **p) {
     F sum = 0.;
     for( int i = 0; i < n; i++ ) {
       sum += w[i] * (x[i] = F(*p[i]) - sub);
@@ -101,7 +101,7 @@ public:
     return sum + sub;
   }
 
-  auto predict() -> F {
+  F predict() {
     assert(index == n);
     index = 0;
     F sum = 0.;

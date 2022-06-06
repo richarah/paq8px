@@ -206,8 +206,8 @@ void ContextMap2::mix(Mixer &m) {
 
       uint8_t* pState = &contextInfo->slot012->bitState + getStateByteLocation(bpos, c0);
       const int state = *pState;
-      const int n0 = StateTable::next(state, 2);
-      const int n1 = StateTable::next(state, 3);
+      const int n0 = StateTable::getNextState(state, 2);
+      const int n1 = StateTable::getNextState(state, 3);
       const int bitIsUncertain = int(n0 != 0 && n1 != 0);
 
       // predict from last byte(s) in context
