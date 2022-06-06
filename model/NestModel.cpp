@@ -9,8 +9,8 @@ void NestModel::mix(Mixer &m) {
     int c = c1;
     int matched = 1;
     int vv = 0;
-    w *= static_cast<int>((vc & 7U) > 0 && (vc & 7U) < 3);
-    if((c & 0x80U) != 0u ) {
+    w *= static_cast<int>((vc & 7) > 0 && (vc & 7) < 3);
+    if((c & 0x80) != 0 ) {
       w = w * 11 * 32 + c;
     }
     const int lc = (c >= 'A' && c <= 'Z' ? c + 'a' - 'A' : c);
@@ -29,11 +29,11 @@ void NestModel::mix(Mixer &m) {
     } else if( lc == '\'' ) {
       vv = 6;
     } else {
-      vv = (c & 32U) != 0u ? 7 : 0;
+      vv = (c & 32) != 0 ? 7 : 0;
     }
-    vc = (vc << 3U) | vv;
+    vc = (vc << 3) | vv;
     if( vv != lvc ) {
-      wc = (wc << 3U) | vv;
+      wc = (wc << 3) | vv;
       lvc = vv;
     }
     INJECT_SHARED_c4
@@ -78,7 +78,7 @@ void NestModel::mix(Mixer &m) {
         break;
       case '\'':
         pc += 0x42;
-        if( c != static_cast<uint8_t>(c4 >> 8U)) {
+        if( c != static_cast<uint8_t>(c4 >> 8)) {
           sense2 ^= 1;
         } else {
           ac += (2 * sense2 - 1);
@@ -127,8 +127,8 @@ void NestModel::mix(Mixer &m) {
         break;
       case '=':
         pc += 87;
-        if( c != static_cast<uint8_t>(c4 >> 8U)) {
-          sense1 ^= 1U;
+        if( c != static_cast<uint8_t>(c4 >> 8)) {
+          sense1 ^= 1;
         } else {
           ec += (2 * sense1 - 1);
         }
@@ -151,18 +151,18 @@ void NestModel::mix(Mixer &m) {
     }
     const uint8_t R_ = CM_USE_RUN_STATS;
     uint64_t i = 0;
-    cm.set(R_, hash(++i, (vv > 0 && vv < 3) ? 0 : (lc | 0x100U), ic & 0x3FFU, ec & 0x7U, ac & 0x7U, uc));
+    cm.set(R_, hash(++i, (vv > 0 && vv < 3) ? 0 : (lc | 0x100), ic & 0x03FF, ec & 0x07, ac & 0x07, uc));
     cm.set(R_, hash(++i, ic, w, ilog2(bc + 1)));
-    cm.set(R_, hash(++i, (3 * vc + 77 * pc + 373 * ic + qc) & 0xffffu));
-    cm.set(R_, hash(++i, (31 * vc + 27 * pc + 281 * qc) & 0xffffu));
-    cm.set(R_, hash(++i, (13 * vc + 271 * ic + qc + bc) & 0xffffu));
-    cm.set(R_, hash(++i, (17 * pc + 7 * ic) & 0xffffu));
-    cm.set(R_, hash(++i, (13 * vc + ic) & 0xffffu));
-    cm.set(R_, hash(++i, (vc / 3 + pc) & 0xffffu));
-    cm.set(R_, hash(++i, (7 * wc + qc) & 0xffffu));
-    cm.set(R_, hash(++i, vc & 0xffffu, c4 & 0xffu));
-    cm.set(R_, hash(++i, (3 * pc) & 0xffffu, c4 & 0xffu));
-    cm.set(R_, hash(++i, ic & 0xffffu, c4 & 0xffu));
+    cm.set(R_, hash(++i, (3 * vc + 77 * pc + 373 * ic + qc) & 0xffff));
+    cm.set(R_, hash(++i, (31 * vc + 27 * pc + 281 * qc) & 0xffff));
+    cm.set(R_, hash(++i, (13 * vc + 271 * ic + qc + bc) & 0xffff));
+    cm.set(R_, hash(++i, (17 * pc + 7 * ic) & 0xffff));
+    cm.set(R_, hash(++i, (13 * vc + ic) & 0xffff));
+    cm.set(R_, hash(++i, (vc / 3 + pc) & 0xffff));
+    cm.set(R_, hash(++i, (7 * wc + qc) & 0xffff));
+    cm.set(R_, hash(++i, vc & 0xffff, c4 & 0xff));
+    cm.set(R_, hash(++i, (3 * pc) & 0xffff, c4 & 0xff));
+    cm.set(R_, hash(++i, ic & 0xffff, c4 & 0xff));
   }
   cm.mix(m);
 }

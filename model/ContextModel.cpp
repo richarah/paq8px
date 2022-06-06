@@ -112,7 +112,6 @@ int ContextModel::p() {
           break;
         }
 
-  #ifndef DISABLE_AUDIOMODEL
         case BlockType::AUDIO:
         case BlockType::AUDIO_LE: {
           if ((blockInfo & 2) == 0) {
@@ -128,7 +127,6 @@ int ContextModel::p() {
             break;
           }
         }
-  #endif //DISABLE_AUDIOMODEL
 
         case BlockType::JPEG: {
           static ContextModelJpeg contextModelJpeg{ shared, models, mixerFactory };

@@ -1,10 +1,10 @@
 #include "StateTable.hpp"
 
-auto StateTable::next(uint8_t const state, const int y) -> uint8_t {
+uint8_t  StateTable::getNextState(uint8_t const state, const int y) {
   return stateTable[state][y];
 }
 
-auto StateTable::next(uint8_t const oldState, const int y, Random &rnd) -> uint8_t {
+uint8_t StateTable::getNextState(uint8_t const oldState, const int y, Random &rnd) {
   const uint8_t newState = stateTable[oldState][y];
   if (newState >= 205 && newState >= oldState + 4) {
     // Apply probabilistic increment for contexts with strong trend of 0s or 1s.
@@ -23,13 +23,13 @@ auto StateTable::next(uint8_t const oldState, const int y, Random &rnd) -> uint8
 }
 
 void StateTable::update(uint8_t *const state, const int y, Random &rnd) {
-  *state = next(*state, y, rnd);
+  *state = getNextState(*state, y, rnd);
 }
 
-auto StateTable::group(const uint8_t state) -> uint8_t {
+uint8_t StateTable::group(const uint8_t state) {
   return stateGroup[state];
 }
 
-auto StateTable::prio(const uint8_t state) -> uint8_t {
+uint8_t StateTable::prio(const uint8_t state) {
   return statePrio[state];
 }

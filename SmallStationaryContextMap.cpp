@@ -25,14 +25,14 @@ void SmallStationaryContextMap::reset() {
 
 void SmallStationaryContextMap::update() {
   INJECT_SHARED_y
-  *cp += ((y << 16U) - (*cp) + (1 << (rate - 1))) >> rate;
-  b += static_cast<uint32_t>((y != 0U) && b > 0);
+  *cp += ((y << 16) - (*cp) + (1 << (rate - 1))) >> rate;
+  b += static_cast<uint32_t>((y != 0) && b > 0);
 }
 
 void SmallStationaryContextMap::mix(Mixer &m) {
   shared->GetUpdateBroadcaster()->subscribe(this);
   cp = &data[context + b];
-  const int prediction = (*cp) >> 4U;
+  const int prediction = (*cp) >> 4;
   m.add((stretch(prediction) * scale) >> 8);
   m.add(((prediction - 2048) * scale) >> 9);
   bCount++;

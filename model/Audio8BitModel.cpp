@@ -15,7 +15,7 @@ void Audio8BitModel::setParam(int info) {
   INJECT_SHARED_blockPos
   if(blockPos == 0 && bpos == 0 ) {
     assert((info & 2) == 0);
-    stereo = (info & 1U);
+    stereo = (info & 1);
     mask = 0;
     wMode = info;
     for( int i = 0; i < nLMS; i++ ) {
@@ -29,14 +29,14 @@ void Audio8BitModel::mix(Mixer &m) {
   INJECT_SHARED_blockPos
   INJECT_SHARED_c1
   if( bpos == 0 ) {
-    ch = (stereo) != 0 ? blockPos & 1U : 0;
-    const int8_t s = int(((wMode & 4U) > 0) ? c1 ^ 128U : c1) - 128U;
-    const int pCh = ch ^stereo;
+    ch = (stereo) != 0 ? blockPos & 1 : 0;
+    const int8_t s = static_cast<int32_t>(((wMode & 4) > 0) ? c1 ^ 128 : c1) - 128;
+    const int pCh = ch ^ stereo;
     int i = 0;
     for( errLog = 0; i < nOLS; i++ ) {
       ols[i][pCh].update(s);
       residuals[i][pCh] = s - prd[i][pCh][0];
-      const auto absResidual = static_cast<uint32_t>(abs(residuals[i][pCh]));
+      const uint32_t absResidual = static_cast<uint32_t>(abs(residuals[i][pCh]));
       mask += mask + static_cast<uint32_t>(absResidual > 4);
       errLog += square(absResidual);
     }
@@ -51,29 +51,45 @@ void Audio8BitModel::mix(Mixer &m) {
 
     int k1 = 90;
     int k2 = k1 - 12 * stereo;
-    for( int j = (i = 1); j <= k1; j++, i += 1U << (static_cast<int>(j > 8) + static_cast<int>(j > 16) + static_cast<int>(j > 64))) {
+    for( int j = (i = 1); j <= k1; j++, i += 1
+            << (static_cast<int>(j > 8) + 
+                static_cast<int>(j > 16) + 
+                static_cast<int>(j > 64))) {
       ols[1][ch].add(x1(i));
     }
-    for( int j = (i = 1); j <= k2; j++, i += 1U
-            << (static_cast<int>(j > 5) + static_cast<int>(j > 10) + static_cast<int>(j > 17) + static_cast<int>(j > 26) +
+    for( int j = (i = 1); j <= k2; j++, i += 1
+            << (static_cast<int>(j > 5) + 
+                static_cast<int>(j > 10) + 
+                static_cast<int>(j > 17) + 
+                static_cast<int>(j > 26) +
                 static_cast<int>(j > 37))) {
       ols[2][ch].add(x1(i));
     }
-    for( int j = (i = 1); j <= k2; j++, i += 1U
-            << (static_cast<int>(j > 3) + static_cast<int>(j > 7) + static_cast<int>(j > 14) + static_cast<int>(j > 20) +
-                static_cast<int>(j > 33) + static_cast<int>(j > 49))) {
+    for( int j = (i = 1); j <= k2; j++, i += 1
+            << (static_cast<int>(j > 3) + 
+                static_cast<int>(j > 7) + 
+                static_cast<int>(j > 14) + 
+                static_cast<int>(j > 20) +
+                static_cast<int>(j > 33) + 
+                static_cast<int>(j > 49))) {
       ols[3][ch].add(x1(i));
     }
-    for( int j = (i = 1); j <= k2; j++, i += 1 + static_cast<int>(j > 4) + static_cast<int>(j > 8)) {
+    for( int j = (i = 1); j <= k2; j++, i += 1 + 
+                static_cast<int>(j > 4) + 
+                static_cast<int>(j > 8)) {
       ols[4][ch].add(x1(i));
     }
-    for( int j = (i = 1); j <= k1; j++, i += 2 + (static_cast<int>(j > 3) + static_cast<int>(j > 9) + static_cast<int>(j > 19) +
-                                                  static_cast<int>(j > 36) + static_cast<int>(j > 61))) {
+    for( int j = (i = 1); j <= k1; j++, i += 2 + 
+               (static_cast<int>(j > 3) + 
+                static_cast<int>(j > 9) + 
+                static_cast<int>(j > 19) +
+                static_cast<int>(j > 36) + 
+                static_cast<int>(j > 61))) {
       ols[5][ch].add(x1(i));
     }
     if( stereo != 0 ) {
       for( i = 1; i <= k1 - k2; i++ ) {
-        const auto s = static_cast<double>(x2(i));
+        const double s = static_cast<double>(x2(i));
         ols[2][ch].addFloat(s);
         ols[3][ch].addFloat(s);
         ols[4][ch].addFloat(s);
@@ -82,7 +98,7 @@ void Audio8BitModel::mix(Mixer &m) {
     k1 = 28;
     k2 = k1 - 6 * stereo;
     for( i = 1; i <= k2; i++ ) {
-      const auto s = static_cast<double>(x1(i));
+      const double s = static_cast<double>(x1(i));
       ols[0][ch].addFloat(s);
       ols[6][ch].addFloat(s);
       ols[7][ch].addFloat(s);
@@ -92,7 +108,7 @@ void Audio8BitModel::mix(Mixer &m) {
     }
     if( stereo != 0 ) {
       for( i = 1; i <= k1 - k2; i++ ) {
-        const auto s = static_cast<double>(x2(i));
+        const double s = static_cast<double>(x2(i));
         ols[0][ch].addFloat(s);
         ols[6][ch].addFloat(s);
         ols[7][ch].addFloat(s);
@@ -120,7 +136,7 @@ void Audio8BitModel::mix(Mixer &m) {
     }
   }
   INJECT_SHARED_c0
-  const int8_t b = c0 << (8U - bpos);
+  const int8_t b = c0 << (8 - bpos);
   for( int i = 0; i < nSSM; i++ ) {
     const uint32_t ctx = (prd[i][ch][0] - b) * 8 + bpos;
     sMap1B[i][0].set(ctx);
@@ -130,9 +146,9 @@ void Audio8BitModel::mix(Mixer &m) {
     sMap1B[i][1].mix(m);
     sMap1B[i][2].mix(m);
   }
-  m.set((errLog << 8U) | c0, 4096);
-  m.set((uint8_t(mask) << 3U) | (ch << 2U) | (bpos >> 1U), 2048);
-  m.set((mxCtx << 7U) | (c1 >> 1U), 1280);
-  m.set((errLog << 4U) | (ch << 3U) | bpos, 256);
+  m.set((errLog << 8) | c0, 4096);
+  m.set((uint8_t(mask) << 3) | (ch << 2) | (bpos >> 1), 2048);
+  m.set((mxCtx << 7) | (c1 >> 1), 1280);
+  m.set((errLog << 4) | (ch << 3) | bpos, 256);
   m.set(mxCtx, 10);
 }

@@ -1,6 +1,6 @@
 #include "Word.hpp"
 
-auto Word::calculateHash() -> uint64_t {
+uint64_t Word::calculateHash() {
   uint64_t h = 0;
   for( int i = start; i <= end; i++ ) {
     h = combine64(h, letters[i]);
@@ -17,12 +17,12 @@ void Word::reset() {
   type = language = embedding = 0;
 }
 
-auto Word::operator==(const char *s) const -> bool {
+bool Word::operator==(const char *s) const {
   size_t len = strlen(s);
   return (static_cast<size_t>(end - start + static_cast<int>(letters[start] != 0)) == len && memcmp(&letters[start], s, len) == 0);
 }
 
-auto Word::operator!=(const char *s) const -> bool {
+bool Word::operator!=(const char *s) const {
   return !operator==(s);
 }
 
@@ -33,38 +33,38 @@ void Word::operator+=(const char c) {
   }
 }
 
-auto Word::operator-(const Word w) const -> uint32_t {
+uint32_t Word::operator-(const Word w) const {
   uint32_t res = 0;
   for( int i = 0, j = 0; i < wordEmbeddingSize; i++, j += 8 ) {
-    res = (res << 8U) | uint8_t(uint8_t(embedding >> j) - uint8_t(w.embedding >> j));
+    res = (res << 8) | uint8_t(uint8_t(embedding >> j) - uint8_t(w.embedding >> j));
   }
   return res;
 }
 
-auto Word::operator+(const Word w) const -> uint32_t {
+uint32_t Word::operator+(const Word w) const {
   uint32_t res = 0;
   for( int i = 0, j = 0; i < wordEmbeddingSize; i++, j += 8 ) {
-    res = (res << 8U) | uint8_t(uint8_t(embedding >> j) + uint8_t(w.embedding >> j));
+    res = (res << 8) | uint8_t(uint8_t(embedding >> j) + uint8_t(w.embedding >> j));
   }
   return res;
 }
 
-auto Word::operator[](uint8_t i) const -> uint8_t {
+uint8_t Word::operator[](uint8_t i) const {
   return (end - start >= i) ? letters[start + i] : 0;
 }
 
-auto Word::operator()(uint8_t i) const -> uint8_t {
+uint8_t Word::operator()(uint8_t i) const {
   return (end - start >= i) ? letters[end - i] : 0;
 }
 
-auto Word::length() const -> uint32_t {
+uint32_t Word::length() const {
   if( letters[start] != 0 ) {
     return end - start + 1;
   }
   return 0;
 }
 
-auto Word::distanceTo(const Word w) const -> uint32_t {
+uint32_t Word::distanceTo(const Word w) const {
   uint32_t res = 0;
   for( int i = 0, j = 0; i < wordEmbeddingSize; i++, j += 8 ) {
     res += square(abs(int(uint8_t(embedding >> j) - uint8_t(w.embedding >> j))));
@@ -80,7 +80,7 @@ void Word::calculateStemHash() {
   Hash[1] = calculateHash();
 }
 
-auto Word::changeSuffix(const char *oldSuffix, const char *newSuffix) -> bool {
+bool Word::changeSuffix(const char *oldSuffix, const char *newSuffix) {
   size_t len = strlen(oldSuffix);
   if( length() > len && memcmp(&letters[end - len + 1], oldSuffix, len) == 0 ) {
     size_t n = strlen(newSuffix);
@@ -95,20 +95,20 @@ auto Word::changeSuffix(const char *oldSuffix, const char *newSuffix) -> bool {
   return false;
 }
 
-auto Word::matchesAny(const char **a, const int count) -> bool {
+bool Word::matchesAny(const char **a, const int count) {
   int i = 0;
-  auto len = static_cast<size_t>(length());
+  size_t len = static_cast<size_t>(length());
   for( ; i < count && (len != strlen(a[i]) || memcmp(&letters[start], a[i], len) != 0); i++ ) { ;
   }
   return i < count;
 }
 
-auto Word::endsWith(const char *suffix) const -> bool {
+bool Word::endsWith(const char *suffix) const {
   size_t len = strlen(suffix);
   return (length() > len && memcmp(&letters[end - len + 1], suffix, len) == 0);
 }
 
-auto Word::startsWith(const char *prefix) const -> bool {
+bool Word::startsWith(const char *prefix) const {
   size_t len = strlen(prefix);
   return (length() > len && memcmp(&letters[start], prefix, len) == 0);
 }

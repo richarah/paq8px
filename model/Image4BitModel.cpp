@@ -8,7 +8,7 @@ Image4BitModel::Image4BitModel(const Shared* const sh, const uint64_t size) : sh
   mask(uint32_t(hashTable.size() - 1)),
   hashBits(ilog2(mask + 1)),
   hashes(S),
-  sm {sh, S, 256, 1023, StateMap::BitHistory},
+  sm {sh, S, 256, 1023, StateMapType::BitHistory},
   mapL (sh, S, 22)
 {}
 
@@ -97,8 +97,8 @@ void Image4BitModel::mix(Mixer &m) {
   sm.subscribe();
   for( int i = 0; i < S; i++ ) {
     const uint8_t state = *cp[i];
-    const int n0 = StateTable::next(state, 2);
-    const int n1 = StateTable::next(state, 3);
+    const int n0 = StateTable::getNextState(state, 2);
+    const int n1 = StateTable::getNextState(state, 3);
     const int p1 = sm.p2(i, state);
     const int st = stretch(p1) >> 1;
     m.add(st);
@@ -107,10 +107,10 @@ void Image4BitModel::mix(Mixer &m) {
     m.add((bitIsUncertain - 1) & st); // when both counts are nonzero add(0) otherwise add(st)
   }
 
-  m.set((W << 4U) | px, 256);
-  m.set(min(31, col / max(1, w / 16)) | (N << 5U), 512);
-  m.set((bpos & 3U) | (W << 2U) | (min(7, ilog2(run + 1)) << 6U), 512);
-  m.set(W | (NE << 4U) | ((bpos & 3U) << 8U), 1024);
+  m.set((W << 4) | px, 256);
+  m.set(min(31, col / max(1, w / 16)) | (N << 5), 512);
+  m.set((bpos & 3) | (W << 2) | (min(7, ilog2(run + 1)) << 6), 512);
+  m.set(W | (NE << 4) | ((bpos & 3) << 8), 1024);
   m.set(px, 16);
   m.set(0, 1);
 }

@@ -47,7 +47,7 @@ void Image8BitModel::mix(Mixer &m) {
       columns[0] = max(1, w / max(1, ilog2(w) * 2));
       columns[1] = max(1, columns[0] / max(1, ilog2(columns[0])));
       if( isGray ) {
-        if((lastPos != 0u) && lastWasPNG != isPNG ) {
+        if((lastPos != 0) && lastWasPNG != isPNG ) {
           for( int i = 0; i < nSM; i++ ) {
             map[i].reset();
           }
@@ -119,16 +119,16 @@ void Image8BitModel::mix(Mixer &m) {
         memset(&jumps[0], 0, sizeof(short) * jumps.size());
         if( line > 0 && w > 8 ) {
           uint8_t bMask = 0xFF - ((1 << isGray) - 1);
-          uint32_t pMask = bMask * 0x01010101u;
+          uint32_t pMask = bMask * 0x01010101;
           uint32_t left = 0;
           uint32_t right = 0;
           int l = min(w, static_cast<int>(jumps.size()));
           int end = l - 4;
           do {
-            left = ((buffer(l - x) << 24U) | (buffer(l - x - 1) << 16U) | (buffer(l - x - 2) << 8U) | buffer(l - x - 3)) & pMask;
+            left = ((buffer(l - x) << 24) | (buffer(l - x - 1) << 16) | (buffer(l - x - 2) << 8) | buffer(l - x - 3)) & pMask;
             int i = end;
             while( i >= x + 4 ) {
-              right = ((buffer(l - i - 3) << 24U) | (buffer(l - i - 2) << 16U) | (buffer(l - i - 1) << 8U) | buffer(l - i)) & pMask;
+              right = ((buffer(l - i - 3) << 24) | (buffer(l - i - 2) << 16) | (buffer(l - i - 1) << 8) | buffer(l - i)) & pMask;
               if( left == right ) {
                 int j = (i + 3 - x - 1) / 2;
                 int k = 0;
@@ -171,7 +171,7 @@ void Image8BitModel::mix(Mixer &m) {
       if( prevFramePos > 0 && prevFrameWidth == w ) {
         int offset = prevFramePos + line * w + x;
         prvFrmPx = buf[offset];
-        if( isGray != 0u ) {
+        if( isGray != 0 ) {
           sceneOls.update(W);
           sceneOls.add(W);
           sceneOls.add(NW);
@@ -196,15 +196,15 @@ void Image8BitModel::mix(Mixer &m) {
       jump = jumps[min(x, static_cast<int>(jumps.size()) - 1)];
       uint64_t i = (filterOn ? (filter + 1) * 64 : 0) + (isGray * 1024);
       const uint8_t R_ = CM_USE_RUN_STATS;
-      cm.set(R_, hash(++i, (jump != 0) ? (0x100 | buffer(abs(jump))) * (1 - 2 * static_cast<int>(jump < 0)) : N, line & 3U));
+      cm.set(R_, hash(++i, (jump != 0) ? (0x100 | buffer(abs(jump))) * (1 - 2 * static_cast<int>(jump < 0)) : N, line & 3));
       if( !isGray ) {
         for( j = 0; j < nPltMaps; j++ ) {
           iCtx[j] += W;
         }
-        iCtx[0] = W | (NE << 8U);
-        iCtx[1] = W | (N << 8U);
-        iCtx[2] = W | (WW << 8U);
-        iCtx[3] = N | (NN << 8U);
+        iCtx[0] = W | (NE << 8);
+        iCtx[1] = W | (N << 8);
+        iCtx[2] = W | (WW << 8);
+        iCtx[3] = N | (NN << 8);
         cm.set(R_, hash(++i, W, px));
         cm.set(R_, hash(++i, W, px, column[0]));
         cm.set(R_, hash(++i, N, px));
@@ -248,7 +248,7 @@ void Image8BitModel::mix(Mixer &m) {
         cm.set(R_, hash(++i, N, NE, NN, NNE, px));
         cm.set(R_, hash(++i, N, NW, NNW, NN, px));
         cm.set(R_, hash(++i, W, WW, NWW, NW, px));
-        cm.set(R_, hash(++i, W, NW << 8U | N, WW << 8U | NWW, px));
+        cm.set(R_, hash(++i, W, NW << 8 | N, WW << 8 | NWW, px));
         cm.set(R_, hash(++i, px, column[0]));
         cm.set(R_, hash(++i, px));
         cm.set(R_, hash(++i, N, px, column[1]));
@@ -348,12 +348,12 @@ void Image8BitModel::mix(Mixer &m) {
         cm.set(R_, hash(++i, clip(W * 2 - WW) - px, DiffQt(NE, clip(N * 2 - NW))));
 
         if( isPNG ) {
-          ctx = (static_cast<int>(abs(W - N) > 8) << 10U) | (static_cast<int>(W > N) << 9U) | (static_cast<int>(abs(N - NW) > 8) << 8U) |
-                (static_cast<int>(N > NW) << 7U) | (static_cast<int>(abs(N - NE) > 8) << 6U) | (static_cast<int>(N > NE) << 5U) |
-                (static_cast<int>(W > WW) << 4U) | (static_cast<int>(N > NN) << 3U) | min(5, filterOn ? filter + 1 : 0);
+          ctx = (static_cast<int>(abs(W - N) > 8) << 10) | (static_cast<int>(W > N) << 9) | (static_cast<int>(abs(N - NW) > 8) << 8) |
+                (static_cast<int>(N > NW) << 7) | (static_cast<int>(abs(N - NE) > 8) << 6) | (static_cast<int>(N > NE) << 5) |
+                (static_cast<int>(W > WW) << 4) | (static_cast<int>(N > NN) << 3) | min(5, filterOn ? filter + 1 : 0);
         } else {
           ctx = min(0x1F, x / max(1, w / min(32, columns[0]))) |
-                (((static_cast<int>(abs(W - N) * 16 > W + N) << 1U) | static_cast<int>(abs(N - NW) > 8)) << 5U) | ((W + N) & 0x180U);
+                (((static_cast<int>(abs(W - N) * 16 > W + N) << 1) | static_cast<int>(abs(N - NW) > 8)) << 5) | ((W + N) & 0x180);
         }
 
         res = clamp4(W + N - NW, W, NW, N, NE) - px;
@@ -373,7 +373,7 @@ void Image8BitModel::mix(Mixer &m) {
       int i = 0;
       map[i++].set(0);
       map[i++].set(((static_cast<uint8_t>(clip(W + N - NW) - px - b)) * 8 + bpos) |
-                         (DiffQt(clip(N + NE - NNE), clip(N + NW - NNW)) << 11U));
+                         (DiffQt(clip(N + NE - NNE), clip(N + NW - NNW)) << 11));
 
       for( int j = 0; j < nSM1; i++, j++ ) {
         map[i].set((mapContexts[j] - px - b) * 8 + bpos);
@@ -397,7 +397,7 @@ void Image8BitModel::mix(Mixer &m) {
       }
     } else {
       for( int i = 0; i < nPltMaps; i++ ) {
-        pltMap[i].set((bpos << 8U) | iCtx[i]());
+        pltMap[i].set((bpos << 8) | iCtx[i]());
         pltMap[i].mix(m);
       }
     }
@@ -407,21 +407,21 @@ void Image8BitModel::mix(Mixer &m) {
       sceneMap[i].mix(m);
     }
 
-    col = (col + 1) & 7U;
+    col = (col + 1) & 7;
     m.set(5 + ctx, 2048 + 5);
-    m.set(col * 2 + static_cast<int>(isPNG && c0 == ((0x100U | res) >> (8 - bpos))) +
+    m.set(col * 2 + static_cast<int>(isPNG && c0 == ((0x100 | res) >> (8 - bpos))) +
           min(5, filterOn ? filter + 1 : 0) * 16, 6 * 16);
-    m.set(((isPNG ? px : N + W) >> 4U) + min(5, filterOn ? filter + 1 : 0) * 32, 6 * 32);
+    m.set(((isPNG ? px : N + W) >> 4) + min(5, filterOn ? filter + 1 : 0) * 32, 6 * 32);
     m.set(c0, 256);
-    m.set((static_cast<int>(abs((W - N)) > 4) << 9U) | (static_cast<int>(abs((N - NE)) > 4) << 8U) |
-          (static_cast<int>(abs((W - NW)) > 4) << 7U) | (static_cast<int>(W > N) << 6U) | (static_cast<int>(N > NE) << 5U) |
-          (static_cast<int>(W > NW) << 4U) | (static_cast<int>(W > WW) << 3U) | (static_cast<int>(N > NN) << 2U) |
-          (static_cast<int>(NW > NNWW) << 1U) | static_cast<int>(NE > NNEE), 1024);
+    m.set((static_cast<int>(abs(W - N) > 4) << 9) | (static_cast<int>(abs(N - NE) > 4) << 8) |
+          (static_cast<int>(abs(W - NW) > 4) << 7) | (static_cast<int>(W > N) << 6) | (static_cast<int>(N > NE) << 5) |
+          (static_cast<int>(W > NW) << 4) | (static_cast<int>(W > WW) << 3) | (static_cast<int>(N > NN) << 2) |
+          (static_cast<int>(NW > NNWW) << 1) | static_cast<int>(NE > NNEE), 1024);
     m.set(min(63, column[0]), 64);
     m.set(min(127, column[1]), 128);
     m.set(min(255, (x + line) / 32), 256);
   } else {
-    m.add(-2048 + ((filter >> (7 - bpos)) & 1U) * 4096);
+    m.add(-2048 + ((filter >> (7 - bpos)) & 1) * 4096);
     m.set(min(4, filter), MIXERCONTEXTS);
   }
 }

@@ -1,7 +1,7 @@
 #include "FileDisk.hpp"
 #include "../SystemDefines.hpp"
 
-auto FileDisk::makeTmpFile() -> FILE * {
+FILE* FileDisk::makeTmpFile() {
 #if defined(WINDOWS)
   wchar_t szTempFileName[MAX_PATH];
   const UINT uRetVal = GetTempFileNameW(L".", L"tmp", 0, szTempFileName);
@@ -16,7 +16,7 @@ FileDisk::FileDisk() { file = nullptr; }
 
 FileDisk::~FileDisk() { close(); }
 
-auto FileDisk::open(const char *filename, bool mustSucceed) -> bool {
+bool FileDisk::open(const char *filename, bool mustSucceed) {
   assert(file == nullptr);
   file = openFile(filename, READ);
   const bool success = (file != nullptr);
@@ -53,11 +53,11 @@ void FileDisk::close() {
   file = nullptr;
 }
 
-auto FileDisk::getchar() -> int { return fgetc(file); }
+int FileDisk::getchar() { return fgetc(file); }
 
 void FileDisk::putChar(uint8_t c) { fputc(c, file); }
 
-auto FileDisk::blockRead(uint8_t *ptr, uint64_t count) -> uint64_t { return fread(ptr, 1, count, file); }
+uint64_t FileDisk::blockRead(uint8_t *ptr, uint64_t count) { return fread(ptr, 1, count, file); }
 
 void FileDisk::blockWrite(uint8_t *ptr, uint64_t count) { fwrite(ptr, 1, count, file); }
 
@@ -65,6 +65,6 @@ void FileDisk::setpos(uint64_t newPos) { fseeko(file, newPos, SEEK_SET); }
 
 void FileDisk::setEnd() { fseeko(file, 0, SEEK_END); }
 
-auto FileDisk::curPos() -> uint64_t { return ftello(file); }
+uint64_t FileDisk::curPos() { return ftello(file); }
 
-auto FileDisk::eof() -> bool { return feof(file) != 0; }
+bool FileDisk::eof() { return feof(file) != 0; }

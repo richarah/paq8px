@@ -13,9 +13,10 @@
  * A hash bucket consists of a list of HashElements
  * Each hash element consists of a 16-bit checksum for collision detection
  * and an arbitrary-sized value:
- *   For LargeStationaryMap: two 16-bit counts               ( sizeof(HashElement) = 2+2 = 4 bytes )
- *   For LargeIndirectContext: byte history                  ( sizeof(HashElement) = 2+4 = 6 bytes )
- *   For ContextMap and ContextMap2: bit and byte statistics ( sizeof(HashElement) = 2+7 = 9 bytes )
+ *   For HashElementForBitHistoryState: one bit-history byte   ( sizeof(HashElement) = 2+1 = 3 bytes )
+ *   For LargeStationaryMap: two 16-bit counts                 ( sizeof(HashElement) = 2+4 = 6 bytes )
+ *   For LargeIndirectContext: byte history (usually 4 bytes)  ( sizeof(HashElement) = 2+4 = 6 bytes )
+ *   For ContextMap and ContextMap2: bit and byte statistics   ( sizeof(HashElement) = 2+7 = 9 bytes )
  *
  */
 
@@ -45,7 +46,7 @@ public:
       else
         used++;
   }
-
+    
   T* find(uint16_t checksum, Random* rnd) {
 
     checksum += checksum == 0; //don't allow 0 checksums (0 checksums are used for empty slots)
@@ -53,20 +54,21 @@ public:
     if (elements[0].checksum == checksum) //there is a high chance that we'll find it in the first slot, so go for it
       return &elements[0].value;
 
-    for (size_t i = 1; i < ElementsInBucket; ++i) {
-      if (elements[i].checksum == checksum) { // found matching checksum
-        T value = elements[i].value;
-        //shift elements down
+    for (size_t i = 1; i < ElementsInBucket; ++i) { //note: gcc fully unrolls this loop: it gives a tiny speed improvement for a cost of ~4K exe size
+      const uint16_t thisChecksum = elements[i].checksum;
+      if (thisChecksum == checksum) { // found matching checksum
+        //shift elements down and move matching element to front
+        HashElement<T> tmpElement = elements[i];
         memmove(&elements[1], &elements[0], i * sizeof(HashElement<T>));
-        //move element to front (re-create)
-        elements[0].checksum = checksum;
-        elements[0].value = value;
+        elements[0] = tmpElement;
         return &elements[0].value;
       }
-      if (elements[i].checksum == 0) { // found empty slot
-        //shift elements down (free the first slot for the new element)
-        memmove(&elements[1], &elements[0], i * sizeof(HashElement<T>)); // i==0 is OK
-        goto create_element;
+      if (thisChecksum == 0) { // found empty slot
+        //shift elements down by 1 (make room for the new element in the first slot)
+        memmove(&elements[1], &elements[0], i * sizeof(HashElement<T>));
+        elements[0].checksum = checksum;
+        elements[0].value = {};
+        return &elements[0].value;
       }
     }
 
@@ -89,55 +91,51 @@ public:
     //   elements have higher chance to stay in the bucket = rarely accessed and/or low priority elements have higher chance to be 
     //   evicted (overwritten).
     //
-    //   The the 2 most recently accessed elements are always protected from overwriting.
+    //   The 2 most recently accessed elements are always protected from overwriting.
+    
+    size_t minElementIdx = ElementsInBucket - 1; //index of element to be evicted
+    if constexpr (std::is_same<T, HashElementForContextMap>::value ||
+                  std::is_same<T, HashElementForStationaryMap>::value || 
+                  std::is_same<T, HashElementForBitHistoryState>::value)
     {
-      size_t minElementIdx = ElementsInBucket - 1;
-      if constexpr (std::is_same<T, HashElementForContextMap>::value ||
-                    std::is_same<T, HashElementForStationaryMap>::value || 
-                    std::is_same<T, HashElementForBitHistoryState>::value)
-      {
-        uint32_t RND = rnd->operator()(32);
-        if ((RND & 63) >= 1) {
-          RND >>= 6;
-          uint32_t minPrio = elements[ElementsInBucket - 1].value.prio();
-          uint32_t thisPrio = elements[ElementsInBucket - 2].value.prio();
+      uint32_t RND = rnd->operator()(32); //note: we'll need only 4 times 6 = 24 bits
+      if ((RND & 63) >= 1) {
+        uint32_t minPrio = elements[ElementsInBucket - 1].value.prio();
+        uint32_t thisPrio = elements[ElementsInBucket - 2].value.prio();
+        if (thisPrio < minPrio) {
+          minPrio = thisPrio;
+          minElementIdx = ElementsInBucket - 2;
+        }
+        RND >>= 6;
+        if ((RND & 63) >= 4) {
+          thisPrio = elements[ElementsInBucket - 3].value.prio();
           if (thisPrio < minPrio) {
             minPrio = thisPrio;
-            minElementIdx = ElementsInBucket - 2;
+            minElementIdx = ElementsInBucket - 3;
           }
-          if ((RND & 63) >= 4) {
-            RND >>= 6;
-            thisPrio = elements[ElementsInBucket - 3].value.prio();
+          RND >>= 6;
+          if ((RND & 63) >= 8) {
+            thisPrio = elements[ElementsInBucket - 4].value.prio();
             if (thisPrio < minPrio) {
               minPrio = thisPrio;
-              minElementIdx = ElementsInBucket - 3;
+              minElementIdx = ElementsInBucket - 4;
             }
-            if ((RND & 63) >= 8) {
-              RND >>= 6;
-              thisPrio = elements[ElementsInBucket - 4].value.prio();
+            RND >>= 6;
+            if ((RND & 63) >= 16) {
+              thisPrio = elements[ElementsInBucket - 5].value.prio();
               if (thisPrio < minPrio) {
                 minPrio = thisPrio;
-                minElementIdx = ElementsInBucket - 4;
-              }
-              if ((RND & 63) >= 16) {
-                //RND >>= 6; //not necessary
-                thisPrio = elements[ElementsInBucket - 5].value.prio();
-                if (thisPrio < minPrio) {
-                  minPrio = thisPrio;
-                  minElementIdx = ElementsInBucket - 5;
-                }
+                minElementIdx = ElementsInBucket - 5;
               }
             }
           }
         }
       }
-
-      //shift elements down (make room for the new element in the first slot)
-      //at the same time owerwrite the element at position "minElementIdx"
-      memmove(&elements[1], &elements[0], minElementIdx * sizeof(HashElement<T>));
     }
 
-  create_element:
+    //shift elements down by 1 (make room for the new element in the first slot)
+    //at the same time owerwrite the element at position "minElementIdx" (the element to be evicted)
+    memmove(&elements[1], &elements[0], minElementIdx * sizeof(HashElement<T>));
     elements[0].checksum = checksum;
     elements[0].value = {};
     return &elements[0].value;

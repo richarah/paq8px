@@ -2,7 +2,7 @@
 
 FileName::FileName(const char *s) : String(s) {}
 
-auto FileName::lastSlashPos() const -> int {
+int FileName::lastSlashPos() const {
   int pos = findLast('/');
   if( pos < 0 ) {
     pos = findLast('\\');

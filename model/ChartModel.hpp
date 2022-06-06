@@ -7,7 +7,7 @@
 class ChartModel {
 private:
   static constexpr int nCM = (3 * 4) + 3 + (8 + 8 + 8) * 3; //87
-  static constexpr int nCM_TEXT = (3 * 4) + 2 + (8) * 3; //38
+  static constexpr int nCM_TEXT = 2 + (8) * 3; //26
     const Shared * const shared;
     ContextMap2 cm;
     uint32_t chart[3*8]{};

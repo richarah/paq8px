@@ -14,10 +14,10 @@ void Audio16BitModel::setParam(int info) {
   INJECT_SHARED_bpos
   INJECT_SHARED_blockPos
   if( blockPos == 0 && bpos == 0 ) {
-    info |= 4U; // comment this line if skipping the endianness transform
+    info |= 4; // comment this line if skipping the endianness transform
     assert((info & 2) != 0);
-    stereo = (info & 1U);
-    lsb = static_cast<int>(info < 4);
+    stereo = (info & 1);
+    lsb = static_cast<uint32_t>(info < 4);
     mask = 0;
     wMode = info;
     for( int i = 0; i < nLMS; i++ ) {
@@ -28,20 +28,20 @@ void Audio16BitModel::setParam(int info) {
 
 void Audio16BitModel::mix(Mixer &m) {
   INJECT_SHARED_bpos
-    INJECT_SHARED_blockPos
+  INJECT_SHARED_blockPos
   if( bpos == 0 && blockPos != 0 ) {
-    ch = (stereo) != 0 ? (blockPos & 2U) >> 1U : 0;
-    lsb = (blockPos & 1U) ^ static_cast<uint32_t>(wMode < 4);
-    if((blockPos & 1U) == 0 ) {
+    ch = (stereo) != 0 ? (blockPos & 2) >> 1 : 0;
+    lsb = (blockPos & 1) ^ static_cast<uint32_t>(wMode < 4);
+    if((blockPos & 1) == 0 ) {
       sample = (wMode < 4) ? s2(2) : t2(2);
       const int pCh = ch ^stereo;
       int i = 0;
       for( errLog = 0; i < nOLS; i++ ) {
         ols[i][pCh].update(sample);
         residuals[i][pCh] = sample - prd[i][pCh][0];
-        const auto absResidual = static_cast<uint32_t>(abs(residuals[i][pCh]));
+        const uint32_t absResidual = static_cast<uint32_t>(abs(residuals[i][pCh]));
         mask += mask + static_cast<uint32_t>(absResidual > 128);
-        errLog += square(absResidual >> 6U);
+        errLog += square(absResidual >> 6);
       }
       for( int j = 0; j < nLMS; j++ ) {
         lms[j][pCh].update(sample);
@@ -66,30 +66,46 @@ void Audio16BitModel::mix(Mixer &m) {
 
       int k1 = 90;
       int k2 = k1 - 12 * stereo;
-      for( int j = (i = 1); j <= k1; j++, i += 1U << (static_cast<int>(j > 16) + static_cast<int>(j > 32) + static_cast<int>(j > 64))) {
+      for( int j = (i = 1); j <= k1; j++, i += 1 
+              << (static_cast<int>(j > 16) + 
+                  static_cast<int>(j > 32) + 
+                  static_cast<int>(j > 64))) {
         ols[1][ch].add(x1(i));
       }
-      for( int j = (i = 1); j <= k2; j++, i += 1U
-              << (static_cast<int>(j > 5) + static_cast<int>(j > 10) + static_cast<int>(j > 17) + static_cast<int>(j > 26) +
+      for( int j = (i = 1); j <= k2; j++, i += 1
+              << (static_cast<int>(j > 5) + 
+                  static_cast<int>(j > 10) + 
+                  static_cast<int>(j > 17) + 
+                  static_cast<int>(j > 26) +
                   static_cast<int>(j > 37))) {
         ols[2][ch].add(x1(i));
       }
-      for( int j = (i = 1); j <= k2; j++, i += 1U
-              << (static_cast<int>(j > 3) + static_cast<int>(j > 7) + static_cast<int>(j > 14) + static_cast<int>(j > 20) +
-                  static_cast<int>(j > 33) + static_cast<int>(j > 49))) {
+      for( int j = (i = 1); j <= k2; j++, i += 1
+              << (static_cast<int>(j > 3) + 
+                  static_cast<int>(j > 7) + 
+                  static_cast<int>(j > 14) + 
+                  static_cast<int>(j > 20) +
+                  static_cast<int>(j > 33) + 
+                  static_cast<int>(j > 49))) {
         ols[3][ch].add(x1(i));
       }
-      for( int j = (i = 1); j <= k2; j++, i += 1 + static_cast<int>(j > 4) + static_cast<int>(j > 8)) {
+      for( int j = (i = 1); j <= k2; j++, i += 1 + 
+                  static_cast<int>(j > 4) + 
+                  static_cast<int>(j > 8)) {
         ols[4][ch].add(x1(i));
       }
-      for( int j = (i = 1); j <= k1; j++, i += 2 + (static_cast<int>(j > 3) + static_cast<int>(j > 9) + static_cast<int>(j > 19) +
-                                                    static_cast<int>(j > 36) + static_cast<int>(j > 61))) {
+      for( int j = (i = 1); j <= k1; j++, i += 2 + 
+                  (static_cast<int>(j > 3) + 
+                   static_cast<int>(j > 9) + 
+                   static_cast<int>(j > 19) +
+                   static_cast<int>(j > 36) + 
+                   static_cast<int>(j > 61))) {
         ols[5][ch].add(x1(i));
       }
 
       if( stereo != 0 ) {
         for( i = 1; i <= k1 - k2; i++ ) {
-          const auto s = static_cast<double>(x2(i));
+          const double s = static_cast<double>(x2(i));
           ols[2][ch].addFloat(s);
           ols[3][ch].addFloat(s);
           ols[4][ch].addFloat(s);
@@ -125,18 +141,18 @@ void Audio16BitModel::mix(Mixer &m) {
         prd[i][ch][1] = signedClip16(prd[i][ch][0] + residuals[i][pCh]);
       }
     }
-    shared->State.Audio = 0x80U | (mxCtx = ilog2(min(0x1F, bitCount(mask))) * 4 + ch * 2 + lsb);
+    shared->State.Audio = 0x80 | (mxCtx = ilog2(min(0x1F, bitCount(mask))) * 4 + ch * 2 + lsb);
   }
 
   INJECT_SHARED_c0
   INJECT_SHARED_c1
-  const auto b = short((wMode < 4) ?
+  const short b = short((wMode < 4) ?
                          (lsb) != 0 ? 
                             uint8_t(c0 << (8 - bpos)) :
                             (c0 << (16 - bpos)) | c1
                        :
                          (lsb) != 0 ?
-                            (c1 << 8U) | uint8_t(c0 << (8 - bpos)) :
+                            (c1 << 8) | uint8_t(c0 << (8 - bpos)) :
                             c0 << (16 - bpos));
 
   for( int i = 0; i < nSSM; i++ ) {
@@ -144,19 +160,19 @@ void Audio16BitModel::mix(Mixer &m) {
     const uint32_t ctx1 = uint16_t(prd[i][ch][1] - b);
 
     const int shift = static_cast<const int>(lsb == 0);
-    sMap1B[i][0].set((lsb << 16U) | (bpos << 13U) | (ctx0 >> (3U << shift)));
-    sMap1B[i][1].set((lsb << 16U) | (bpos << 13U) | (ctx0 >> (static_cast<uint32_t>(lsb == 0) + (3U << shift))));
-    sMap1B[i][2].set((lsb << 16U) | (bpos << 13U) | (ctx0 >> (static_cast<int>(lsb == 0) * 2 + (3U << shift))));
-    sMap1B[i][3].set((lsb << 16U) | (bpos << 13U) | (ctx1 >> (static_cast<uint32_t>(lsb == 0) + (3U << shift))));
+    sMap1B[i][0].set((lsb << 16) | (bpos << 13) | (ctx0 >> (3 << shift)));
+    sMap1B[i][1].set((lsb << 16) | (bpos << 13) | (ctx0 >> (static_cast<uint32_t>(lsb == 0) + (3 << shift))));
+    sMap1B[i][2].set((lsb << 16) | (bpos << 13) | (ctx0 >> (static_cast<int>(lsb == 0) * 2 + (3 << shift))));
+    sMap1B[i][3].set((lsb << 16) | (bpos << 13) | (ctx1 >> (static_cast<uint32_t>(lsb == 0) + (3 << shift))));
     sMap1B[i][0].mix(m);
     sMap1B[i][1].mix(m);
     sMap1B[i][2].mix(m);
     sMap1B[i][3].mix(m);
   }
 
-  m.set((errLog << 9U) | (lsb << 8U) | c0, 8192);
-  m.set((uint8_t(mask) << 4U) | (ch << 3U) | (lsb << 2U) | (bpos >> 1U), 4096);
-  m.set((mxCtx << 7U) | (c1 >> 1U), 2560);
-  m.set((errLog << 4U) | (ch << 3U) | (lsb << 2U) | (bpos >> 1U), 256);
+  m.set((errLog << 9) | (lsb << 8) | c0, 8192);
+  m.set((uint8_t(mask) << 4) | (ch << 3) | (lsb << 2) | (bpos >> 1), 4096);
+  m.set((mxCtx << 7) | (c1 >> 1), 2560);
+  m.set((errLog << 4) | (ch << 3) | (lsb << 2) | (bpos >> 1), 256);
   m.set(mxCtx, 20);
 }

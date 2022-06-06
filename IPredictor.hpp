@@ -16,6 +16,6 @@
  */
 class IPredictor {
 public:
-    virtual void update() = 0;
-    virtual ~IPredictor() = default;
+  virtual void update() = 0;
+  virtual ~IPredictor() = default;
 };

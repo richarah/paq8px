@@ -52,7 +52,7 @@ private:
      * @param increment either 0 or 1.
      * @return
      */
-    [[nodiscard]] static auto incrementCounter(uint32_t x, uint32_t increment) -> uint32_t;
+    static uint32_t incrementCounter(uint32_t x, uint32_t increment);
 
 public:
     DmcModel(const Shared* const sh, uint64_t dmcNodes, uint32_t thStart);
@@ -74,23 +74,23 @@ public:
      * Determine if the state graph is full or not.
      * @return
      */
-    [[nodiscard]] auto isFull() const -> bool;
+    bool isFull() const;
 
     /**
      * Stretched probability based on counts.
      * @return
      */
-    [[nodiscard]] auto st1() const -> int;
+    int st1() const;
 
     /**
      * Stretched probability based on state.
      * @return
      */
-    [[nodiscard]] auto st2() -> int;
+    int st2();
 
     /**
     * Weighted stretched probability.
     * @return
     */
-    [[nodiscard]] auto stw() -> int;
+    int stw();
 };

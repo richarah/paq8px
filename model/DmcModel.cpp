@@ -1,12 +1,12 @@
 #include "DmcModel.hpp"
 
-auto DmcModel::incrementCounter(const uint32_t x, const uint32_t increment) -> uint32_t {
+uint32_t DmcModel::incrementCounter(const uint32_t x, const uint32_t increment) {
   return (((x << 6) - x) >> 6) + (increment << 10); // x * (1-1/64) + increment
 }
 
 DmcModel::DmcModel(const Shared* const sh, const uint64_t dmcNodes, const uint32_t thStart) : shared(sh), 
   t(min(dmcNodes + dmcNodesBase, dmcNodesMax)),
-  sm(sh, 1, 256, 256 /*64-512 are all fine*/, StateMap::BitHistory) {
+  sm(sh, 1, 256, 256 /*64-512 are all fine*/, StateMapType::BitHistory) {
     resetStateGraph(thStart);
   }
 
@@ -42,7 +42,7 @@ void DmcModel::update() {
   // update counts, state
   t[curr].c0 = incrementCounter(c0, 1 - y);
   t[curr].c1 = incrementCounter(c1, y);
-  t[curr].setState(StateTable::next(t[curr].getState(), y, rnd));
+  t[curr].setState(StateTable::getNextState(t[curr].getState(), y, rnd));
 
   // clone next state when threshold is reached
   if( n > threshold ) {
@@ -92,17 +92,17 @@ void DmcModel::update() {
   }
 }
 
-auto DmcModel::isFull() const -> bool {
+bool DmcModel::isFull() const{
   return (extra >> 7) > uint32_t(t.size());
 }
 
-auto DmcModel::st1() const -> int {
+int  DmcModel::st1() const{
   const uint32_t n0 = t[curr].c0 + 1;
   const uint32_t n1 = t[curr].c1 + 1;
   return stretch((n1 << 12) / (n0 + n1));
 }
 
-auto DmcModel::st2() -> int {
+int DmcModel::st2() {
   const uint8_t state = t[curr].getState();
   if (state == 0)
     return 0; // p = 0.5
@@ -110,7 +110,7 @@ auto DmcModel::st2() -> int {
     return stretch(sm.p1(state));
 }
 
-auto DmcModel::stw() -> int {
+int DmcModel::stw() {
   shared->GetUpdateBroadcaster()->subscribe(this);
   return st1() * 5 + st2() * 3; // (weighted) average of the predictions for stability
 }

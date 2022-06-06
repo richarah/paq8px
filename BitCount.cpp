@@ -2,11 +2,11 @@
 #include "BitCount.hpp"
 
 uint32_t bitCount(uint32_t v) {
-  v -= ((v >> 1U) & 0x55555555U);
-  v = ((v >> 2U) & 0x33333333U) + (v & 0x33333333U);
-  v = ((v >> 4U) + v) & 0x0f0f0f0fU;
-  v = ((v >> 8U) + v) & 0x00ff00ffU;
-  v = ((v >> 16U) + v) & 0x0000ffffU;
+  v -= ((v >> 1) & 0x55555555);
+  v = ((v >> 2) & 0x33333333) + (v & 0x33333333);
+  v = ((v >> 4) + v) & 0x0f0f0f0f;
+  v = ((v >> 8) + v) & 0x00ff00ff;
+  v = ((v >> 16) + v) & 0x0000ffff;
   return v;
 }
 

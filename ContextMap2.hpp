@@ -38,9 +38,9 @@ mapped to predictions.
 
 class ContextMap2 : IPredictor {
 public:
-    static constexpr int MIXERINPUTS = 4;
-    static constexpr int MIXERINPUTS_RUN_STATS = 1;
-    static constexpr int MIXERINPUTS_BYTE_HISTORY = 2;
+  static constexpr int MIXERINPUTS = 4;
+  static constexpr int MIXERINPUTS_RUN_STATS = 1;
+  static constexpr int MIXERINPUTS_BYTE_HISTORY = 2;
 
 private:
 
@@ -53,44 +53,44 @@ private:
     HashElementForContextMap bitStateTmp;
   };
 
-    const Shared * const shared;
-    Random rnd;
-    const uint32_t C; /**< max number of contexts */
-    Array<Bucket16<HashElementForContextMap, 7>> hashTable; /**< bit and byte histories (statistics) */
-    Array<ContextInfo> contextInfoList;
-    StateMap runMap;
-    StateMap stateMap;
-    StateMap bhMap8B;
-    StateMap bhMap12B;
-    uint32_t index; /**< next context to set by @ref ContextMap2::set(), resets to zero after every round */
-    const uint32_t mask;
-    const int hashBits;
-    int scale;
-    uint8_t contextflagsAll;
+  const Shared * const shared;
+  Random rnd;
+  const uint32_t C; /**< max number of contexts */
+  Array<Bucket16<HashElementForContextMap, 7>> hashTable; /**< bit and byte histories (statistics) */
+  Array<ContextInfo> contextInfoList;
+  StateMap runMap;
+  StateMap stateMap;
+  StateMap bhMap8B;
+  StateMap bhMap12B;
+  uint32_t index; /**< next context to set by @ref ContextMap2::set(), resets to zero after every round */
+  const uint32_t mask;
+  const int hashBits;
+  int scale;
+  uint8_t contextflagsAll;
 
-    void updatePendingContextsInSlot(HashElementForContextMap* const p, uint32_t c);
-    void updatePendingContexts(uint32_t ctx, uint16_t checksum, uint32_t c);
-    size_t getStateByteLocation(const uint32_t bpos, const uint32_t c0);
+  void updatePendingContextsInSlot(HashElementForContextMap* const p, uint32_t c);
+  void updatePendingContexts(uint32_t ctx, uint16_t checksum, uint32_t c);
+  size_t getStateByteLocation(const uint32_t bpos, const uint32_t c0);
 
 public:
-    int order = 0; // is set after mix()
-    /**
-     * Construct using @ref size bytes of memory for @ref contexts contexts.
-     * @param size bytes of memory to use
-     * @param contexts max number of contexts
-     * @param scale
-     * @param uw
-     */
-    ContextMap2(const Shared* const sh, uint64_t size, uint32_t contexts, int scale);
+  int order = 0; // is set after mix()
+  /**
+    * Construct using @ref size bytes of memory for @ref contexts contexts.
+    * @param size bytes of memory to use
+    * @param contexts max number of contexts
+    * @param scale
+    * @param uw
+    */
+  ContextMap2(const Shared* const sh, uint64_t size, uint32_t contexts, int scale);
 
-    /**
-     * Set next whole byte context to @ref ctx.
-     * @param ctx
-     */
-    void set(uint8_t ctxflags, const uint64_t ctx);
-    void skip(const uint8_t ctxflags);
-    void skipn(const uint8_t ctxflags, const int n);
-    void update() override;
-    void setScale(const int Scale);
-    void mix(Mixer &m);
+  /**
+    * Set next whole byte context to @ref ctx.
+    * @param ctx
+    */
+  void set(uint8_t ctxflags, const uint64_t ctx);
+  void skip(const uint8_t ctxflags);
+  void skipn(const uint8_t ctxflags, const int n);
+  void update() override;
+  void setScale(const int Scale);
+  void mix(Mixer &m);
 };

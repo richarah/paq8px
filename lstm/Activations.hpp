@@ -17,13 +17,13 @@ private:
 #if !defined(__i386__) && !defined(__x86_64__) && !defined(_M_X64)
     return;
 #else
-    static constexpr std::size_t SIMDW = 8u;
+    static constexpr std::size_t SIMDW = 8;
     __m256 const c1 = _mm256_set1_ps(0.03138777f);
     __m256 const c2 = _mm256_set1_ps(0.276281267f);
     __m256 const c_log2f = _mm256_set1_ps(1.442695022f);
     std::size_t const limit = len & static_cast<std::size_t>(-static_cast<std::ptrdiff_t>(SIMDW));
-    std::size_t remainder = len & (SIMDW - 1u);
-    for (std::size_t i = 0u; i < limit; i += SIMDW) {
+    std::size_t remainder = len & (SIMDW - 1);
+    for (std::size_t i = 0; i < limit; i += SIMDW) {
       _mm_prefetch((char*)(f + i + SIMDW), _MM_HINT_T0);
       __m256 v = _mm256_mul_ps(_mm256_loadu_ps(f + i), c_log2f);      
       __m256 x = _mm256_sub_ps(v, _mm256_round_ps(v, _MM_FROUND_TO_NEAREST_INT | _MM_FROUND_NO_EXC));
@@ -47,7 +47,7 @@ private:
         )
       );
     }
-    for (; remainder > 0u; remainder--)
+    for (; remainder > 0; remainder--)
       f[len - remainder] = tanha(f[len - remainder]);
 #endif
   }
@@ -56,7 +56,7 @@ public:
     if (simd == SIMDType::SIMD_AVX2)
       RunSimdAVX2(f, len);
     else {
-      for (std::size_t i = 0u; i < len; i++)
+      for (std::size_t i = 0; i < len; i++)
         f[i] = tanha(f[i]);
     }
   }
@@ -73,15 +73,15 @@ private:
 #if !defined(__i386__) && !defined(__x86_64__) && !defined(_M_X64)
     return;
 #else
-    static constexpr std::size_t SIMDW = 8u;
+    static constexpr std::size_t SIMDW = 8;
     static __m256 const c1 = _mm256_set1_ps(0.03138777f);
     static __m256 const c2 = _mm256_set1_ps(0.276281267f);
     static __m256 const c_log2f = _mm256_set1_ps(1.442695022f);
     static __m256 const c_log2f_2 = _mm256_set1_ps(0.721347511f);
     static __m256 const vec_half = _mm256_set1_ps(0.5f);
     std::size_t const limit = len & static_cast<std::size_t>(-static_cast<std::ptrdiff_t>(SIMDW));
-    std::size_t remainder = len & (SIMDW - 1u);
-    for (std::size_t i = 0u; i < limit; i += SIMDW) {
+    std::size_t remainder = len & (SIMDW - 1);
+    for (std::size_t i = 0; i < limit; i += SIMDW) {
       _mm_prefetch((char*)(f + i + SIMDW), _MM_HINT_T0);
       __m256 v = _mm256_mul_ps(_mm256_loadu_ps(f + i), c_log2f_2);      
       __m256 x = _mm256_sub_ps(v, _mm256_round_ps(v, _MM_FROUND_TO_NEAREST_INT | _MM_FROUND_NO_EXC));
@@ -111,7 +111,7 @@ private:
         )
       );
     }
-    for (; remainder > 0u; remainder--)
+    for (; remainder > 0; remainder--)
       f[len - remainder] = (tanha(f[len - remainder] * 0.5f) + 1.0f) * 0.5f;
 #endif
   }
@@ -120,7 +120,7 @@ public:
     if (simd == SIMDType::SIMD_AVX2)
       RunSimdAVX2(f, len);
     else {
-      for (std::size_t i = 0u; i < len; i++)
+      for (std::size_t i = 0; i < len; i++)
         f[i] = (tanha(f[i] * 0.5f) + 1.0f) * 0.5f;
     }
   }

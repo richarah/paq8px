@@ -35,11 +35,11 @@ void GermanStemmer::markVowelsAsConsonants(Word *w) {
   }
 }
 
-auto GermanStemmer::isValidEnding(const char c, const bool includeR) -> bool {
+bool GermanStemmer::isValidEnding(const char c, const bool includeR) {
   return charInArray(c, endings, numEndings) || (includeR && c == 'r');
 }
 
-auto GermanStemmer::step1(Word *w, const uint32_t r1) -> bool {
+bool GermanStemmer::step1(Word *w, const uint32_t r1) {
   int i = 0;
   for( ; i < 3; i++ ) {
     if( w->endsWith(suffixesStep1[i]) && suffixInRn(w, r1, suffixesStep1[i])) {
@@ -61,7 +61,7 @@ auto GermanStemmer::step1(Word *w, const uint32_t r1) -> bool {
   return false;
 }
 
-auto GermanStemmer::step2(Word *w, const uint32_t r1) -> bool {
+bool GermanStemmer::step2(Word *w, const uint32_t r1) {
   for( int i = 0; i < numSuffixesStep2; i++ ) {
     if( w->endsWith(suffixesStep2[i]) && suffixInRn(w, r1, suffixesStep2[i])) {
       w->end -= uint8_t(strlen(suffixesStep2[i]));
@@ -75,7 +75,7 @@ auto GermanStemmer::step2(Word *w, const uint32_t r1) -> bool {
   return false;
 }
 
-auto GermanStemmer::step3(Word *w, const uint32_t r1, const uint32_t r2) -> bool {
+bool GermanStemmer::step3(Word *w, const uint32_t r1, const uint32_t r2) {
   int i = 0;
   for( ; i < 2; i++ ) {
     if( w->endsWith(suffixesStep3[i]) && suffixInRn(w, r2, suffixesStep3[i])) {
@@ -124,11 +124,11 @@ auto GermanStemmer::step3(Word *w, const uint32_t r1, const uint32_t r2) -> bool
   return false;
 }
 
-auto GermanStemmer::isVowel(const char c) -> bool {
+bool GermanStemmer::isVowel(const char c) {
   return charInArray(c, vowels, numVowels);
 }
 
-auto GermanStemmer::stem(Word *w) -> bool {
+bool GermanStemmer::stem(Word *w) {
   convertUtf8(w);
   if( w->length() < 2 ) {
     w->calculateStemHash();

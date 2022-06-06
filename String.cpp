@@ -28,11 +28,11 @@ void String::appendIntRecursive(uint64_t x) {
   }
 }
 
-auto String::c_str() const -> const char * {
+const char* String::c_str() const {
   return &(*this)[0];
 }
 
-auto String::strsize() const -> uint64_t {
+uint64_t String::strsize() const {
   chk_consistency();
   assert(size() > 0);
   return size() - 1;
@@ -70,7 +70,7 @@ void String::operator+=(uint64_t x) {
   chk_consistency();
 }
 
-auto String::endsWith(const char *ending) const -> bool {
+bool String::endsWith(const char *ending) const {
   const uint64_t endingSize = strlen(ending);
   if( endingSize > strsize()) {
     return false;
@@ -87,7 +87,7 @@ void String::stripEnd(uint64_t count) {
   chk_consistency();
 }
 
-auto String::beginsWith(const char *beginning) const -> bool {
+bool String::beginsWith(const char *beginning) const {
   const uint64_t beginningSize = strlen(beginning);
   if( beginningSize > strsize()) {
     return false;
@@ -105,7 +105,7 @@ void String::stripStart(uint64_t count) {
   chk_consistency();
 }
 
-auto String::findLast(char c) const -> int {
+int String::findLast(char c) const{
   uint64_t i = strsize();
   while( i-- > 0 ) {
     if((*this)[i] == c ) {

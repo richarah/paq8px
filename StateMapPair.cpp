@@ -6,8 +6,8 @@ StateMapPair::StateMapPair(const Shared* const sh, const int n, const int lim_sl
 }
 
 void StateMapPair::reset() {
-  uint32_t n = t.size();
-  for (uint32_t i = 0; i < n; ++i) {
+  size_t n = t.size();
+  for (size_t i = 0; i < n; ++i) {
     t[i] = 2048 << 20 | 5; //initial p=0.5, initial count=5
   }
 }

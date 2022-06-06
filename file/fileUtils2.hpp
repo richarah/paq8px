@@ -8,13 +8,13 @@
  * @param filename
  * @return
  */
-static auto getFileSize(const char *filename) -> uint64_t {
+static uint64_t getFileSize(const char *filename) {
   FileDisk f;
   f.open(filename, true);
   f.setEnd();
-  const auto fileSize = f.curPos();
+  const uint64_t fileSize = f.curPos();
   f.close();
-  if((fileSize >> 31U) != 0 ) {
+  if((fileSize >> 31) != 0 ) {
     quit("Large files not supported.");
   }
   return fileSize;

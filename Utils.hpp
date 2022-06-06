@@ -101,7 +101,7 @@ class IntentionalException : public std::exception {};
   throw IntentionalException();
 }
 
-inline auto clip(int const px) -> uint8_t {
+inline uint8_t clip(int const px) {
   if( px > 255 ) {
     return 255;
   }
@@ -111,7 +111,7 @@ inline auto clip(int const px) -> uint8_t {
   return px;
 }
 
-inline auto clamp4(const int px, const uint8_t n1, const uint8_t n2, const uint8_t n3, const uint8_t n4) -> uint8_t {
+inline uint8_t clamp4(const int px, const uint8_t n1, const uint8_t n2, const uint8_t n3, const uint8_t n4) {
   int maximum = n1;
   if( maximum < n2 ) {
     maximum = n2;
@@ -146,7 +146,7 @@ inline auto clamp4(const int px, const uint8_t n1, const uint8_t n2, const uint8
 
 //distance (absolute difference) between two 8-bit pixel values, quantized
 //used by 8-bit and 24-bit image models
-inline auto DiffQt(const uint8_t a, const uint8_t b, const uint8_t limit = 7) -> uint8_t {
+inline uint8_t DiffQt(const uint8_t a, const uint8_t b, const uint8_t limit = 7) {
   //assert(limit <= 7);
   uint32_t d = abs(a - b);
   if (d <= 2)d = d;
@@ -159,6 +159,6 @@ inline auto DiffQt(const uint8_t a, const uint8_t b, const uint8_t limit = 7) ->
   return sign | min(d, limit);
 }
 
-inline auto logQt(const uint8_t px, const uint8_t bits) -> uint32_t {
+inline uint32_t logQt(const uint8_t px, const uint8_t bits) {
   return (uint32_t(0x100 | px)) >> max(0, static_cast<int>(ilog2(px) - bits));
 }

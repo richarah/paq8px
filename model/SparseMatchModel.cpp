@@ -22,7 +22,7 @@ void SparseMatchModel::update() {
     hashes[i] = finalize64(hash, hashBits);
   }
   // extend current match, if available
-  if( length != 0u ) {
+  if( length != 0 ) {
     index++;
     if( length < MaxLen ) {
       length++;
@@ -66,7 +66,7 @@ void SparseMatchModel::update() {
   if( valid ) {
     INJECT_SHARED_c0
     INJECT_SHARED_c4
-    mapL.set(hash(expectedByte, c0, c1, (c4 >> 8) & 0xffu, ilog2(length + 1) * numHashes + hashIndex));
+    mapL.set(hash(expectedByte, c0, c1, (c4 >> 8) & 0xff, ilog2(length + 1) * numHashes + hashIndex));
     const uint32_t c1ExpectedByte = (c1 << 8) | expectedByte;
     maps[0].set(c1ExpectedByte);
     iCtx8 = c1ExpectedByte;

@@ -1,7 +1,6 @@
 #pragma once
 
 #include "IDecay.hpp"
-#include "../Utils.hpp"
 
 #define _USE_MATH_DEFINES
 #include <cmath>

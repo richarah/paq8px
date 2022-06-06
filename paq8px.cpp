@@ -8,7 +8,7 @@
 //////////////////////// Versioning ////////////////////////////////////////
 
 #define PROGNAME     "paq8px"
-#define PROGVERSION  "206"  //update version here before publishing your changes
+#define PROGVERSION  "206fix1"  //update version here before publishing your changes
 #define PROGYEAR     "2021"
 
 
@@ -165,18 +165,6 @@ static void printModules() {
   printf("ZLIB: DISABLED, ");
 #endif
 
-#ifndef DISABLE_AUDIOMODEL
-  printf("AUDIOMODEL: ENABLED, ");
-#else
-  printf("AUDIOMODEL: DISABLED, ");
-#endif
-
-#ifndef DISABLE_TEXTMODEL
-  printf("TEXTMODEL: ENABLED ");
-#else
-  printf("TEXTMODEL: DISABLED ");
-#endif
-
   printf("\n");
 }
 
@@ -200,7 +188,7 @@ static void printSimdInfo(int simdIset, int detectedSimdIset) {
   } else {
     printf("non-vectorized");
   }
-  printf(" neural network and hashtable functions.\n");
+  printf(" neural network functions.\n");
 }
 
 static void printCommand(const WHATTODO &whattodo) {
@@ -237,7 +225,7 @@ static void printOptions(Shared *shared) {
   printf(" File mode      = %s\n", shared->GetOptionMultipleFileMode() ? "Multiple" : "Single");
 }
 
-auto processCommandLine(int argc, char **argv) -> int {
+int processCommandLine(int argc, char **argv) {
   ProgramChecker *programChecker = ProgramChecker::getInstance();
   Shared shared;
   try {
@@ -289,7 +277,7 @@ auto processCommandLine(int argc, char **argv) -> int {
           whattodo = DoCompress;
           //process optional compression switches
           for( ; j < argLen; j++ ) {
-            switch( argv[i][j] & 0xDFU ) {
+            switch( argv[i][j] & 0xDF ) {
               case 'B':
                 shared.SetOptionBruteforceDeflateDetection();
                 break;
@@ -622,7 +610,7 @@ auto processCommandLine(int argc, char **argv) -> int {
       }
     }
 
-    bool doEncoding = shared.level != 0u;
+    bool doEncoding = shared.level != 0;
     Encoder en(&shared, doEncoding, mode, &archive);
     uint64_t contentSize = 0;
     uint64_t totalSize = 0;
@@ -746,7 +734,7 @@ auto processCommandLine(int argc, char **argv) -> int {
         contentSize += fSize;
       }
 
-      auto preFlush = en.size();
+      uint64_t preFlush = en.size();
       en.flush();
       totalSize += en.size() - preFlush; //we consider padding bytes as auxiliary bytes
       printf("-----------------------\n");
@@ -791,7 +779,7 @@ auto processCommandLine(int argc, char **argv) -> int {
       }
     } else { //decompress
       if( whattodo == DoExtract || whattodo == DoCompare ) {
-        FMode fMode = whattodo == DoExtract ? FDECOMPRESS : FCOMPARE;
+        FMode fMode = whattodo == DoExtract ? FMode::FDECOMPRESS : FMode::FCOMPARE;
         if(shared.GetOptionMultipleFileMode()) { //multiple file mode
           for( int i = 0; i < numberOfFiles; i++ ) {
             const char *fName = listoffiles.getfilename(i);
@@ -825,7 +813,7 @@ auto processCommandLine(int argc, char **argv) -> int {
 #pragma comment(lib,"shell32.lib")
 #endif
 
-auto main(int argc, char **argv) -> int {
+int main(int argc, char **argv) {
 #ifdef WINDOWS
   // On Windows, argv is encoded in the effective codepage, therefore unsuitable for acquiring command line arguments (file names
   // in our case) not representable in that particular codepage.

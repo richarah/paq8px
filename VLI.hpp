@@ -2,10 +2,10 @@
 
 #include <cstdint>
 
-static auto VLICost(uint64_t n) -> int {
+static int VLICost(uint64_t n) {
   int cost = 1;
   while (n > 0x7F) {
-    n >>= 7U;
+    n >>= 7;
     cost++;
   }
   return cost;

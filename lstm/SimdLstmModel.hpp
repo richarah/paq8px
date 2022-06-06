@@ -23,12 +23,12 @@ private:
 public:
   SIMDLstmModel(
     const Shared* const sh,
-    std::size_t const num_cells,
-    std::size_t const num_layers,
-    std::size_t const horizon,
-    float const learning_rate,
-    float const gradient_clip) :
-    LstmModel<Bits>(sh, num_cells, num_layers, horizon, learning_rate, gradient_clip),
+    std::size_t const num_cells, //200
+    std::size_t const num_layers, //2
+    std::size_t const horizon, //100
+    float const learning_rate, //0.06
+    float const gradient_clip) : //16.0
+    LstmModel<Bits>(sh),
     shape{ 0, this->Size, num_cells, num_layers, horizon },
     lstm(shape, learning_rate, gradient_clip),
     modelType(LSTM::Model::Type::Default), pModelType(LSTM::Model::Type::Default),
@@ -54,11 +54,12 @@ public:
       this->top = this->mid;
     if (bpos == 0) {
       std::uint8_t const c1 = this->shared->State.c1;
-      auto const& output = lstm.Perceive(c1);
+      lstm.Perceive(c1);
+      auto const& output = lstm.Predict(c1);
       memcpy(&this->probs[0], &output[0], (1 << Bits) * sizeof(float));
       this->top = (1 << Bits) - 1;
       this->bot = 0;
-      if ((this->shared->GetOptionTrainLSTM()) && (this->shared->State.blockPos == 0u)) {
+      if ((this->shared->GetOptionTrainLSTM()) && (this->shared->State.blockPos == 0)) {
         BlockType const blockType = static_cast<BlockType>(this->shared->State.blockType);
         if (blockType != pBlockType) {
           switch (blockType) {

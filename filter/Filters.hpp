@@ -77,9 +77,9 @@
 static bool isGrayscalePalette(File *in, int n = 256, int isRGBA = 0) {
   uint64_t offset = in->curPos();
   int stride = 3 + isRGBA;
-  int res = (n > 0) << 8U;
+  int res = (n > 0) << 8;
   int order = 1;
-  for( int i = 0; (i < n * stride) && ((res >> 8U) != 0); i++ ) {
+  for( int i = 0; (i < n * stride) && ((res >> 8) != 0); i++ ) {
     int b = in->getchar();
     if( b == EOF) {
       res = 0;
@@ -326,8 +326,8 @@ static DetectionInfo detect(File *in, uint64_t blockSize, const TransformOptions
   struct {
     Array<uint64_t> absPos{ 256 };
     Array<uint64_t> relPos{ 256 };
-    uint32_t opcode = 0u, idx = 0u, count[4] = { 0 }, branches[4] = { 0 };
-    uint64_t offset = 0u, last = 0u;
+    uint32_t opcode = 0, idx = 0, count[4] = { 0 }, branches[4] = { 0 };
+    uint64_t offset = 0, last = 0;
   } DEC;
   
   // For JPEG detection
@@ -336,7 +336,6 @@ static DetectionInfo detect(File *in, uint64_t blockSize, const TransformOptions
   uint64_t sos = 0; // Start Of Scan
   uint64_t app = 0; // Application-specific marker
 
-#ifndef DISABLE_AUDIOMODEL
   // For WAVE detection
   uint64_t wavi = 0;
   int wavSize = 0; // filesize
@@ -356,7 +355,6 @@ static DetectionInfo detect(File *in, uint64_t blockSize, const TransformOptions
   uint64_t s3mi = 0;
   int s3Mno = 0;
   int s3Mni = 0; 
-#endif //  DISABLE_AUDIOMODEL
    
   // For MRB detection
   uint64_t mrb = 0; 
@@ -410,8 +408,8 @@ static DetectionInfo detect(File *in, uint64_t blockSize, const TransformOptions
 
   // For ZLIB stream detection
   uint8_t zBuf[256 + 32] = {0};
-  uint8_t zin[1U << 16] = {0};
-  uint8_t zout[1U << 16] = {0};
+  uint8_t zin[1 << 16] = {0};
+  uint8_t zout[1 << 16] = {0};
 
   // For DBF detection
   dBASE dbase{};
@@ -677,7 +675,7 @@ static DetectionInfo detect(File *in, uint64_t blockSize, const TransformOptions
         }
         else {
           uint32_t endPos = dbase.nRecords * dbase.RecordLength;
-          uint32_t seekpos = endPos + in->curPos();
+          uint64_t seekpos = endPos + in->curPos();
           in->setpos(seekpos);
           marker = in->getchar(); // file end marker, it must be 0x1a
           if (marker != 0x1a) {
@@ -803,7 +801,7 @@ static DetectionInfo detect(File *in, uint64_t blockSize, const TransformOptions
       detectionInfo.DataLength = start + i +1 - detectionInfo.DataStart;
       return detectionInfo;
     }
-#ifndef DISABLE_AUDIOMODEL
+
     // Detect .wav file header
     if (buf0 == 0x52494646 /*RIFF*/) { 
       wavi = i;
@@ -991,7 +989,7 @@ static DetectionInfo detect(File *in, uint64_t blockSize, const TransformOptions
         in->setpos(savedPos);
       }
     }
-#endif //  DISABLE_AUDIOMODEL
+
 
     //detect uncompressed and rle encoded mrb files inside windows hlp files 506C
     //we support only single images
@@ -1058,7 +1056,7 @@ static DetectionInfo detect(File *in, uint64_t blockSize, const TransformOptions
     }
 
     // Detect .bmp image
-    if ((bmpi == 0u) && (dibi == 0u)) {
+    if ((bmpi == 0) && (dibi == 0)) {
       if ((buf0 & 0xffff) == 16973) { // 'BM'
         bmpi = i; // header start: bmpi-1
         dibi = i - 1 + 18; // we expect a DIB header to come
@@ -1109,13 +1107,13 @@ static DetectionInfo detect(File *in, uint64_t blockSize, const TransformOptions
       else if (p == 50 + 4) { //the number of important colors used
         if (bswap(buf0) <= static_cast<uint32_t>(nColors) || bswap(buf0) == 0x10000000) {
           if (bmpi == 0 /*headerless*/ && (bmpx * 2 == bmpy) && imgbpp > 1 && // possible icon/cursor?
-            ((bmps > 0 && bmps == ((bmpx * bmpy * (imgbpp + 1)) >> 4)) || (((bmps == 0u) || bmps < ((bmpx * bmpy * imgbpp) >> 3)) &&
-              ((bmpx == 8) || (bmpx == 10) || (bmpx == 14) || (bmpx == 16) ||
-                (bmpx == 20) || (bmpx == 22) || (bmpx == 24) ||
-                (bmpx == 32) || (bmpx == 40) || (bmpx == 48) ||
-                (bmpx == 60) || (bmpx == 64) || (bmpx == 72) ||
-                (bmpx == 80) || (bmpx == 96) || (bmpx == 128) ||
-                (bmpx == 256))))) {
+            ((bmps > 0 && bmps == ((bmpx * bmpy * (imgbpp + 1)) >> 4)) || (((bmps == 0) || bmps < ((bmpx * bmpy * imgbpp) >> 3)) &&
+              ((bmpx == 8)  || (bmpx == 10) || (bmpx == 14) || (bmpx == 16) ||
+               (bmpx == 20) || (bmpx == 22) || (bmpx == 24) ||
+               (bmpx == 32) || (bmpx == 40) || (bmpx == 48) ||
+               (bmpx == 60) || (bmpx == 64) || (bmpx == 72) ||
+               (bmpx == 80) || (bmpx == 96) || (bmpx == 128) ||
+               (bmpx == 256))))) {
             bmpy = bmpx;
           }
 
@@ -1668,46 +1666,46 @@ static DetectionInfo detect(File *in, uint64_t blockSize, const TransformOptions
     }
 
     // detect DEC Alpha
-    DEC.idx = i & 3u;
+    DEC.idx = i & 3;
     DEC.opcode = bswap(buf0);
-    DEC.count[DEC.idx] = ((i >= 3u) && DECAlpha::IsValidInstruction(DEC.opcode)) ? DEC.count[DEC.idx] + 1u : DEC.count[DEC.idx] >> 3u;
-    DEC.opcode >>= 21u;
+    DEC.count[DEC.idx] = ((i >= 3) && DECAlpha::IsValidInstruction(DEC.opcode)) ? DEC.count[DEC.idx] + 1 : DEC.count[DEC.idx] >> 3;
+    DEC.opcode >>= 21;
     //test if bsr opcode and if last 4 opcodes are valid
     if (
-      (DEC.opcode == (0x34u << 5u) + 26u) &&
-      (DEC.count[DEC.idx] > 4u) &&
+      (DEC.opcode == (0x34 << 5) + 26) &&
+      (DEC.count[DEC.idx] > 4) &&
       ((e8e9count == 0) && !soi && !pgm && !rgbi && !bmpi && !wavi && !tga)
     ) {
-      std::uint32_t const absAddrLSB = DEC.opcode & 0xFFu; // absolute address low 8 bits
-      std::uint32_t const relAddrLSB = ((DEC.opcode & 0x1FFFFFu) + static_cast<std::uint32_t>(i) / 4u) & 0xFFu; // relative address low 8 bits
+      std::uint32_t const absAddrLSB = DEC.opcode & 0xFF; // absolute address low 8 bits
+      std::uint32_t const relAddrLSB = ((DEC.opcode & 0x1FFFFF) + static_cast<std::uint32_t>(i) / 4u) & 0xff; // relative address low 8 bits
       std::uint64_t const absPos = DEC.absPos[absAddrLSB];
       std::uint64_t const relPos = DEC.relPos[relAddrLSB];
       std::uint64_t const curPos = static_cast<std::uint64_t>(i);
-      if ((absPos > relPos) && (curPos < absPos + UINT64_C(0x8000)) && (absPos > 16u) && (curPos > absPos + UINT64_C(16)) && (((curPos-absPos) & UINT64_C(3)) == 0u)) {
+      if ((absPos > relPos) && (curPos < absPos + UINT64_C(0x8000)) && (absPos > 16) && (curPos > absPos + UINT64_C(16)) && (((curPos-absPos) & UINT64_C(3)) == 0)) {
         DEC.last = curPos;
         DEC.branches[DEC.idx]++;      
-        if ((DEC.offset == 0u) || (DEC.offset > DEC.absPos[absAddrLSB])) {
-          std::uint64_t const addr = curPos - (DEC.count[DEC.idx] - 1u) * UINT64_C(4);
-          DEC.offset = ((start > 0u) && (start == prv_start)) ? DEC.absPos[absAddrLSB] : std::min<std::uint64_t>(DEC.absPos[absAddrLSB], addr);
+        if ((DEC.offset == 0) || (DEC.offset > DEC.absPos[absAddrLSB])) {
+          std::uint64_t const addr = curPos - (DEC.count[DEC.idx] - 1) * UINT64_C(4);
+          DEC.offset = ((start > 0) && (start == prv_start)) ? DEC.absPos[absAddrLSB] : std::min<std::uint64_t>(DEC.absPos[absAddrLSB], addr);
         }
       }
       else
-        DEC.branches[DEC.idx] = 0u;
+        DEC.branches[DEC.idx] = 0;
       DEC.absPos[absAddrLSB] = DEC.relPos[relAddrLSB] = curPos;
     }
      
-    if ((detectionInfo.Type == BlockType::DEFAULT) && (DEC.branches[DEC.idx] >= 16u)) {
+    if ((detectionInfo.Type == BlockType::DEFAULT) && (DEC.branches[DEC.idx] >= 16)) {
       detectionInfo.Type = BlockType::DEC_ALPHA;
       detectionInfo.DataStart = start + DEC.offset - (start + DEC.offset) % 4;
     }
    
-    if ((i + 1 == n) || (static_cast<std::uint64_t>(i) > DEC.last + (detectionInfo.Type == BlockType::DEC_ALPHA ? UINT64_C(0x8000) : UINT64_C(0x4000))) && (DEC.count[DEC.offset & 3] == 0u)) {
+    if ((i + 1 == n) || (static_cast<std::uint64_t>(i) > DEC.last + (detectionInfo.Type == BlockType::DEC_ALPHA ? UINT64_C(0x8000) : UINT64_C(0x4000))) && (DEC.count[DEC.offset & 3] == 0)) {
       if (detectionInfo.Type == BlockType::DEC_ALPHA) {
         detectionInfo.DataLength = (start + DEC.last - (start + DEC.last) % 4) - detectionInfo.DataStart;
         return detectionInfo;
       }
-      DEC.last = 0u, DEC.offset = 0u;
-      std::memset(&DEC.branches[0], 0u, sizeof(DEC.branches));
+      DEC.last = 0, DEC.offset = 0;
+      std::memset(&DEC.branches[0], 0, sizeof(DEC.branches));
     }
 
     // Detect base64 encoded data
@@ -1795,8 +1793,7 @@ static void directEncodeBlock(BlockType type, File *in, uint64_t len, Encoder &e
 
 static void compressRecursive(File *in, uint64_t blockSize, Encoder &en, String &blstr, int recursionLevel, float p1, float p2, const TransformOptions* const transformOptions);
 
-static auto
-decodeFunc(BlockType type, Encoder &en, File *tmp, uint64_t len, int info, File *out, FMode mode, uint64_t &diffFound, const TransformOptions* const transformOptions) -> uint64_t {
+static uint64_t decodeFunc(BlockType type, Encoder &en, File *tmp, uint64_t len, int info, File *out, FMode mode, uint64_t &diffFound, const TransformOptions* const transformOptions) {
   if( type == BlockType::IMAGE24 ) {
     auto b = new BmpFilter();
     b->setWidth(info);
@@ -1835,7 +1832,7 @@ decodeFunc(BlockType type, Encoder &en, File *tmp, uint64_t len, int info, File 
     return decodeGif(tmp, len, out, mode, diffFound);
   } else if( type == BlockType::RLE ) {
     auto r = new RleFilter();
-    //r->setScanLineSize(info & 0xFFFFFFU); //now it self-encodes this info, but eventually we need to pass it
+    //r->setScanLineSize(info & 0xFFFFFF); //now it self-encodes this info, but eventually we need to pass it
     return r->decode(tmp, out, mode, len, diffFound);
   } else if( type == BlockType::MRB) {
     uint8_t packingMethod = (info >> 24) & 3; //0..3
@@ -1857,7 +1854,7 @@ decodeFunc(BlockType type, Encoder &en, File *tmp, uint64_t len, int info, File 
   return 0;
 }
 
-static auto encodeFunc(BlockType type, File *in, File *tmp, uint64_t len, int info, int &hdrsize, const TransformOptions* const transformOptions) -> uint64_t {
+static uint64_t encodeFunc(BlockType type, File *in, File *tmp, uint64_t len, int info, int &hdrsize, const TransformOptions* const transformOptions) {
   if( type == BlockType::IMAGE24 ) {
     auto b = new BmpFilter();
     b->setSkipRgb(transformOptions->skipRgb);
@@ -1889,7 +1886,7 @@ static auto encodeFunc(BlockType type, File *in, File *tmp, uint64_t len, int in
     return encodeGif(in, tmp, len, hdrsize) != 0 ? 0 : 1;
   } else if( type == BlockType::RLE ) {
     auto r = new RleFilter();
-    r->setScanLineSize(info & 0xFFFFFFU);
+    r->setScanLineSize(info & 0xFFFFFF);
     r->encode(in, tmp, len, info, hdrsize);
   } else if (type == BlockType::MRB) {
     const uint8_t packingMethod = (info >> 24) & 3; //0..3
@@ -1931,7 +1928,7 @@ transformEncodeBlock(BlockType type, File *in, uint64_t len, Encoder &en, int in
       tmp.setpos(0);
       en.setFile(&tmp);
       in->setpos(begin);
-      decodeFunc(type, en, &tmp, tmpSize, info, in, FCOMPARE, diffFound, transformOptions);
+      decodeFunc(type, en, &tmp, tmpSize, info, in, FMode::FCOMPARE, diffFound, transformOptions);
     }
     // Test fails, compress without transform
     if( diffFound > 0 || tmp.getchar() != EOF) {
@@ -1998,17 +1995,17 @@ static void printBlock(const uint64_t begin, const uint64_t len, const BlockType
   static const char* audioTypes[4] = { "8b-mono", "8b-stereo", "16b-mono", "16b-stereo" };
   static const char* mrbTypes[4] = { "mrb-uncompressed", "mrb-rle", "mrb-lz77", "mrb-rle-lz77" };
 
-  auto typeName =
+  const char* typeName =
     type == BlockType::MRB ? mrbTypes[(blockInfo >> 24) & 3] :
-    type == BlockType::ZLIB && isPNG(BlockType(blockInfo >> 24U)) ? typeNames[blockInfo >> 24] :
+    type == BlockType::ZLIB && isPNG(BlockType(blockInfo >> 24)) ? typeNames[blockInfo >> 24] :
     typeNames[(int)type];
   printf(" %-11s | %-16s |%10" PRIu64 " bytes [%" PRIu64 " - %" PRIu64 "]", blstrSub.c_str(), typeName, len, begin, (begin + len) - 1);
   if (type == BlockType::AUDIO || type == BlockType::AUDIO_LE) {
     printf(" (%s)", audioTypes[blockInfo % 4]);
   }
   else if (type == BlockType::IMAGE1 || type == BlockType::IMAGE4 || type == BlockType::IMAGE8 || type == BlockType::IMAGE8GRAY || type == BlockType::IMAGE24 || type == BlockType::IMAGE32 ||
-    (type == BlockType::ZLIB && isPNG(BlockType(blockInfo >> 24U)))) {
-    printf(" (width: %d)", (type == BlockType::ZLIB) ? (blockInfo & 0xFFFFFFU) : blockInfo);
+    (type == BlockType::ZLIB && isPNG(BlockType(blockInfo >> 24)))) {
+    printf(" (width: %d)", (type == BlockType::ZLIB) ? (blockInfo & 0xFFFFFF) : blockInfo);
   }
   else if (type == BlockType::MRB) {
     const uint8_t packingMethod = (blockInfo >> 24) & 3; //0..3
@@ -2017,8 +2014,8 @@ static void printBlock(const uint64_t begin, const uint64_t len, const BlockType
     const int height = blockInfo & 0xFFF;
     printf(" (%d-bit image: %dx%d)", colorBits, width, height);
   }
-  else if (hasRecursion(type) && (blockInfo >> 24U) != (int)BlockType::DEFAULT) {
-      printf(" (%s)", typeNames[blockInfo >> 24U]);
+  else if (hasRecursion(type) && (blockInfo >> 24) != (int)BlockType::DEFAULT) {
+      printf(" (%s)", typeNames[blockInfo >> 24]);
   }
   else if (type == BlockType::CD) {
     printf(" (mode%d/form%d)", blockInfo == 1 ? 1 : 2, blockInfo != 3 ? 1 : 2);
@@ -2123,7 +2120,7 @@ static void compressfile(const Shared* const shared, const char *filename, uint6
   }
 }
 
-static auto decompressRecursive(File *out, uint64_t blockSize, Encoder &en, FMode mode, int recursionLevel, TransformOptions *transformOptions) -> uint64_t {
+static uint64_t decompressRecursive(File *out, uint64_t blockSize, Encoder &en, FMode mode, int recursionLevel, TransformOptions *transformOptions) {
   uint64_t i = 0;
   uint64_t diffFound = 0;
   while( i < blockSize ) {
@@ -2135,7 +2132,7 @@ static auto decompressRecursive(File *out, uint64_t blockSize, Encoder &en, FMod
       FileTmp tmp;
       for (uint64_t j = 0; j < len; ++j)
           tmp.putChar(en.decompressByte(&en.predictorMain));
-      if (mode != FDISCARD) {
+      if (mode != FMode::FDISCARD) {
         tmp.setpos(0);
         len = decodeFunc(type, en, &tmp, len, info, out, mode, diffFound, transformOptions);
       }
@@ -2144,8 +2141,8 @@ static auto decompressRecursive(File *out, uint64_t blockSize, Encoder &en, FMod
     else
     if( hasRecursion(type)) {
       FileTmp tmp;
-      decompressRecursive(&tmp, len, en, FDECOMPRESS, recursionLevel + 1, transformOptions);
-      if( mode != FDISCARD ) {
+      decompressRecursive(&tmp, len, en, FMode::FDECOMPRESS, recursionLevel + 1, transformOptions);
+      if( mode != FMode::FDISCARD ) {
         tmp.setpos(0);
         if( hasTransform(type, info)) {
           len = decodeFunc(type, en, &tmp, len, info, out, mode, diffFound, transformOptions);
@@ -2156,14 +2153,14 @@ static auto decompressRecursive(File *out, uint64_t blockSize, Encoder &en, FMod
       len = decodeFunc(type, en, nullptr, len, info, out, mode, diffFound, transformOptions);
     } else {
       for( uint64_t j = 0; j < len; ++j ) {
-        if((j & 0xfff) == 0u ) {
+        if((j & 0xfff) == 0 ) {
           en.printStatus();
         }
-        if( mode == FDECOMPRESS ) {
+        if( mode == FMode::FDECOMPRESS ) {
           out->putChar(en.decompressByte(&en.predictorMain));
-        } else if( mode == FCOMPARE ) {
-          if( en.decompressByte(&en.predictorMain) != out->getchar() && (diffFound == 0u)) {
-            mode = FDISCARD;
+        } else if( mode == FMode::FCOMPARE ) {
+          if( en.decompressByte(&en.predictorMain) != out->getchar() && (diffFound == 0)) {
+            mode = FMode::FDISCARD;
             diffFound = i + j + 1;
           }
         } else {
@@ -2184,7 +2181,7 @@ static void decompressFile(const Shared* const shared, const char* filename, FMo
   uint64_t fileSize = Block::DecodeBlockSize(&en);
 
   FileDisk f;
-  if( fMode == FCOMPARE ) {
+  if( fMode == FMode::FCOMPARE ) {
     f.open(filename, true);
     printf("Comparing");
   } else { //mode==FDECOMPRESS;
@@ -2196,11 +2193,11 @@ static void decompressFile(const Shared* const shared, const char* filename, FMo
   // Decompress/Compare
   TransformOptions transformOptions(shared);
   uint64_t r = decompressRecursive(&f, fileSize, en, fMode, 0, &transformOptions);
-  if( fMode == FCOMPARE && (r == 0u) && f.getchar() != EOF) {
+  if( fMode == FMode::FCOMPARE && (r == 0) && f.getchar() != EOF) {
     printf("file is longer\n");
-  } else if( fMode == FCOMPARE && (r != 0u)) {
+  } else if( fMode == FMode::FCOMPARE && (r != 0)) {
     printf("differ at %" PRIu64 "\n", r - 1);
-  } else if( fMode == FCOMPARE ) {
+  } else if( fMode == FMode::FCOMPARE ) {
     printf("identical\n");
   } else {
     printf("done   \n");

@@ -4,7 +4,6 @@
 #include "IOptimizer.hpp"
 #include "IActivation.hpp"
 #include "IDecay.hpp"
-#include "../Utils.hpp"
 
 template<SIMDType simd, class Optimizer, class Activation, class Decay, typename T>
 class Layer {
@@ -12,18 +11,42 @@ class Layer {
   static_assert(std::is_base_of<IActivation, Activation>::value, "Activation must implement IActivation interface");
   static_assert(std::is_base_of<IDecay, Decay>::value, "Decay must implement IDecay interface");
 private:
-  std::valarray<std::valarray<float>> update, m, v, transpose, norm;
+  std::valarray<std::valarray<float>> update;
+  std::valarray<std::valarray<float>> m;
+  std::valarray<std::valarray<float>> v;
+  std::valarray<std::valarray<float>> transpose;
+  std::valarray<std::valarray<float>> norm;
+  
   std::valarray<float> inverse_variance;
-  std::valarray<float> gamma, gamma_u, gamma_m, gamma_v;
-  std::valarray<float> beta, beta_u, beta_m, beta_v;
-  std::size_t input_size, auxiliary_input_size, output_size, num_cells, horizon;
+  
+  std::valarray<float> gamma; 
+  std::valarray<float> gamma_u; 
+  std::valarray<float> gamma_m; 
+  std::valarray<float> gamma_v;
+
+  std::valarray<float> beta;
+  std::valarray<float> beta_u;
+  std::valarray<float> beta_m;
+  std::valarray<float> beta_v;
+
+  std::size_t input_size;
+  std::size_t auxiliary_input_size;
+  std::size_t output_size;
+  std::size_t num_cells;
+  std::size_t horizon;
+
   float learning_rate;
+
   Optimizer optimizer;
   Activation activation;
   Decay decay;
+
 public:
-  std::valarray<std::valarray<float>> weights, state;
+
+  std::valarray<std::valarray<float>> weights;
+  std::valarray<std::valarray<float>> state;
   std::valarray<float> error;
+
   Layer(
     std::size_t const input_size,
     std::size_t const auxiliary_input_size,
@@ -34,13 +57,30 @@ public:
     update(std::valarray<float>(input_size), num_cells),
     m(std::valarray<float>(input_size), num_cells),
     v(std::valarray<float>(input_size), num_cells),
-    transpose(std::valarray<float>(num_cells), input_size - output_size - auxiliary_input_size),
+    transpose(std::valarray<float>(num_cells), input_size - output_size - auxiliary_input_size), //457-256-0 = 201
     norm(std::valarray<float>(num_cells), horizon),
+
     inverse_variance(horizon),
-    gamma(1.f, num_cells), gamma_u(num_cells), gamma_m(num_cells), gamma_v(num_cells),
-    beta(num_cells), beta_u(num_cells), beta_m(num_cells), beta_v(num_cells),
-    input_size(input_size), auxiliary_input_size(auxiliary_input_size), output_size(output_size), num_cells(num_cells), horizon(horizon),
-    learning_rate(0.f),
+
+    gamma(1.f, num_cells), 
+    gamma_u(num_cells), 
+    gamma_m(num_cells), 
+    gamma_v(num_cells),
+
+    beta(num_cells),
+    beta_u(num_cells), 
+    beta_m(num_cells), 
+    beta_v(num_cells),
+
+    input_size(input_size), 
+    auxiliary_input_size(auxiliary_input_size), 
+    output_size(output_size), 
+
+    num_cells(num_cells), 
+    horizon(horizon),
+
+    learning_rate(0.f), // 0 initially, managed by the selected decay function
+
     weights(std::valarray<float>(input_size), num_cells),
     state(std::valarray<float>(num_cells), horizon),
     error(num_cells)
@@ -80,20 +120,23 @@ public:
     T const input_symbol)
   {
     if (epoch == horizon - 1) {
-       memset(&gamma_u[0], 0, num_cells * sizeof(float));
-       memset(&beta_u[0], 0, num_cells * sizeof(float));
+      memset(&gamma_u[0], 0, num_cells * sizeof(float));
+      memset(&beta_u[0], 0, num_cells * sizeof(float));
+
       for (std::size_t i = 0; i < num_cells; i++) {
-          memset(&update[i][0], 0, input_size * sizeof(float));
-        std::size_t offset = output_size + auxiliary_input_size;
+        memset(&update[i][0], 0, input_size * sizeof(float)); //657
+        std::size_t offset = output_size + auxiliary_input_size; //256+0
         for (std::size_t j = 0; j < transpose.size(); j++)
           transpose[j][i] = weights[i][j + offset];
       }
     }
+
     for (size_t i = 0; i < num_cells; i++) {
       beta_u[i] += error[i];
       gamma_u[i] += error[i] * norm[epoch][i];
       error[i] *= gamma[i] * inverse_variance[epoch];
     }
+
     float sop = SumOfProducts(&error[0], &norm[epoch][0], num_cells) / num_cells;
     for (size_t i = 0; i < num_cells; i++) error[i] -= sop*norm[epoch][i];
 
@@ -103,58 +146,63 @@ public:
           (*hidden_error)[i] += dot256_ps_fma3(&error[0], &transpose[num_cells + i][0], num_cells, 0.f);
         else {
           float f = 0.f;
-          for (std::size_t j = 0; j < num_cells; j++)
+          for (std::size_t j = 0; j < num_cells; j++) {
             f += error[j] * transpose[num_cells + i][j];
+          }
           (*hidden_error)[i] += f;
         }
       }
     }
+
     if (epoch > 0) {
       for (std::size_t i = 0; i < num_cells; i++) {
         if (simd == SIMDType::SIMD_AVX2)
           (*stored_error)[i] += dot256_ps_fma3(&error[0], &transpose[i][0], num_cells, 0.f);
         else {
           float f = 0.f;
-          for (std::size_t j = 0; j < num_cells; j++)
+          for (std::size_t j = 0; j < num_cells; j++) {
             f += error[j] * transpose[i][j];
+          }
           (*stored_error)[i] += f;
         }
       }
     }
-    decay.Apply(learning_rate, time_step);
+
     std::slice slice = std::slice(output_size, input.size(), 1);
-    for (std::size_t i = 0; i < num_cells; i++) {
-      update[i][slice] += error[i] * input;
-      update[i][input_symbol] += error[i];
+    for (std::size_t cell_index = 0; cell_index < num_cells; cell_index++) {
+      update[cell_index][slice] += error[cell_index] * input;
+      update[cell_index][input_symbol] += error[cell_index];
     }
+
     if (epoch == 0) {
-      for (std::size_t i = 0; i < num_cells; i++)
-        optimizer.Run(&update[i], &m[i], &v[i], &weights[i], learning_rate, time_step);
+      decay.Apply(learning_rate, time_step);
+      for (std::size_t cell_index = 0; cell_index < num_cells; cell_index++)
+        optimizer.Run(&update[cell_index], &m[cell_index], &v[cell_index], &weights[cell_index], learning_rate, time_step);
       optimizer.Run(&gamma_u, &gamma_m, &gamma_v, &gamma, learning_rate, time_step);
       optimizer.Run(&beta_u, &beta_m, &beta_v, &beta, learning_rate, time_step);
     }
   }
 
   void Reset() {
-    for (std::size_t i = 0u; i < horizon; i++) {
+    for (std::size_t i = 0; i < horizon; i++) {
       inverse_variance[i] = 0.f;
-      for (std::size_t j = 0u; j < num_cells; j++) {
+      for (std::size_t j = 0; j < num_cells; j++) {
         state[i][j] = 0.f;
         norm[i][j] = 0.f;
       }
     }
-    for (std::size_t i = 0u; i < num_cells; i++) {
+    for (std::size_t i = 0; i < num_cells; i++) {
       error[i] = 0.f;
       gamma[i] = 1.f, gamma_u[i] = 0.f, gamma_m[i] = 0.f, gamma_v[i] = 0.f;
       beta[i] = 0.f, beta_u[i] = 0.f, beta_m[i] = 0.f, beta_v[i] = 0.f;
-      for (std::size_t j = 0u; j < input_size; j++) {
+      for (std::size_t j = 0; j < input_size; j++) {
         update[i][j] = 0.f;
         m[i][j] = 0.f;
         v[i][j] = 0.f;
       }
     }
-    for (std::size_t i = 0u; i < transpose.size(); i++) {
-      for (std::size_t j = 0u; j < num_cells; j++)
+    for (std::size_t i = 0; i < transpose.size(); i++) {
+      for (std::size_t j = 0; j < num_cells; j++)
         transpose[i][j] = 0.f;
     }
   }

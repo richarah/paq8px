@@ -53,7 +53,7 @@ void StationaryMap::update() {
 void StationaryMap::mix(Mixer &m) {
   shared->GetUpdateBroadcaster()->subscribe(this);
   uint32_t counts, n0, n1, sum;
-  int p1, st, bitIsUncertain, p0;
+  int p1, st, bitIsUncertain;
 
   cp = &data[context + b];
   counts = *cp;
@@ -67,8 +67,6 @@ void StationaryMap::mix(Mixer &m) {
   m.add(((p1 - 2048) * scale) >> 9);
   bitIsUncertain = int(sum <= 1 || (n0 != 0 && n1 != 0));
   m.add((bitIsUncertain - 1) & st); // when both counts are nonzero add(0) otherwise add(st)
-  //p0 = 4095 - p1;
-  //m.add((((p1 & (-!n0)) - (p0 & (-!n1))) * scale) >> 10);
 
   bCount++;
   b += b + 1;

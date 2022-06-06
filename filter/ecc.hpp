@@ -21,12 +21,12 @@ static void eccedcInit() {
   uint32_t j = 0;
   uint32_t edc = 0;
   for( i = 0; i < 256; i++ ) {
-    j = (i << 1U) ^ ((i & 0x80U) != 0u ? 0x11DU : 0U);
+    j = (i << 1) ^ ((i & 0x80) != 0 ? 0x11D : 0);
     eccFLut[i] = j;
     eccBLut[i ^ j] = i;
     edc = i;
     for( j = 0; j < 8; j++ ) {
-      edc = (edc >> 1U) ^ ((edc & 1U) != 0u ? 0xD8018001 : 0);
+      edc = (edc >> 1) ^ ((edc & 1) != 0 ? 0xD8018001 : 0);
     }
     edcLut[i] = edc;
   }
@@ -38,7 +38,7 @@ static void eccCompute(const uint8_t *src, uint32_t majorCount, uint32_t minorCo
   uint32_t major = 0;
   uint32_t minor = 0;
   for( major = 0; major < majorCount; major++ ) {
-    uint32_t index = (major >> 1U) * majorMult + (major & 1U);
+    uint32_t index = (major >> 1) * majorMult + (major & 1);
     uint8_t eccA = 0;
     uint8_t eccB = 0;
     for( minor = 0; minor < minorCount; minor++ ) {
@@ -57,10 +57,10 @@ static void eccCompute(const uint8_t *src, uint32_t majorCount, uint32_t minorCo
   }
 }
 
-static auto edcCompute(const uint8_t *src, int size) -> uint32_t {
+static uint32_t edcCompute(const uint8_t *src, int size) {
   uint32_t edc = 0;
   while((size--) != 0 ) {
-    edc = (edc >> 8U) ^ edcLut[(edc ^ (*src++)) & 0xFFU];
+    edc = (edc >> 8) ^ edcLut[(edc ^ (*src++)) & 0xff];
   }
   return edc;
 }

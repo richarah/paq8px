@@ -27,9 +27,9 @@ Encoder::Encoder(Shared* const sharedMain, bool doEncoding, Mode m, File *f) :
   }
 }
 
-auto Encoder::getMode() const -> Mode { return mode; }
+Mode Encoder::getMode() const { return mode; }
 
-auto Encoder::size() const -> uint64_t { return archive->curPos(); }
+uint64_t Encoder::size() const { return archive->curPos(); }
 
 void Encoder::flush() {
   if(doEncoding && mode == COMPRESS) {

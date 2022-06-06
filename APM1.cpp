@@ -18,18 +18,18 @@ APM1::APM1(const Shared* const sh, const int n, const int r) : shared(sh), index
   }
 }
 
-auto APM1::p(int pr, const int cxt) -> int {
+int APM1::p(int pr, const int cxt) {
   shared->GetUpdateBroadcaster()->subscribe(this);
   assert(pr >= 0 && pr < 4096 && cxt >= 0 && cxt < n);
   pr = stretch(pr);
-  const int w = pr & 127U; // interpolation weight (33 points)
+  const int w = pr & 127; // interpolation weight (33 points)
   index = ((pr + 2048) >> 7) + cxt * 33;
-  return (t[index] * (128 - w) + t[index + 1] * w) >> 11U;
+  return (t[index] * (128 - w) + t[index + 1] * w) >> 11;
 }
 
 void APM1::update() {
   INJECT_SHARED_y
-  const int g = (y << 16U) + (y << rate) - y - y;
+  const int g = (y << 16) + (y << rate) - y - y;
   t[index] += (g - t[index]) >> rate;
   t[index + 1] += (g - t[index + 1]) >> rate;
 }

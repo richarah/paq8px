@@ -1,6 +1,6 @@
 #include "FrenchStemmer.hpp"
 
-auto FrenchStemmer::isConsonant(const char c) -> bool {
+bool FrenchStemmer::isConsonant(const char c) {
   return !isVowel(c);
 }
 
@@ -37,7 +37,7 @@ void FrenchStemmer::markVowelsAsConsonants(Word *w) {
   }
 }
 
-auto FrenchStemmer::getRv(Word *w) -> uint32_t {
+uint32_t FrenchStemmer::getRv(Word *w) {
   uint32_t len = w->length();
   uint32_t res = w->start + len;
   if( len >= 3 && ((isVowel(w->letters[w->start]) && isVowel(w->letters[w->start + 1])) || w->startsWith("par") || w->startsWith("col") ||
@@ -53,7 +53,7 @@ auto FrenchStemmer::getRv(Word *w) -> uint32_t {
   return res;
 }
 
-auto FrenchStemmer::step1(Word *w, const uint32_t rv, const uint32_t r1, const uint32_t r2, bool *forceStep2A) -> bool {
+bool FrenchStemmer::step1(Word *w, const uint32_t rv, const uint32_t r1, const uint32_t r2, bool *forceStep2A) {
   int i = 0;
   for( ; i < 11; i++ ) {
     if( w->endsWith(suffixesStep1[i]) && suffixInRn(w, r2, suffixesStep1[i])) {
@@ -192,7 +192,7 @@ auto FrenchStemmer::step1(Word *w, const uint32_t rv, const uint32_t r1, const u
   return false;
 }
 
-auto FrenchStemmer::step2A(Word *w, const uint32_t rv) -> bool {
+bool FrenchStemmer::step2A(Word *w, const uint32_t rv) {
   for( int i = 0; i < numSuffixesStep2A; i++ ) {
     if( w->endsWith(suffixesStep2A[i]) && suffixInRn(w, rv + 1, suffixesStep2A[i]) &&
         isConsonant((*w)(static_cast<uint8_t>(strlen(suffixesStep2A[i]))))) {
@@ -206,7 +206,7 @@ auto FrenchStemmer::step2A(Word *w, const uint32_t rv) -> bool {
   return false;
 }
 
-auto FrenchStemmer::step2B(Word *w, const uint32_t rv, const uint32_t r2) -> bool {
+bool FrenchStemmer::step2B(Word *w, const uint32_t rv, const uint32_t r2) {
   for( int i = 0; i < numSuffixesStep2B; i++ ) {
     if( w->endsWith(suffixesStep2B[i]) && suffixInRn(w, rv, suffixesStep2B[i])) {
       switch( suffixesStep2B[i][0] ) {
@@ -239,7 +239,7 @@ void FrenchStemmer::step3(Word *w) {
   }
 }
 
-auto FrenchStemmer::step4(Word *w, const uint32_t rv, const uint32_t r2) -> bool {
+bool FrenchStemmer::step4(Word *w, const uint32_t rv, const uint32_t r2) {
   bool res = false;
   if( w->length() >= 2 && w->letters[w->end] == 's' && !charInArray((*w)(1), setStep4, numSetStep4)) {
     w->end--;
@@ -277,7 +277,7 @@ auto FrenchStemmer::step4(Word *w, const uint32_t rv, const uint32_t r2) -> bool
   return res;
 }
 
-auto FrenchStemmer::step5(Word *w) -> bool {
+bool  FrenchStemmer::step5(Word *w) {
   for( int i = 0; i < numSuffixesStep5; i++ ) {
     if( w->endsWith(suffixesStep5[i])) {
       w->end--;
@@ -287,10 +287,10 @@ auto FrenchStemmer::step5(Word *w) -> bool {
   return false;
 }
 
-auto FrenchStemmer::step6(Word *w) -> bool {
+bool FrenchStemmer::step6(Word *w) {
   for( int i = w->end; i >= w->start; i-- ) {
     if( isVowel(w->letters[i])) {
-      if( i < w->end && (w->letters[i] & 0xFEU) == 0xE8U ) {
+      if( i < w->end && (w->letters[i] & 0xFE) == 0xE8 ) {
         w->letters[i] = 'e';
         return true;
       }
@@ -300,11 +300,11 @@ auto FrenchStemmer::step6(Word *w) -> bool {
   return false;
 }
 
-auto FrenchStemmer::isVowel(const char c) -> bool {
+bool FrenchStemmer::isVowel(const char c){
   return charInArray(c, vowels, numVowels);
 }
 
-auto FrenchStemmer::stem(Word *w) -> bool {
+bool FrenchStemmer::stem(Word *w) {
   convertUtf8(w);
   if( w->length() < 2 ) {
     w->calculateStemHash();

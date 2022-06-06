@@ -13,7 +13,7 @@ void LZWDictionary::reset() {
   index = 258; //2 extra codes, one for resetting the dictionary and one for signaling EOF
 }
 
-auto LZWDictionary::findEntry(const int prefix, const int suffix) -> int {
+int LZWDictionary::findEntry(const int prefix, const int suffix) {
   int i = finalize64(hash(prefix, suffix), 13);
   int offset = (i > 0) ? hashSize - i : 1;
   while( true ) {
@@ -40,7 +40,7 @@ void LZWDictionary::addEntry(const int prefix, const int suffix, const int offse
   index += static_cast<int>(index < 4096);
 }
 
-auto LZWDictionary::dumpEntry(File *f, int code) -> int {
+int LZWDictionary::dumpEntry(File *f, int code) {
   int n = 4095;
   while( code > 256 && n >= 0 ) {
     buffer[n] = uint8_t(dictionary[code].suffix);

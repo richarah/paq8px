@@ -25,13 +25,6 @@ void Mixer::set(const uint32_t cx, const uint32_t range) {
   base += range;
 }
 
-void Mixer::skip(const uint32_t range) {
-  assert(numContexts < s);
-  assert(base + range <= m);
-  cxt[numContexts++] = UINT32_MAX; // flag for skipping
-  base += range;
-}
-
 void Mixer::reset() {
   nx = 0;
   base = 0;

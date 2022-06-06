@@ -1,16 +1,16 @@
 #include "StateMap.hpp"
 #include "Utils.hpp"
 
-StateMap::StateMap (const Shared* const sh, const int s, const int n, const int lim, const StateMap::MAPTYPE mapType) :
+StateMap::StateMap (const Shared* const sh, const int s, const int n, const int lim, const StateMapType mapType) :
   AdaptiveMap(sh, n * s), limit(lim), numContextSets(s), numContextsPerSet(n), currentContextSetIndex(0), cxt(s) {
   assert(numContextSets > 0 && numContextsPerSet > 0);
-  if( mapType == BitHistory ) { // when the context is a bit history byte, we have a-priory for p
+  if( mapType == StateMapType::BitHistory ) { // when the context is a bit history byte, we have a-priory for p
     assert((numContextsPerSet & 255) == 0);
     for( uint64_t cx = 0; cx < numContextsPerSet; ++cx ) {
-      auto state = uint8_t(cx & 255);
+      uint8_t state = cx & 255;
       for ( uint64_t s = 0; s < numContextSets; ++s ) {
-        uint32_t n0 = StateTable::next(state, 2);
-        uint32_t n1 = StateTable::next(state, 3);
+        uint32_t n0 = StateTable::getNextState(state, 2);
+        uint32_t n1 = StateTable::getNextState(state, 3);
         uint32_t p;
         if (state < 205) {
           n0 = n0 * 3 + 1;
@@ -36,8 +36,8 @@ StateMap::StateMap (const Shared* const sh, const int s, const int n, const int 
         t[s * numContextsPerSet + cx] = p;
       }
     }
-  } else if( mapType == Run ) { // when the context is a run count: we have a-priory for p
-    for( uint64_t cx = 0; cx < numContextsPerSet; ++cx ) {
+  } else if( mapType == StateMapType::Run ) { // when the context is a run count: we have a-priory for p
+    for( uint32_t cx = 0; cx < numContextsPerSet; ++cx ) {
       const int predictedBit = (cx) & 1;
       const int uncertainty = (cx >> 1) & 1;
       //const int bp = (cx>>2)&1; // unused in calculation - a-priory does not seem to depend on bitPosition for a RunMap
@@ -72,7 +72,7 @@ void StateMap::update() {
   }
 }
 
-auto StateMap::p1(const uint32_t cx) -> int {
+int StateMap::p1(const uint32_t cx) {
   assert(numContextSets == 1);
   assert(currentContextSetIndex == 0);
   assert(cx >= 0 && cx < numContextsPerSet);
@@ -82,7 +82,7 @@ auto StateMap::p1(const uint32_t cx) -> int {
   return t[cx] >> 20;
 }
 
-auto StateMap::p2(const uint32_t s, const uint32_t cx) -> int {
+int StateMap::p2(const uint32_t s, const uint32_t cx) {
   assert(s < numContextSets);
   assert(cx < numContextsPerSet);
   assert(s == currentContextSetIndex);

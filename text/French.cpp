@@ -1,3 +1,3 @@
 #include "French.hpp"
 
-auto French::isAbbreviation(Word *w) -> bool { return w->matchesAny(abbreviations, numAbbrev); }
+bool French::isAbbreviation(Word *w) { return w->matchesAny(abbreviations, numAbbrev); }

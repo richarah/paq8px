@@ -22,15 +22,10 @@ protected:
   std::uint8_t expected;
 public:
   LstmModel(
-    const Shared* const sh,
-    std::size_t const num_cells,
-    std::size_t const num_layers,
-    std::size_t const horizon,
-    float const learning_rate,
-    float const gradient_clip) :
+    const Shared* const sh) :
     shared(sh),
     probs(1.f / Size, Size),
-    apm1{ sh, 0x10000u, 24, 255 }, apm2{ sh, 0x800u, 24, 255 }, apm3{ sh, 1024, 24, 255 },
+    apm1{ sh, 0x10000, 24, 255 }, apm2{ sh, 0x800, 24, 255 }, apm3{ sh, 1024, 24, 255 },
     iCtx{ 11, 1, 9 },
     top(Size - 1), mid(0), bot(0),
     expected(0)
