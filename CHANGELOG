@@ -1956,3 +1956,22 @@ paq8px_v206 by Zoltán Gotthardt
 2021.12.30
   - Yet another fix for proper casing of Utils.hpp
   - Fixed multiple file mode compression.
+
+
+paq8px_v206fix1 by Zoltán Gotthardt
+2022.06.06
+- Cosmetic: Using scoped enums for FMode, ParseState (ListOfFiles) and StateMapType.
+- Cosmetic changes and notes in lstm model.
+- Fixed ChartModel's number of inputs for text blocks.
+- Fixed some typos.
+- Fixed some compiler warnings.
+- Fixed some formatting (indentation).
+- Tiny speed improvement + document fixes in Bucket16.hpp.
+- Removed some unused code.
+- Removed DISABLE_TEXTMODEL and DISABLE_AUDIOMODEL preprocessor options.
+- Readability/consistency fixes (cosmetics):
+  - Removed unsigned integer literal suffixes when it was unnecessary.
+  - Removed the auto keyword in places where a simple type was the return type.
+  - Removed [[nodiscard]] attributes (they didn't contribute to code safety)
+- Fixed some signed left shifts.
+
