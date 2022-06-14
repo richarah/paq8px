@@ -1773,7 +1773,6 @@ static DetectionInfo detect(File *in, uint64_t blockSize, const TransformOptions
 #include "endianness16b.hpp"
 #include "eol.hpp"
 #include "exe.hpp"
-#include "im32.hpp"
 #include "rle.hpp"
 
 //////////////////// Compress, Decompress ////////////////////////////
@@ -1802,7 +1801,13 @@ static uint64_t decodeFunc(BlockType type, Encoder &en, File *tmp, uint64_t len,
     return b->decode(tmp, out, mode, len, diffFound);
   }
   if( type == BlockType::IMAGE32 ) {
-    return decodeIm32(en, len, info, out, mode, diffFound, transformOptions->skipRgb);
+    auto b = new BmpFilter();
+    b->setWidth(info);
+    b->setSkipRgb(transformOptions->skipRgb);
+    b->setHasApha();
+    b->setEncoder(en);
+    return b->decode(tmp, out, mode, len, diffFound);
+    //return decodeIm32(en, len, info, out, mode, diffFound, transformOptions->skipRgb);
   }
   if( type == BlockType::AUDIO_LE ) {
     auto e = new EndiannessFilter();
@@ -1860,7 +1865,11 @@ static uint64_t encodeFunc(BlockType type, File *in, File *tmp, uint64_t len, in
     b->setSkipRgb(transformOptions->skipRgb);
     b->encode(in, tmp, len, info, hdrsize);
   } else if( type == BlockType::IMAGE32 ) {
-    encodeIm32(in, tmp, len, info, transformOptions->skipRgb);
+    auto b = new BmpFilter();
+    b->setSkipRgb(transformOptions->skipRgb);
+    b->setHasApha();
+    b->encode(in, tmp, len, info, hdrsize);
+    //encodeIm32(in, tmp, len, info, transformOptions->skipRgb);
   } else if( type == BlockType::AUDIO_LE ) {
     auto e = new EndiannessFilter();
     e->encode(in, tmp, len, info, hdrsize);

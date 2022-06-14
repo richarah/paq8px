@@ -375,7 +375,6 @@
     <ClInclude Include="filter\Filter.hpp" />
     <ClInclude Include="filter\Filters.hpp" />
     <ClInclude Include="filter\gif.hpp" />
-    <ClInclude Include="filter\im32.hpp" />
     <ClInclude Include="filter\lzw.hpp" />
     <ClInclude Include="filter\LZWDictionary.hpp" />
     <ClInclude Include="filter\LZWEntry.hpp" />

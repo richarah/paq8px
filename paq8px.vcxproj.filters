@@ -485,9 +485,6 @@
     <ClInclude Include="filter\gif.hpp">
       <Filter>filter</Filter>
     </ClInclude>
-    <ClInclude Include="filter\im32.hpp">
-      <Filter>filter</Filter>
-    </ClInclude>
     <ClInclude Include="filter\lzw.hpp">
       <Filter>filter</Filter>
     </ClInclude>
