@@ -256,8 +256,8 @@ public:
           if ((count % 7) == 0) {
             if (count < 21) {
               maps0[state].setDirect(count / 7);
-              maps1[map_state(0, State::Bra_Displacement)].set(hash(count, cache(1).Opcode, op.Displacement) + 0x40);
-              maps2[map_state(1, State::Bra_Displacement)].set(hash(count, cache(1).Opcode, cache(2).Opcode, op.Displacement) + 0x1000);
+              maps1[map_state(0, State::Bra_Displacement)].set(hash(count, cache(1).Opcode, op.Displacement));
+              maps2[map_state(1, State::Bra_Displacement)].set(hash(count, cache(1).Opcode, cache(2).Opcode, op.Displacement));
             }
             else {
               state = State::OpCode;
@@ -275,7 +275,7 @@ public:
           }
           else if ((count % 3) == 0) {
             maps0[state].setDirect(count / 3);
-            maps1[map_state(0, State::F_P_Function)].set(hash(count, op.Opcode, op.Function) + 0x40);
+            maps1[map_state(0, State::F_P_Function)].set(hash(count, op.Opcode, op.Function));
           }
           break;
         }
