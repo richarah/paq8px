@@ -70,7 +70,7 @@ public:
     this->width = width;
     this->height = height;
   }
-  void encode(File* in, File* out, uint64_t size, int info, int& headerSize) override {
+  void encode(File* in, File* out, uint64_t size, int info, int& /*headerSize*/) override {
     uint64_t savepos = in->curPos();
     int totalSize = (width)*height;
     Array<uint8_t, 1> ptrin(totalSize + 4);

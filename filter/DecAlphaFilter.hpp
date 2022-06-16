@@ -50,12 +50,12 @@ public:
    * @param diffFound
    * @return
    */
-  uint64_t decode(File* in, File* out, FMode fMode, uint64_t size, uint64_t& diffFound) override {
+  uint64_t decode(File* /*in*/, File* out, FMode fMode, uint64_t size, uint64_t& diffFound) override {
     Array<std::uint8_t> blk(block);
     for (std::uint64_t offset = 0; offset < size; offset += block) {
       std::uint64_t length = std::min<std::uint64_t>(size - offset, block);
       for (std::size_t i = 0; i < static_cast<std::size_t>(length) - 3; i += 4) {
-        blk[i]      = encoder->decompressByte(&encoder->predictorMain);
+        blk[i]     = encoder->decompressByte(&encoder->predictorMain);
         blk[i + 1] = encoder->decompressByte(&encoder->predictorMain);
         blk[i + 2] = encoder->decompressByte(&encoder->predictorMain);
         blk[i + 3] = encoder->decompressByte(&encoder->predictorMain);

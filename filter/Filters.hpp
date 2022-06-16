@@ -17,6 +17,7 @@
 #include "gif.hpp"
 #include "lzw.hpp"
 #include "mrb.hpp"
+#include "png.hpp"
 #include "DecAlphaFilter.hpp"
 #include <cctype>
 #include <cstdint>
@@ -479,7 +480,7 @@ static DetectionInfo detect(File *in, uint64_t blockSize, const TransformOptions
         pngw = buf2;
         pngh = buf1;
         pngbps = buf0 >> 24;
-        pngType = static_cast<uint8_t>(buf0 >> 16);
+        pngType = static_cast<uint8_t>(buf0 >> 16); //Color type codes represent sums of the following values: 1 (palette used), 2 (color used), and 4 (alpha channel used). Valid values are 0, 2, 3, 4, and 6.
         pnggray = 0;
         png *= static_cast<int>((buf0 & 0xFFFF) == 0 && (pngw != 0) && (pngh != 0) && pngbps == 8 &&
           ((pngType == 0) || pngType == 2 || pngType == 3 || pngType == 4 || pngType == 6));
@@ -596,12 +597,12 @@ static DetectionInfo detect(File *in, uint64_t blockSize, const TransformOptions
           pdfGray = 0;
         }
         else if (png && pngw < 0x1000000 && lastChunk == 0x49444154 /*IDAT*/) {
-          if (pngbps == 8 && pngType == 2 && (int)strm.total_out == (pngw * 3 + 1) * pngh)
+          if (pngbps == 8 && pngType == 2 /*color, no alpha*/ && (int)strm.total_out == (pngw * 3 + 1) * pngh)
             info = (BlockType::PNG24 << 24) | (pngw * 3), png = 0;
-          else if (pngbps == 8 && pngType == 6 && (int)strm.total_out == (pngw * 4 + 1) * pngh)
+          else if (pngbps == 8 && pngType == 6 /*color, with alpha*/ && (int)strm.total_out == (pngw * 4 + 1) * pngh)
             info = (BlockType::PNG32 << 24) | (pngw * 4), png = 0;
-          else if (pngbps == 8 && (!pngType || pngType == 3) && (int)strm.total_out == (pngw + 1) * pngh)
-            info = (((!pngType || pnggray) ? BlockType::PNG8GRAY : BlockType::PNG8) << 24) | (pngw), png = 0;
+          else if (pngbps == 8 && (pngType == 0 /*no color channels, no palette, i.e. grayscale*/ || pngType == 3 /*palette, color*/) && (int)strm.total_out == (pngw + 1) * pngh)
+            info = (((pngType == 0 /*grayscale png*/ || pnggray) ? BlockType::PNG8GRAY : BlockType::PNG8) << 24) | (pngw), png = 0;
         }
         detectionInfo.Type = BlockType::ZLIB;
         detectionInfo.DataInfo = info;
@@ -1807,7 +1808,14 @@ static uint64_t decodeFunc(BlockType type, Encoder &en, File *tmp, uint64_t len,
     b->setHasApha();
     b->setEncoder(en);
     return b->decode(tmp, out, mode, len, diffFound);
-    //return decodeIm32(en, len, info, out, mode, diffFound, transformOptions->skipRgb);
+  }
+  if (type == BlockType::PNG8GRAY || type == BlockType::PNG8 || type == BlockType::PNG24|| type == BlockType::PNG32) {
+    auto b = new PngFilter();
+    b->setWidth(info);
+    auto stride = type == BlockType::PNG24 ? 3 : type == BlockType::PNG32 ? 4 : 1;
+    b->setStride(stride);
+    b->setEncoder(en);
+    return b->decode(tmp, out, mode, len, diffFound);
   }
   if( type == BlockType::AUDIO_LE ) {
     auto e = new EndiannessFilter();
@@ -1869,7 +1877,11 @@ static uint64_t encodeFunc(BlockType type, File *in, File *tmp, uint64_t len, in
     b->setSkipRgb(transformOptions->skipRgb);
     b->setHasApha();
     b->encode(in, tmp, len, info, hdrsize);
-    //encodeIm32(in, tmp, len, info, transformOptions->skipRgb);
+  } else if (type == BlockType::PNG8GRAY || type == BlockType::PNG8 || type == BlockType::PNG24 || type == BlockType::PNG32) {
+    auto b = new PngFilter();
+    auto stride = type == BlockType::PNG24 ? 3 : type == BlockType::PNG32 ? 4 : 1;
+    b->setStride(stride);
+    b->encode(in, tmp, len, info, hdrsize);
   } else if( type == BlockType::AUDIO_LE ) {
     auto e = new EndiannessFilter();
     e->encode(in, tmp, len, info, hdrsize);
@@ -1951,12 +1963,17 @@ transformEncodeBlock(BlockType type, File *in, uint64_t len, Encoder &en, int in
         blstrSub0 += blstr.c_str();
         blstrSub0 += "->";
         printf(" %-11s | ->  uncompressed |%10d bytes [%d - %d]\n", blstrSub0.c_str(), int(tmpSize), 0, int(tmpSize - 1));
-      }
-      if( hasRecursion(type)) {
+      } else if( hasRecursion(type)) {
         // TODO(epsteina): Large file support
-        Block::EncodeBlockType(&en, type);
-        Block::EncodeBlockSize(&en, tmpSize);
+        Block::EncodeBlockHeader(&en, type, tmpSize, info&0xffffff);
         BlockType type2 = static_cast<BlockType>((info >> 24) & 0xFF);
+        if (isPNG(type)) {
+            type2 =
+                type == BlockType::PNG8GRAY ? BlockType::IMAGE8GRAY :
+                type == BlockType::PNG8 ? BlockType::IMAGE8 :
+                type == BlockType::PNG24 ? BlockType::IMAGE24 :
+                type == BlockType::PNG32 ? BlockType::IMAGE32 : BlockType::DEFAULT;
+        }
         if( type2 != BlockType::DEFAULT ) {
           String blstrSub0;
           blstrSub0 += blstr.c_str();
@@ -1967,12 +1984,21 @@ transformEncodeBlock(BlockType type, File *in, uint64_t len, Encoder &en, int in
           String blstrSub2;
           blstrSub2 += blstr.c_str();
           blstrSub2 += "-->";
-          printf(" %-11s | ->  exploded     |%10d bytes [%d - %d]\n", blstrSub0.c_str(), int(tmpSize), 0, int(tmpSize - 1));
+          const char* exploded = 
+                           "exploded    ";
+          const char* addedheader =
+            isPNG(type)  ? "filter data " : // PNG ->Image
+                           "added header";
+          const char* dataname =
+            isPNG(type2) ? "png data    " : // ZLIB -> PNG
+            isPNG(type)  ? "pixel data  " : // PNG  -> Image
+                           "data        ";
+          if(!isPNG(type))
+            printf(" %-11s | ->  %s |%10d bytes [%d - %d]\n", blstrSub0.c_str(), exploded, int(tmpSize), 0, int(tmpSize - 1));
           if (headerSize != 0) {
-            printf(" %-11s | --> added header |%10d bytes [%d - %d]\n", blstrSub1.c_str(), headerSize, 0, headerSize - 1);
+            printf(" %-11s | --> %s |%10d bytes [%d - %d]\n", blstrSub1.c_str(), addedheader, headerSize, 0, headerSize - 1);
             directEncodeBlock(BlockType::HDR, &tmp, headerSize, en, -1);
-            printf(" %-11s | --> data         |%10d bytes [%d - %d]\n", blstrSub2.c_str(), int(tmpSize - headerSize), headerSize,
-              int(tmpSize - 1));
+            printf(" %-11s | --> %s |%10d bytes [%d - %d]\n", blstrSub2.c_str(), dataname, int(tmpSize - headerSize), headerSize, int(tmpSize - 1));
           }
           transformEncodeBlock(type2, &tmp, tmpSize - headerSize, en, info & 0xffffff, blstr, recursionLevel, p1, p2, headerSize, transformOptions);
         } else {
@@ -2012,7 +2038,13 @@ static void printBlock(const uint64_t begin, const uint64_t len, const BlockType
   if (type == BlockType::AUDIO || type == BlockType::AUDIO_LE) {
     printf(" (%s)", audioTypes[blockInfo % 4]);
   }
-  else if (type == BlockType::IMAGE1 || type == BlockType::IMAGE4 || type == BlockType::IMAGE8 || type == BlockType::IMAGE8GRAY || type == BlockType::IMAGE24 || type == BlockType::IMAGE32 ||
+  else if (
+    type == BlockType::IMAGE1 || 
+    type == BlockType::IMAGE4 || 
+    type == BlockType::IMAGE8 ||
+    type == BlockType::IMAGE8GRAY || 
+    type == BlockType::IMAGE24 ||
+    type == BlockType::IMAGE32 ||
     (type == BlockType::ZLIB && isPNG(BlockType(blockInfo >> 24)))) {
     printf(" (width: %d)", (type == BlockType::ZLIB) ? (blockInfo & 0xFFFFFF) : blockInfo);
   }
@@ -2146,9 +2178,7 @@ static uint64_t decompressRecursive(File *out, uint64_t blockSize, Encoder &en, 
         len = decodeFunc(type, en, &tmp, len, info, out, mode, diffFound, transformOptions);
       }
       tmp.close();
-    } 
-    else
-    if( hasRecursion(type)) {
+    } else if( hasRecursion(type)) {
       FileTmp tmp;
       decompressRecursive(&tmp, len, en, FMode::FDECOMPRESS, recursionLevel + 1, transformOptions);
       if( mode != FMode::FDISCARD ) {

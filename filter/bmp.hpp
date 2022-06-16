@@ -16,6 +16,7 @@ private:
   int width = 0;
   bool skipRgb = false;
   bool isPossibleRgb565 = true;
+  uint32_t rgb565Run = 0;
   static constexpr int rgb565MinRun = 63;
 public:
 
@@ -34,23 +35,22 @@ public:
     uint32_t r = 0;
     uint32_t g = 0;
     uint32_t b = 0;
-    uint32_t total = 0;
     for( int i = 0; i < static_cast<int>(size / width); i++ ) {
       for( int j = 0; j < width / stride; j++ ) {
         b = in->getchar();
         g = in->getchar();
         r = in->getchar();
         if( isPossibleRgb565 ) {
-          int pTotal = total;
-          total = min(total + 1, 0xFFFF) *
+          int rgb565RunPrevious = rgb565Run;
+          rgb565Run = min(rgb565Run + 1, 0xFFFF) *
                   static_cast<int>((b & 7) == ((b & 8) - ((b >> 3) & 1)) && (g & 3) == ((g & 4) - ((g >> 2) & 1)) &&
                                     (r & 7) == ((r & 8) - ((r >> 3) & 1)));
-          if( total > rgb565MinRun || pTotal >= rgb565MinRun ) {
+          if( rgb565Run > rgb565MinRun || rgb565RunPrevious >= rgb565MinRun ) {
             b ^= (b & 8) - ((b >> 3) & 1);
             g ^= (g & 4) - ((g >> 2) & 1);
             r ^= (r & 8) - ((r >> 3) & 1);
           }
-          isPossibleRgb565 = total > 0;
+          isPossibleRgb565 = rgb565Run > 0;
         }
         out->putChar(g);
         out->putChar(skipRgb ? r : g - r);
@@ -74,7 +74,6 @@ public:
     uint32_t b = 0;
     uint32_t a = 0;
     uint32_t p = 0;
-    uint32_t total = 0;
     for( int i = 0; i < static_cast<int>(size / width); i++ ) {
       p = i * width;
       for( int j = 0; j < width / stride; j++ ) {
@@ -88,15 +87,15 @@ public:
           r = g - r, b = g - b;
         }
         if( isPossibleRgb565 ) {
-          if( total >= rgb565MinRun ) {
+          if( rgb565Run >= rgb565MinRun ) {
             b ^= (b & 8) - ((b >> 3) & 1);
             g ^= (g & 4) - ((g >> 2) & 1);
             r ^= (r & 8) - ((r >> 3) & 1);
           }
-          total = min(total + 1, 0xFFFF) *
+          rgb565Run = min(rgb565Run + 1, 0xFFFF) *
                   static_cast<uint32_t>((b & 7) == ((b & 8) - ((b >> 3) & 1)) && (g & 3) == ((g & 4) - ((g >> 2) & 1)) &&
                                         (r & 7) == ((r & 8) - ((r >> 3) & 1)));
-          isPossibleRgb565 = total > 0;
+          isPossibleRgb565 = rgb565Run > 0;
         }
         if( fMode == FMode::FDECOMPRESS ) {
           out->putChar(b);
