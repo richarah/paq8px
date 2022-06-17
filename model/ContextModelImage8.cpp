@@ -29,9 +29,9 @@ public:
     );
   }
 
-  void setParam(int width, uint32_t isGray, uint32_t isPNG) {
+  void setParam(int width, uint32_t isGray) {
     Image8BitModel& image8BitModel = models->image8BitModel();
-    image8BitModel.setParam(width, isGray, isPNG);
+    image8BitModel.setParam(width, isGray);
     if (isGray)
       m->setScaleFactor(1300, 100); // 1100-1400, 90-110
     else

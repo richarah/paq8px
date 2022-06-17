@@ -761,6 +761,9 @@
     <ClInclude Include="lstm\IActivation.hpp">
       <Filter>Header Files\lstm</Filter>
     </ClInclude>
+    <ClInclude Include="filter\png.hpp">
+      <Filter>filter</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

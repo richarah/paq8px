@@ -11,7 +11,7 @@
 #include <cstdint>
 
 /**
- * Model for 8-bit image data
+ * Model for 8-bit image data (grayscale/indexed)
  */
 class Image8BitModel {
 private:
@@ -20,7 +20,7 @@ private:
   static constexpr int nOLS = 5;
   static constexpr int nSM = nSM0 + nSM1 + nOLS;
   static constexpr int nPltMaps = 4;
-  static constexpr int nCM = 49 + nPltMaps;
+  static constexpr int nCM = 48 + nPltMaps;
   static constexpr int nIM = 5;
 
 public:
@@ -28,8 +28,8 @@ public:
     nSM * StationaryMap::MIXERINPUTS + 
     nCM * (ContextMap2::MIXERINPUTS + ContextMap2::MIXERINPUTS_RUN_STATS) + 
     nPltMaps * SmallStationaryContextMap::MIXERINPUTS +
-    nIM * IndirectMap::MIXERINPUTS; //469
-  static constexpr int MIXERCONTEXTS = (2048 + 5) + 6 * 16 + 6 * 32 + 256 + 1024 + 64 + 128 + 256; /**< 4069 */
+    nIM * IndirectMap::MIXERINPUTS; //464
+  static constexpr int MIXERCONTEXTS = 512 + 16 + 32 + 255 + 1024 + 64 + 128 + 256; /**< 2286 */
   static constexpr int MIXERCONTEXTSETS = 8;
 
   Shared * const shared;
@@ -38,7 +38,6 @@ public:
   SmallStationaryContextMap pltMap[nPltMaps];  /**< palette maps, not used for grayscale images */
   IndirectMap sceneMap[nIM];
   IndirectContext<uint8_t> iCtx[nPltMaps]; /**< palette contexts, not used for grayscale images */
-  RingBuffer<uint8_t> buffer {0x100000}; /**< internal rotating buffer for (PNG unfiltered) pixel data (1MB) */
   Array<short> jumps {0x8000};
   //pixel neighborhood
   uint8_t WWWWWW = 0, WWWWW = 0, WWWW = 0, WWW = 0, WW = 0, W = 0;
@@ -48,20 +47,16 @@ public:
   uint8_t NNNNW = 0, NNNN = 0, NNNNE = 0;
   uint8_t NNNNN = 0;
   uint8_t NNNNNN = 0;
-  uint8_t px = 0; /**< current PNG filter prediction */
   uint8_t res = 0; /**< expected residual */
   uint8_t prvFrmPx = 0; /**< corresponding pixel in previous frame */
   uint8_t prvFrmPrediction = 0; /**< prediction for corresponding pixel in previous frame */
   uint32_t lastPos = 0;
-  uint32_t lastWasPNG = 0;
   uint32_t isGray = 0;
-  uint32_t isPNG = 0;
   int w = 0;
   int ctx = 0;
   int col = 0;
   int line = 0;
   int x = 0;
-  int filter = 0;
   int jump = 0;
   int framePos = 0;
   int prevFramePos = 0;
@@ -89,6 +84,6 @@ public:
   const uint8_t **olsCtxs[nOLS] = {&olsCtx1[0], &olsCtx2[0], &olsCtx3[0], &olsCtx4[0], &olsCtx5[0]};
 
   Image8BitModel(Shared* const sh, uint64_t size);
-  void setParam(int info0, uint32_t gray0, uint32_t isPNG0);
+  void setParam(int info0, uint32_t gray0);
   void mix(Mixer &m);
 };

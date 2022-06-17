@@ -29,9 +29,9 @@ public:
     );
   }
 
-  void setParam(int width, int isAlpha, int isPNG) {
+  void setParam(int width, int isAlpha) {
     Image24BitModel& image24BitModel = models->image24BitModel();
-    image24BitModel.setParam(width, isAlpha, isPNG);
+    image24BitModel.setParam(width, isAlpha);
     if (isAlpha)
       m->setScaleFactor(2048, 128);
     else

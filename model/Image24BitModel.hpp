@@ -9,7 +9,7 @@
 #include <cmath>
 
 /**
- * Model for filtered (PNG) or unfiltered 24/32-bit image data
+ * Model 24/32-bit image data
  */
 class Image24BitModel {
 private:
@@ -28,7 +28,7 @@ public:
     nLSM * LargeStationaryMap::MIXERINPUTS +
     nSM * StationaryMap::MIXERINPUTS +
     nCM * (ContextMap2::MIXERINPUTS); //593
-  static constexpr int MIXERCONTEXTS = (16 * 8) +(5 + 256) + 256 + 512 + 2048 + (8 * 32) + (6 * 64) + (256 * 2) + 1024 + 8192 + 8192 + 8192 + 8192 + 256; //38405
+  static constexpr int MIXERCONTEXTS = (16 * 8) + 256 + 256 + 512 + 2048 + (8 * 32) + 4 + (255 * 4) + 1024 + 8192 + 8192 + 8192 + 8192 + 256; //38528
   static constexpr int MIXERCONTEXTSETS = 15;
 
   Shared * const shared;
@@ -36,7 +36,6 @@ public:
   SmallStationaryContextMap SCMap[nSSM];
   LargeStationaryMap mapL;
   StationaryMap map[nSM];
-  RingBuffer<uint8_t> buffer {0x100000}; // internal rotating buffer for (PNG unfiltered) pixel data (1 MB)
   //pixel neighborhood
   uint8_t WWWWWW = 0, WWWWW = 0, WWWW = 0, WWW = 0, WW = 0, W = 0;
   uint8_t NWWWW = 0, NWWW = 0, NWW = 0, NW = 0, N = 0, NE = 0, NEE = 0, NEEE = 0, NEEEE = 0;
@@ -47,16 +46,13 @@ public:
   uint8_t NNNNNN = 0;
   uint8_t WWp1 = 0, Wp1 = 0, p1 = 0, NWp1 = 0, Np1 = 0, NEp1 = 0, NNp1 = 0;
   uint8_t WWp2 = 0, Wp2 = 0, p2 = 0, NWp2 = 0, Np2 = 0, NEp2 = 0, NNp2 = 0;
-  uint8_t px = 0; // current PNG filter prediction
   int info = 0;
-  uint32_t alpha = 0, isPNG = 0;
+  uint32_t alpha = 0;
   int color = -1;
   int stride = 3;
   int col = 0;
-  uint32_t ctx[2]{}, padding = 0, filter = 0, x = 0, w = 0, line = 0;
-  int R1 = 0, R2 = 0;
-  uint32_t lastPos = 0, lastWasPNG = 0;
-  bool filterOn = false;
+  uint32_t ctx[2]{}, padding = 0, x = 0, w = 0, line = 0;
+  uint32_t lastPos = 0;
   int columns[2] = {1, 1}, column[2] {};
   short mapContexts[nSM1] = { 0 }, scMapContexts[nSSM] = { 0 };
   uint8_t pOLS[nOLS] = {0};
@@ -85,6 +81,6 @@ public:
     * New image.
     */
   void init();
-  void setParam(int width, uint32_t alpha0, uint32_t isPNG0);
+  void setParam(int width, uint32_t alpha0);
   void mix(Mixer &m);
 };
