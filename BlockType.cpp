@@ -2,7 +2,7 @@
 #include "BlockType.hpp"
 
 bool hasRecursion(BlockType ft) {
-  return ft == BlockType::CD || ft == BlockType::ZLIB || ft == BlockType::BASE64 || ft == BlockType::GIF || ft == BlockType::RLE || ft == BlockType::LZW || ft == BlockType::PNG8 || ft == BlockType::PNG8GRAY || ft == BlockType::PNG24 || ft == BlockType::PNG32;
+  return ft == BlockType::CD || ft == BlockType::ZLIB || ft == BlockType::BASE64 || ft == BlockType::BASE85 || ft == BlockType::GIF || ft == BlockType::RLE || ft == BlockType::LZW || ft == BlockType::PNG8 || ft == BlockType::PNG8GRAY || ft == BlockType::PNG24 || ft == BlockType::PNG32;
 }
 
 bool hasInfo(BlockType ft) {
@@ -15,7 +15,7 @@ bool hasTransform(BlockType ft, int info) {
     uint8_t packingMethod = (info >> 24) & 3; //0..3
     return packingMethod != 0; //0: uncompressed, 1: rle encoded
   }
-  return ft == BlockType::IMAGE24 || ft == BlockType::IMAGE32 || ft == BlockType::AUDIO_LE || ft == BlockType::EXE || ft == BlockType::CD || ft == BlockType::ZLIB || ft == BlockType::BASE64 || ft == BlockType::GIF ||
+  return ft == BlockType::IMAGE24 || ft == BlockType::IMAGE32 || ft == BlockType::AUDIO_LE || ft == BlockType::EXE || ft == BlockType::CD || ft == BlockType::ZLIB || ft == BlockType::BASE64 || ft == BlockType::BASE85 || ft == BlockType::GIF ||
     ft == BlockType::TEXT_EOL || ft == BlockType::RLE || ft == BlockType::LZW || ft == BlockType::DEC_ALPHA || ft == BlockType::PNG8 || ft == BlockType::PNG8GRAY || ft == BlockType::PNG24 || ft == BlockType::PNG32;
 }
 

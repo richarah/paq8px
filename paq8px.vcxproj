@@ -364,6 +364,7 @@
     <ClInclude Include="file\ListOfFiles.hpp" />
     <ClInclude Include="file\OpenFromMyFolder.hpp" />
     <ClInclude Include="filter\base64.hpp" />
+    <ClInclude Include="filter\base85.hpp" />
     <ClInclude Include="filter\bmp.hpp" />
     <ClInclude Include="filter\cd.hpp" />
     <ClInclude Include="filter\DecAlpha.hpp" />

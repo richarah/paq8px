@@ -764,6 +764,9 @@
     <ClInclude Include="filter\png.hpp">
       <Filter>filter</Filter>
     </ClInclude>
+    <ClInclude Include="filter\base85.hpp">
+      <Filter>filter</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

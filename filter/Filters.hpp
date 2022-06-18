@@ -12,6 +12,7 @@
 #include "Filter.hpp"
 #include "TextParserStateInfo.hpp"
 #include "base64.hpp"
+#include "base85.hpp"
 #include "cd.hpp"
 #include "ecc.hpp"
 #include "gif.hpp"
@@ -126,6 +127,11 @@ uint32_t GetCDWord(File* f) {
     return ((w1 << 16) | w) >> 1;
   }
   return w >> 1;
+}
+
+ALWAYS_INLINE
+static bool is_base85(unsigned char c) {
+  return (isalnum(c) || (c == 13) || (c == 10) || (c == 'y') || (c == 'z') || (c >= '!' && c <= 'u'));
 }
 
 struct DetectionInfo {
@@ -432,6 +438,12 @@ static DetectionInfo detect(File *in, uint64_t blockSize, const TransformOptions
   uint64_t b64Line = 0;
   uint64_t b64Nl = 0;
   uint64_t b64End = 0;
+
+  // For base85 (ascii85) detection
+  uint64_t b85s = 0;
+  uint64_t base85start = 0;
+  uint64_t base85end = 0;
+  uint64_t b85line = 0;
 
   // For GIF detection
   uint64_t gifi = 0;
@@ -1757,6 +1769,41 @@ static DetectionInfo detect(File *in, uint64_t blockSize, const TransformOptions
       }
     }
 
+    //detect base85 (ascii85) encoded data
+    //headers: stream\n stream\r\n oNimage\n utimage\n \nimage\n
+    if (b85s == 0 && ((buf0 == 0x65616D0A && (buf1 & 0xffffff) == 0x737472) || (buf0 == 0x616D0D0A && buf1 == 0x73747265) || (buf0 == 0x6167650A && buf1 == 0x6F4E696D) || (buf0 == 0x6167650A && buf1 == 0x7574696D) || (buf0 == 0x6167650A && (buf1 & 0xffffff) == 0x0A696D))) {
+        b85s = 1;
+        base85start = i;
+        b85line = 0;
+    }
+    else if (b85s == 1) {
+      if (c == CARRIAGE_RETURN && b85line == 0) {
+        b85line = i - base85start; //capture line lenght
+        if (b85line <= 25 || b85line > 255)
+          b85s = 0; //fail
+      }
+      else if (c == '~') { //end marker
+        base85end = i - 1;
+        b85s = 0;
+        if (((base85end - base85start) > 60) && ((base85end - base85start) < 0x8000000)) {
+          detectionInfo.Type = BlockType::BASE85;
+          detectionInfo.DataStart = start + base85start + 1;
+          detectionInfo.DataLength = base85end - base85start;
+          return detectionInfo;
+        }
+      }
+      else if (is_base85(c)) {
+        // still ok
+      }
+      else if (c == CARRIAGE_RETURN && b85line != 0) {
+        if (b85line != i - base85start)
+          b85s = 0; //fail
+      }
+      else {
+        b85s = 0; //fail
+      }
+    }
+
   }
   
   if (detectionInfo.Type != BlockType::DEFAULT)
@@ -1833,15 +1880,18 @@ static uint64_t decodeFunc(BlockType type, Encoder &en, File *tmp, uint64_t len,
   } else if( type == BlockType::CD ) {
     auto c = new CdFilter();
     return c->decode(tmp, out, mode, len, diffFound);
-  }
 #ifndef DISABLE_ZLIB
-  else if( type == BlockType::ZLIB )
+  } else if( type == BlockType::ZLIB ) {
     return decodeZlib(tmp, len, out, mode, diffFound);
 #endif //DISABLE_ZLIB
-  else if( type == BlockType::BASE64 ) {
+  } else if( type == BlockType::BASE64 ) {
     auto b = new Base64Filter();
     return b->decode(tmp, out, mode, len, diffFound);
-  } else if( type == BlockType::GIF ) {
+  } else if (type == BlockType::BASE85) {
+    auto b = new Base85Filter();
+    return b->decode(tmp, out, mode, len, diffFound);
+  }
+  else if( type == BlockType::GIF ) {
     return decodeGif(tmp, len, out, mode, diffFound);
   } else if( type == BlockType::RLE ) {
     auto r = new RleFilter();
@@ -1895,13 +1945,15 @@ static uint64_t encodeFunc(BlockType type, File *in, File *tmp, uint64_t len, in
   } else if( type == BlockType::CD ) {
     auto c = new CdFilter();
     c->encode(in, tmp, len, info, hdrsize);
-  }
 #ifndef DISABLE_ZLIB
-  else if( type == BlockType::ZLIB )
+  } else if( type == BlockType::ZLIB ) {
     return encodeZlib(in, tmp, len, hdrsize) ? 0 : 1;
 #endif //DISABLE_ZLIB
-  else if( type == BlockType::BASE64 ) {
+  } else if( type == BlockType::BASE64 ) {
     auto b = new Base64Filter();
+    b->encode(in, tmp, len, info, hdrsize);
+  } else if (type == BlockType::BASE85) {
+    auto b = new Base85Filter();
     b->encode(in, tmp, len, info, hdrsize);
   } else if( type == BlockType::GIF ) {
     return encodeGif(in, tmp, len, hdrsize) != 0 ? 0 : 1;
@@ -2024,9 +2076,9 @@ static void composeSubBlockStringToPrint(String& blstr, String& blstrSub, int bl
 }
 
 static void printBlock(const uint64_t begin, const uint64_t len, const BlockType type, const int blockInfo, String& blstrSub, const int recursionLevel) {
-  static const char* typeNames[27] = { "default", "jpeg", "hdr", "1b-image", "4b-image", "8b-image", "8b-img-grayscale",
+  static const char* typeNames[28] = { "default", "jpeg", "hdr", "1b-image", "4b-image", "8b-image", "8b-img-grayscale",
                                       "24b-image", "32b-image", "audio", "audio - le", "x86/64", "cd", "zlib", "base64", "gif", "png-8b",
-                                      "png-8b-grayscale", "png-24b", "png-32b", "text", "text - eol", "rle", "lzw", "dec-alpha", "mrb", "dBase"};
+                                      "png-8b-grayscale", "png-24b", "png-32b", "text", "text - eol", "rle", "lzw", "dec-alpha", "mrb", "dBase", "base85"};
   static const char* audioTypes[4] = { "8b-mono", "8b-stereo", "16b-mono", "16b-stereo" };
   static const char* mrbTypes[4] = { "mrb-uncompressed", "mrb-rle", "mrb-lz77", "mrb-rle-lz77" };
 
