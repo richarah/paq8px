@@ -70,7 +70,7 @@ uint32_t nextPowerOf2(uint32_t x)
   return x;
 }
 
-template <std::uint8_t e>
+template <uint8_t e>
 struct neg_pow10 {
   static constexpr float value = neg_pow10<e - 1>::value / 10.0f;
 };

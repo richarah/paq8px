@@ -45,14 +45,14 @@ ALWAYS_INLINE float hsum256_ps_avx(__m256 const v) {
 #if (defined(__GNUC__) || defined(__clang__)) && (!defined(__ARM_FEATURE_SIMD32) && !defined(__ARM_NEON))
 __attribute__((target("avx2,fma")))
 #endif
-float dot256_ps_fma3(float const* x1, float const* x2, std::size_t const len, float init = 0.) {
+float dot256_ps_fma3(float const* x1, float const* x2, size_t const len, float init = 0.) {
 #if !defined(__i386__) && !defined(__x86_64__) && !defined(_M_X64)
   return 0.f;
 #else
-  static constexpr std::size_t SIMDW = 8, CACHELINE = 64;
-  std::size_t const limit = len & static_cast<std::size_t>(-static_cast<std::ptrdiff_t>(SIMDW));
-  std::size_t const limit_x2 = len & static_cast<std::size_t>(-static_cast<std::ptrdiff_t>(SIMDW * 2));
-  std::size_t remainder = len & (SIMDW - 1), i = SIMDW * 2;
+  static constexpr size_t SIMDW = 8, CACHELINE = 64;
+  size_t const limit = len & static_cast<size_t>(-static_cast<ptrdiff_t>(SIMDW));
+  size_t const limit_x2 = len & static_cast<size_t>(-static_cast<ptrdiff_t>(SIMDW * 2));
+  size_t remainder = len & (SIMDW - 1), i = SIMDW * 2;
   __m256 sum0 = _mm256_setzero_ps();
   __m256 sum1 = _mm256_setzero_ps();
   _mm_prefetch((char*)(x1 + (CACHELINE / sizeof(float))), _MM_HINT_NTA);
@@ -77,15 +77,15 @@ float dot256_ps_fma3(float const* x1, float const* x2, std::size_t const len, fl
 #if (defined(__GNUC__) || defined(__clang__)) && (!defined(__ARM_FEATURE_SIMD32) && !defined(__ARM_NEON))
 __attribute__((target("avx2")))
 #endif
-float sum256_ps(float const* x, std::size_t const len, float init = 0.) {
+float sum256_ps(float const* x, size_t const len, float init = 0.) {
 #if !defined(__i386__) && !defined(__x86_64__) && !defined(_M_X64)
   return 0.f;
 #else
-  static constexpr std::size_t SIMDW = 8;
-  std::size_t const limit = len & static_cast<std::size_t>(-static_cast<std::ptrdiff_t>(SIMDW)), remainder = len & (SIMDW - 1);
+  static constexpr size_t SIMDW = 8;
+  size_t const limit = len & static_cast<size_t>(-static_cast<ptrdiff_t>(SIMDW)), remainder = len & (SIMDW - 1);
   if (limit > 0) {
     __m256 sum = _mm256_loadu_ps(x);
-    for (std::size_t i = SIMDW; i < limit; i += SIMDW)
+    for (size_t i = SIMDW; i < limit; i += SIMDW)
       sum = _mm256_add_ps(_mm256_loadu_ps(x + i), sum);
     init += hsum256_ps_avx(sum);
   }

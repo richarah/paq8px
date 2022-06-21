@@ -6,20 +6,20 @@
 #include "../IndirectContext.hpp"
 #include <valarray>
 
-template <std::size_t Bits = 8>
+template <size_t Bits = 8>
 class LstmModel {
 public:
   static constexpr int MIXERINPUTS = 5;
   static constexpr int MIXERCONTEXTS = 8 * 256 + 8 * 100;
   static constexpr int MIXERCONTEXTSETS = 2;
-  static constexpr std::size_t Size = 1u << Bits;
+  static constexpr size_t Size = 1u << Bits;
 protected:  
   const Shared* const shared;
   std::valarray<float> probs;
   APM apm1, apm2, apm3;
   IndirectContext<std::uint16_t> iCtx;
-  std::size_t top, mid, bot;
-  std::uint8_t expected;
+  size_t top, mid, bot;
+  uint8_t expected;
 public:
   LstmModel(
     const Shared* const sh) :

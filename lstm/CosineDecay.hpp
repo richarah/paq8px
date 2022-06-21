@@ -5,7 +5,7 @@
 #define _USE_MATH_DEFINES
 #include <cmath>
 
-template <std::uint16_t LR, std::uint8_t E1, std::uint8_t Alpha, std::uint64_t Steps>
+template <std::uint16_t LR, uint8_t E1, uint8_t Alpha, uint64_t Steps>
 class CosineDecay :
   public IDecay {
   static_assert((Alpha > 0) && (Alpha < 100), "Cosine decay alpha must be in [1..99]");
@@ -15,8 +15,8 @@ private:
   static constexpr double mul = 1. / static_cast<double>(Steps);
   static constexpr float learning_rate = static_cast<float>(static_cast<double>(LR) * neg_pow10<E1>::value);
 public:
-  ALWAYS_INLINE void Apply(float& rate, std::uint64_t const time_step) const {
-    rate = learning_rate * ((1.f - alpha) * (0.5f * (1.f + static_cast<float>(std::cos(std::min<std::uint64_t>(time_step, Steps) * mul * M_PI)))) + alpha);
+  ALWAYS_INLINE void Apply(float& rate, uint64_t const time_step) const {
+    rate = learning_rate * ((1.f - alpha) * (0.5f * (1.f + static_cast<float>(std::cos(std::min<uint64_t>(time_step, Steps) * mul * M_PI)))) + alpha);
   }
 };
 

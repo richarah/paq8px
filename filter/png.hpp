@@ -24,8 +24,8 @@ public:
   void encode(File *in, File *out, uint64_t size, int width, int & headerSize) override {
     int lineWidth = width + 1; //including filter byte
     headerSize = static_cast<int>(size / lineWidth); // = number of rows
-    RingBuffer<std::uint8_t> filterBuffer(nextPowerOf2(headerSize));
-    RingBuffer<std::uint8_t> pixelBuffer(nextPowerOf2(size - headerSize));
+    RingBuffer<uint8_t> filterBuffer(nextPowerOf2(headerSize));
+    RingBuffer<uint8_t> pixelBuffer(nextPowerOf2(size - headerSize));
     assert(filterBuffer.size() >= headerSize);
     assert(pixelBuffer.size() >= size - headerSize);
     for( int line = 0; line < headerSize; line++ ) {
@@ -74,8 +74,8 @@ public:
   uint64_t decode(File *in, File *out, FMode fMode, uint64_t size, uint64_t &diffFound) override {
     int lineWidth = width + 1; //including filter byte
     int headerSize = static_cast<int>(size / lineWidth); // = number of rows
-    RingBuffer<std::uint8_t> filterBuffer(nextPowerOf2(headerSize));
-    RingBuffer<std::uint8_t> pixelBuffer(nextPowerOf2(size - headerSize));
+    RingBuffer<uint8_t> filterBuffer(nextPowerOf2(headerSize));
+    RingBuffer<uint8_t> pixelBuffer(nextPowerOf2(size - headerSize));
     assert(filterBuffer.size() >= headerSize);
     assert(pixelBuffer.size() >= size - headerSize);
     for (int line = 0; line < headerSize; line++) {

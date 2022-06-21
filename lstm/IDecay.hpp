@@ -5,5 +5,5 @@
 class IDecay {
 public:
   virtual ~IDecay() = default;
-  virtual void Apply(float& rate, std::uint64_t const time_step) const = 0;
+  virtual void Apply(float& rate, uint64_t const time_step) const = 0;
 };

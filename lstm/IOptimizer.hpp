@@ -12,5 +12,5 @@ public:
     std::valarray<float>* v,
     std::valarray<float>* w,
     float const learning_rate,
-    std::uint64_t const time_step) const = 0;
+    uint64_t const time_step) const = 0;
 };

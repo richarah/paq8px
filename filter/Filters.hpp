@@ -1689,17 +1689,17 @@ static DetectionInfo detect(File *in, uint64_t blockSize, const TransformOptions
       (DEC.count[DEC.idx] > 4) &&
       ((e8e9count == 0) && !soi && !pgm && !rgbi && !bmpi && !wavi && !tga)
     ) {
-      std::uint32_t const absAddrLSB = DEC.opcode & 0xFF; // absolute address low 8 bits
-      std::uint32_t const relAddrLSB = ((DEC.opcode & 0x1FFFFF) + static_cast<std::uint32_t>(i) / 4u) & 0xff; // relative address low 8 bits
-      std::uint64_t const absPos = DEC.absPos[absAddrLSB];
-      std::uint64_t const relPos = DEC.relPos[relAddrLSB];
-      std::uint64_t const curPos = static_cast<std::uint64_t>(i);
+      uint32_t const absAddrLSB = DEC.opcode & 0xFF; // absolute address low 8 bits
+      uint32_t const relAddrLSB = ((DEC.opcode & 0x1FFFFF) + static_cast<uint32_t>(i) / 4u) & 0xff; // relative address low 8 bits
+      uint64_t const absPos = DEC.absPos[absAddrLSB];
+      uint64_t const relPos = DEC.relPos[relAddrLSB];
+      uint64_t const curPos = static_cast<uint64_t>(i);
       if ((absPos > relPos) && (curPos < absPos + UINT64_C(0x8000)) && (absPos > 16) && (curPos > absPos + UINT64_C(16)) && (((curPos-absPos) & UINT64_C(3)) == 0)) {
         DEC.last = curPos;
         DEC.branches[DEC.idx]++;      
         if ((DEC.offset == 0) || (DEC.offset > DEC.absPos[absAddrLSB])) {
-          std::uint64_t const addr = curPos - (DEC.count[DEC.idx] - 1) * UINT64_C(4);
-          DEC.offset = ((start > 0) && (start == prv_start)) ? DEC.absPos[absAddrLSB] : std::min<std::uint64_t>(DEC.absPos[absAddrLSB], addr);
+          uint64_t const addr = curPos - (DEC.count[DEC.idx] - 1) * UINT64_C(4);
+          DEC.offset = ((start > 0) && (start == prv_start)) ? DEC.absPos[absAddrLSB] : std::min<uint64_t>(DEC.absPos[absAddrLSB], addr);
         }
       }
       else
@@ -1712,7 +1712,7 @@ static DetectionInfo detect(File *in, uint64_t blockSize, const TransformOptions
       detectionInfo.DataStart = start + DEC.offset - (start + DEC.offset) % 4;
     }
    
-    if ((i + 1 == n) || (static_cast<std::uint64_t>(i) > DEC.last + (detectionInfo.Type == BlockType::DEC_ALPHA ? UINT64_C(0x8000) : UINT64_C(0x4000))) && (DEC.count[DEC.offset & 3] == 0)) {
+    if ((i + 1 == n) || (static_cast<uint64_t>(i) > DEC.last + (detectionInfo.Type == BlockType::DEC_ALPHA ? UINT64_C(0x8000) : UINT64_C(0x4000))) && (DEC.count[DEC.offset & 3] == 0)) {
       if (detectionInfo.Type == BlockType::DEC_ALPHA) {
         detectionInfo.DataLength = (start + DEC.last - (start + DEC.last) % 4) - detectionInfo.DataStart;
         return detectionInfo;

@@ -11,21 +11,21 @@
 #include "../Shared.hpp"
 #include "../SIMDType.hpp"
 
-template <SIMDType simd, std::size_t Bits = 8>
+template <SIMDType simd, size_t Bits = 8>
 class SIMDLstmModel :
   public LstmModel<Bits> {
 private:  
   LSTM::Shape shape;
-  Lstm<simd, std::uint8_t> lstm;
+  Lstm<simd, uint8_t> lstm;
   LSTM::Repository repo;
   LSTM::Model::Type modelType, pModelType;
   BlockType pBlockType; // previous blockType
 public:
   SIMDLstmModel(
     const Shared* const sh,
-    std::size_t const num_cells, //200
-    std::size_t const num_layers, //2
-    std::size_t const horizon, //100
+    size_t const num_cells, //200
+    size_t const num_layers, //2
+    size_t const horizon, //100
     float const learning_rate, //0.06
     float const gradient_clip) : //16.0
     LstmModel<Bits>(sh),
@@ -45,15 +45,15 @@ public:
   }
 
   void mix(Mixer& m) {
-    std::uint8_t const bpos = this->shared->State.bitPosition;
-    std::uint8_t const y = this->shared->State.y;
-    std::uint8_t const c0 = this->shared->State.c0;
+    uint8_t const bpos = this->shared->State.bitPosition;
+    uint8_t const y = this->shared->State.y;
+    uint8_t const c0 = this->shared->State.c0;
     if (y)
       this->bot = this->mid + 1;
     else
       this->top = this->mid;
     if (bpos == 0) {
-      std::uint8_t const c1 = this->shared->State.c1;
+      uint8_t const c1 = this->shared->State.c1;
       lstm.Perceive(c1);
       auto const& output = lstm.Predict(c1);
       memcpy(&this->probs[0], &output[0], (1 << Bits) * sizeof(float));
@@ -97,18 +97,18 @@ public:
     }
     prediction = (denom == 0.f) ? 0.5f : num / denom;
     
-    this->expected = static_cast<std::uint8_t>(this->bot);
+    this->expected = static_cast<uint8_t>(this->bot);
     float max_prob_val = this->probs[this->bot];
-    for (std::size_t i = this->bot + 1; i <= this->top; i++) {
+    for (size_t i = this->bot + 1; i <= this->top; i++) {
       if (this->probs[i] > max_prob_val) {
         max_prob_val = this->probs[i];
-        this->expected = static_cast<std::uint8_t>(i);
+        this->expected = static_cast<uint8_t>(i);
       }
     }
 
     this->iCtx += y;
     this->iCtx = (bpos << 8) | this->expected;
-    std::uint32_t ctx = this->iCtx();
+    uint32_t ctx = this->iCtx();
 
     int const p = min(max(std::lround(prediction * 4096.0f), 1), 4095);
     m.promote(stretch(p)/2);
@@ -121,6 +121,6 @@ public:
     m.add(stretch(pr2) >> 1);
     m.add(stretch(pr3) >> 1);
     m.set((bpos << 8) | this->expected, 8 * 256);
-    m.set(static_cast<std::uint32_t>(lstm.epoch) << 3 | bpos, 100 * 8);
+    m.set(static_cast<uint32_t>(lstm.epoch) << 3 | bpos, 100 * 8);
   }
 };
