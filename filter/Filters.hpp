@@ -316,10 +316,8 @@ static DetectionInfo detect(File *in, uint64_t blockSize, const TransformOptions
   uint32_t buf1 = 0;
   uint32_t buf0 = 0;
   
-  static uint64_t start = 0;
-  static uint64_t prv_start = 0;
+  uint64_t start = 0;
 
-  prv_start = start;    // for DEC Alpha detection
   start = in->curPos(); // start of the current block
 
   // For EXE detection
@@ -331,12 +329,12 @@ static DetectionInfo detect(File *in, uint64_t blockSize, const TransformOptions
   
   // For DEC Alpha detection
   struct {
-    Array<uint64_t> absPos{ 256 };
-    Array<uint64_t> relPos{ 256 };
+    Array<uint64_t> absPos{ 256 * 4 };
+    Array<uint64_t> relPos{ 256 * 4 };
     uint32_t opcode = 0, idx = 0, count[4] = { 0 }, branches[4] = { 0 };
-    uint64_t offset = 0, last = 0;
+    uint64_t offset[4] = { 0 }, last[4] = { 0 };
   } DEC;
-  
+
   // For JPEG detection
   uint64_t soi = 0; // Start Of Image 
   uint64_t sof = 0; // Start Of Frame
@@ -1681,44 +1679,63 @@ static DetectionInfo detect(File *in, uint64_t blockSize, const TransformOptions
     // detect DEC Alpha
     DEC.idx = i & 3;
     DEC.opcode = bswap(buf0);
-    DEC.count[DEC.idx] = ((i >= 3) && DECAlpha::IsValidInstruction(DEC.opcode)) ? DEC.count[DEC.idx] + 1 : DEC.count[DEC.idx] >> 3;
+    bool isValidDecAlphaInstruction = (i >= 3) && DECAlpha::IsValidInstruction(DEC.opcode);
+    if (DEC.count[DEC.idx] == 0 && buf0 == 0 && buf1 == 0 /*ignore lead-in padding*/)
+      isValidDecAlphaInstruction = false;
+    if (isValidDecAlphaInstruction && buf0 == 0 && buf1 == 0 && buf2 == 0 && buf3 == 0 /*stop when lead-out padding*/)
+      isValidDecAlphaInstruction = false;
+    DEC.count[DEC.idx] = isValidDecAlphaInstruction ? DEC.count[DEC.idx] + 1 : DEC.count[DEC.idx] = 0;
     DEC.opcode >>= 21;
     //test if bsr opcode and if last 4 opcodes are valid
     if (
       (DEC.opcode == (0x34 << 5) + 26) &&
       (DEC.count[DEC.idx] > 4) &&
       ((e8e9count == 0) && !soi && !pgm && !rgbi && !bmpi && !wavi && !tga)
-    ) {
+      ) {
       uint32_t const absAddrLSB = DEC.opcode & 0xFF; // absolute address low 8 bits
       uint32_t const relAddrLSB = ((DEC.opcode & 0x1FFFFF) + static_cast<uint32_t>(i) / 4u) & 0xff; // relative address low 8 bits
-      uint64_t const absPos = DEC.absPos[absAddrLSB];
-      uint64_t const relPos = DEC.relPos[relAddrLSB];
-      uint64_t const curPos = static_cast<uint64_t>(i);
-      if ((absPos > relPos) && (curPos < absPos + UINT64_C(0x8000)) && (absPos > 16) && (curPos > absPos + UINT64_C(16)) && (((curPos-absPos) & UINT64_C(3)) == 0)) {
-        DEC.last = curPos;
-        DEC.branches[DEC.idx]++;      
-        if ((DEC.offset == 0) || (DEC.offset > DEC.absPos[absAddrLSB])) {
+      uint64_t const absPos = DEC.absPos[absAddrLSB * 4 + DEC.idx];
+      uint64_t const relPos = DEC.relPos[relAddrLSB * 4 + DEC.idx];
+      uint64_t const curPos = i - 3;
+      if ((absPos > relPos) && (curPos < absPos + UINT64_C(0x8000)) && (absPos > 16) && (curPos > absPos + UINT64_C(16)) && (((curPos - absPos) & UINT64_C(3)) == 0)) {
+        DEC.last[DEC.idx] = curPos;
+        DEC.branches[DEC.idx]++;
+        if ((DEC.offset[DEC.idx] == 0) || (DEC.offset[DEC.idx] > DEC.absPos[absAddrLSB])) {
           uint64_t const addr = curPos - (DEC.count[DEC.idx] - 1) * UINT64_C(4);
-          DEC.offset = ((start > 0) && (start == prv_start)) ? DEC.absPos[absAddrLSB] : std::min<uint64_t>(DEC.absPos[absAddrLSB], addr);
+          DEC.offset[DEC.idx] = std::min<uint64_t>(DEC.absPos[absAddrLSB * 4 + DEC.idx], addr);
         }
       }
       else
         DEC.branches[DEC.idx] = 0;
-      DEC.absPos[absAddrLSB] = DEC.relPos[relAddrLSB] = curPos;
+      DEC.absPos[absAddrLSB * 4 + DEC.idx] = DEC.relPos[relAddrLSB * 4 + DEC.idx] = curPos;
     }
-     
-    if ((detectionInfo.Type == BlockType::DEFAULT) && (DEC.branches[DEC.idx] >= 16)) {
-      detectionInfo.Type = BlockType::DEC_ALPHA;
-      detectionInfo.DataStart = start + DEC.offset - (start + DEC.offset) % 4;
-    }
-   
-    if ((i + 1 == n) || (static_cast<uint64_t>(i) > DEC.last + (detectionInfo.Type == BlockType::DEC_ALPHA ? UINT64_C(0x8000) : UINT64_C(0x4000))) && (DEC.count[DEC.offset & 3] == 0)) {
-      if (detectionInfo.Type == BlockType::DEC_ALPHA) {
-        detectionInfo.DataLength = (start + DEC.last - (start + DEC.last) % 4) - detectionInfo.DataStart;
+
+    if (DEC.last[DEC.idx] != 0) {
+      if ((detectionInfo.Type == BlockType::DEFAULT) && (DEC.branches[DEC.idx] >= 16) && DEC.count[DEC.idx] >= 64) {
+        detectionInfo.Type = BlockType::DEC_ALPHA;
+        detectionInfo.DataStart = start + DEC.offset[DEC.idx];
+        for (int i = 0; i < 4; i++) {
+          if (i != DEC.idx) {
+            DEC.last[i] = 0;
+            DEC.offset[i] = 0;
+            DEC.branches[i] = 0;
+          }
+        }
+      }
+
+      else if ((detectionInfo.Type == BlockType::DEFAULT) && (i > DEC.last[DEC.idx] + UINT64_C(0x8000))) {
+        DEC.last[DEC.idx] = 0;
+        DEC.offset[DEC.idx] = 0;
+        DEC.branches[DEC.idx] = 0;
+      }
+
+      else if (detectionInfo.Type == BlockType::DEC_ALPHA 
+        && (start + DEC.offset[DEC.idx]-detectionInfo.DataStart) % 4 == 0
+        && ((i + 4 >= n) || (i > DEC.last[DEC.idx] + UINT64_C(0x1000) && DEC.count[DEC.idx] == 0))) {
+        detectionInfo.DataStart = start + DEC.offset[DEC.idx];
+        detectionInfo.DataLength = (start + DEC.last[DEC.idx]) - detectionInfo.DataStart;
         return detectionInfo;
       }
-      DEC.last = 0, DEC.offset = 0;
-      std::memset(&DEC.branches[0], 0, sizeof(DEC.branches));
     }
 
     // Detect base64 encoded data
