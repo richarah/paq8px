@@ -319,7 +319,7 @@ static DetectionInfo detect(File *in, uint64_t blockSize, const TransformOptions
   uint64_t start = 0;
 
   start = in->curPos(); // start of the current block
-
+  
   // For EXE detection
   Array<uint64_t> absPos(256); // CALL/JMP abs. address. low byte -> last offset
   Array<uint64_t> relPos(256); // CALL/JMP relative address. low byte -> last offset
@@ -328,12 +328,12 @@ static DetectionInfo detect(File *in, uint64_t blockSize, const TransformOptions
   uint64_t e8e9last = 0; // offset of most recent CALL or JMP
   
   // For DEC Alpha detection
-  struct {
-    Array<uint64_t> absPos{ 256 * 4 };
-    Array<uint64_t> relPos{ 256 * 4 };
-    uint32_t opcode = 0, idx = 0, count[4] = { 0 }, branches[4] = { 0 };
-    uint64_t offset[4] = { 0 }, last[4] = { 0 };
-  } DEC;
+  int decAlpha = 0;
+  uint64_t decAlphaHeaderStart = 0;
+  uint16_t decAlphaNumberOfSections = 0;
+  uint64_t decAlphaNextExpectedOffset = 0;
+  uint64_t decAlphaSectionStart = 0;
+  uint64_t decAlphaSectionLen = 0;
 
   // For JPEG detection
   uint64_t soi = 0; // Start Of Image 
@@ -1676,7 +1676,107 @@ static DetectionInfo detect(File *in, uint64_t blockSize, const TransformOptions
       e8e9count = 0;
     }
 
-    // detect DEC Alpha
+    //DEC Alpha code section detection 
+    //Based on the Tru64 Object file format
+    //see: https://www3.physnet.uni-hamburg.de/physnet/Tru64-Unix/HTML/APS31DTE/DOCU_013.HTM
+    //note: this document^ doesn't cover the same version as in silesia/mozilla
+    //luckily the 3 sections containing DEC Alpha code are always adjacent to each other
+    //so we can treat them as one continuous section.
+
+    if (decAlpha == 0 && ((buf3 >> 16) == 0x8301 /*Target-machine magic number*/ || buf1 == 0 && buf0 == 0 /*no symbolic header*/)) {
+      uint16_t numberOfSections = bswap(buf3) >> 16;
+      if (numberOfSections >= 3 && numberOfSections <= 24) {
+        decAlpha = 1;
+        decAlphaHeaderStart = i - 15;
+        decAlphaNumberOfSections = numberOfSections;
+      }
+    }
+
+    if (decAlpha != 0) {
+      if (decAlpha == 1) { // sanity checks
+        if (i == decAlphaHeaderStart + 23) {
+          //size of optional header is always 80
+          uint16_t sizeOfOptionalHeader = bswap(buf0)&0xffff;
+          //flags:
+          //0x2005/0x2007 - Dynamically shared object (so)
+          //0x3007        - Dynamic executable file
+          uint16_t flags = bswap(buf0) >> 16;
+          if (sizeOfOptionalHeader != 80 || !(flags == 0x2005 || flags == 0x2007 || flags == 0x3007)) {
+            decAlpha = 0; //fail
+          }
+        }
+        else if (i == decAlphaHeaderStart + 24 + 80) {
+          if (c != '.') { //section names start with a dot (this is the first section)
+            decAlpha = 0; //fail
+          }
+        }
+        else if (i > decAlphaHeaderStart + 24 + 80 + decAlphaNumberOfSections * 64) {
+          decAlpha = 0; //fail
+        }
+      }
+
+      //we look for the 3 (adjacent) sections containing program code
+      if (decAlpha == 1 && buf1 == 0x2E746578 && buf0 == 0x74000000) { // ".text   "
+        decAlpha = 2;
+        decAlphaNextExpectedOffset = i + 32;
+      }
+      else if (decAlpha == 2 && i == decAlphaNextExpectedOffset) {
+        decAlphaSectionStart = ((uint64_t)bswap(buf0)) << 32 | bswap(buf1);
+        decAlphaSectionLen = ((uint64_t)bswap(buf2)) << 32 | bswap(buf3);
+        decAlpha = 3;
+      }
+      else if (decAlpha == 3 && buf1 == 0x2E696E69 && buf0 == 0x74000000) { // ".init   "
+        decAlpha = 4;
+        decAlphaNextExpectedOffset = i + 32;
+      }
+      else if (decAlpha == 4 && i == decAlphaNextExpectedOffset) {
+        uint64_t initstart = ((uint64_t)bswap(buf0)) << 32 | bswap(buf1);
+        if (initstart == decAlphaSectionStart + decAlphaSectionLen) {
+          decAlphaSectionLen += ((uint64_t)bswap(buf2)) << 32 | bswap(buf3);
+          decAlpha = 5;
+        } 
+        else {
+          //printf("DECALPHA - found .text and .init sections are not adjacent");
+          decAlpha = 0; //fail
+        }
+      }
+      else if (decAlpha == 5 && buf1 == 0x2E66696E && buf0 == 0x69000000) { // ".fini   "
+        decAlpha = 6;
+        decAlphaNextExpectedOffset = i + 32;
+      }
+      else if (decAlpha == 6 && i == decAlphaNextExpectedOffset) {
+        uint64_t finistart = ((uint64_t)bswap(buf0)) << 32 | bswap(buf1);
+        if (finistart == decAlphaSectionStart + decAlphaSectionLen) {
+          decAlphaSectionLen += ((uint64_t)bswap(buf2)) << 32 | bswap(buf3);
+          if (decAlphaHeaderStart + decAlphaSectionStart + decAlphaSectionLen <= n) {
+            detectionInfo.Type = BlockType::DEC_ALPHA;
+            detectionInfo.DataStart = start + decAlphaHeaderStart + decAlphaSectionStart;
+            detectionInfo.DataLength = decAlphaSectionLen;
+            return detectionInfo;
+          }
+          else {
+            //printf("DECALPHA - end of section is past end of file");
+            decAlpha = 0; //fail
+          }
+        }
+        else {
+          //printf("DECALPHA - found .init and .fini sections are not adjavent");
+          decAlpha = 0; //fail
+        }
+      }
+    }
+
+    // this is the old DEC Alpha detection logic
+    // unused - kept for reference only 
+#ifdef USE_OLD_DECALPHA_DETECTION
+
+    struct {
+      Array<uint64_t> absPos{ 256 * 4 };
+      Array<uint64_t> relPos{ 256 * 4 };
+      uint32_t opcode = 0, idx = 0, count[4] = { 0 }, branches[4] = { 0 };
+      uint64_t offset[4] = { 0 }, last[4] = { 0 };
+    } DEC;
+
     DEC.idx = i & 3;
     DEC.opcode = bswap(buf0);
     bool isValidDecAlphaInstruction = (i >= 3) && DECAlpha::IsValidInstruction(DEC.opcode);
@@ -1737,6 +1837,8 @@ static DetectionInfo detect(File *in, uint64_t blockSize, const TransformOptions
         return detectionInfo;
       }
     }
+
+#endif //USE_OLD_DECALPHA_DETECTION
 
     // Detect base64 encoded data
     if( b64S == 0 && buf0 == 0x73653634 && ((buf1 & 0xffffff) == 0x206261 || (buf1 & 0xffffff) == 0x204261)) {
