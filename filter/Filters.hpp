@@ -2129,13 +2129,7 @@ transformEncodeBlock(BlockType type, File *in, uint64_t len, Encoder &en, int in
       directEncodeBlock(BlockType::DEFAULT, in, len, en, -1);
     } else {
       tmp.setpos(0);
-      if (type == BlockType::MRB) {
-        String blstrSub0;
-        blstrSub0 += blstr.c_str();
-        blstrSub0 += "->";
-        printf(" %-11s | ->  uncompressed |%10d bytes [%d - %d]\n", blstrSub0.c_str(), int(tmpSize), 0, int(tmpSize - 1));
-      } else if( hasRecursion(type)) {
-        // TODO(epsteina): Large file support
+      if( hasRecursion(type)) {
         Block::EncodeBlockHeader(&en, type, tmpSize, info&0xffffff);
         BlockType type2 = static_cast<BlockType>((info >> 24) & 0xFF);
         if (isPNG(type)) {
@@ -2176,6 +2170,12 @@ transformEncodeBlock(BlockType type, File *in, uint64_t len, Encoder &en, int in
           compressRecursive(&tmp, tmpSize, en, blstr, recursionLevel + 1, p1, p2, transformOptions);
         }
       } else {
+        if (type == BlockType::MRB) {
+          String blstrSub0;
+          blstrSub0 += blstr.c_str();
+          blstrSub0 += "->";
+          printf(" %-11s | ->  uncompressed |%10d bytes [%d - %d]\n", blstrSub0.c_str(), int(tmpSize), 0, int(tmpSize - 1));
+        }
         directEncodeBlock(type, &tmp, tmpSize, en, info);
       }
     }
