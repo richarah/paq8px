@@ -45,19 +45,22 @@ void WordModel::mix(Mixer &m) {
       }
     }
 
+    INJECT_SHARED_blockType
+    const bool isTextBlock = isTEXT(blockType);
+
     const bool isPdfText = (pdfTextParserState & 4) != 0;
     if( isPdfText ) {
-      const bool isExtendedChar = false;
+      infoPdf.setParams(isTextBlock);
       //predict the chars after "(", but the "(" must not be processed
       if( doPdfProcess ) {
         //printf("%c",c1); //debug: print the extracted pdf text
+        const bool isExtendedChar = false;
         infoPdf.processChar(isExtendedChar);
       }
       infoPdf.predict(pdfTextParserState);
       infoPdf.lineModelSkip();
     } else {
-      INJECT_SHARED_blockType
-      const bool isTextBlock = isTEXT(blockType);
+      infoNormal.setParams(isTextBlock);
       const bool isExtendedChar = isTextBlock && c1 >= 128;
       infoNormal.processChar(isExtendedChar);
       infoNormal.predict(pdfTextParserState);

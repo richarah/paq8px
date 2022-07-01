@@ -5,14 +5,19 @@ Info::Info(Shared* const sh, ContextMap2 &contextmap) : shared(sh), cm(contextma
   reset();
 }
 
+void Info::setParams(bool isTextBlock) {
+  this->isTextBlock = isTextBlock;
+}
+
 void Info::reset() {
   memset(&wordPositions[0], 0, (1 << wPosBits) * sizeof(uint32_t));
   memset(&checksums[0], 0, (1 << wPosBits) * sizeof(uint16_t));
   c4 = 0;
   c = pC = ppC = 0;
   isLetter = isLetterPc = isLetterPpC = false;
+  isTextBlock = isNewline = isNewlinePc = false;
   opened = wordLen0 = wordLen1 = exprLen0 = 0;
-  line0 = firstWord = 0;
+  line0 = line1 = firstWord = 0;
   word0 = word1 = word2 = word3 = word4 = 0;
   expr0 = expr1 = expr2 = expr3 = expr4 = 0;
   keyword0 = gapToken0 = gapToken1 = 0;
@@ -56,8 +61,8 @@ void Info::processChar(const bool isExtendedChar) {
   isLetter = (c >= 'a' && c <= 'z') || isExtendedChar;
   const bool isNumber =
           (c >= '0' && c <= '9') || (pC >= '0' && pC <= '9' && c == '.' /* decimal point (english) or thousand separator (misc) */);
-  const bool isNewline = c == NEW_LINE || c == 0;
-  const bool isNewlinePC = pC == NEW_LINE || pC == 0;
+  isNewlinePc = isNewline;
+  isNewline = isTextBlock ? c == NEW_LINE || c == 0 : c == 0;
 
   lastUpper = min(lastUpper + 1, maxLastUpper);
   lastLetter = min(lastLetter + 1, maxLastLetter);
@@ -123,7 +128,7 @@ void Info::processChar(const bool isExtendedChar) {
       killWords(); //end of sentence (probably)
     } else if( c == pC ) {
     } //don't shift when anything repeats
-    else if((c == SPACE || isNewline) && (pC == SPACE || isNewlinePC)) {
+    else if((c == SPACE || isNewline) && (pC == SPACE || isNewlinePc)) {
     } //ignore repeating whitespace
     else {
       shiftWords();
@@ -211,7 +216,7 @@ void Info::processChar(const bool isExtendedChar) {
       expr2 = expr1;
       expr1 = expr0;
       expr0 = 0;
-    } else if( c == APOSTROPHE || c == QUOTE || (isNewline && pC == SPACE) || (c == SPACE && isNewlinePC)) {
+    } else if( c == APOSTROPHE || c == QUOTE || (isNewline && pC == SPACE) || (c == SPACE && isNewlinePc)) {
       //ignore
     } else {
       expr4 = expr3 = expr2 = expr1 = expr0 = 0;
@@ -221,20 +226,20 @@ void Info::processChar(const bool isExtendedChar) {
 
 void Info::lineModelPredict() {
   const uint8_t RH = CM_USE_RUN_STATS | CM_USE_BYTE_HISTORY;
-  uint64_t i = 1024;
-  const bool isNewline = c == NEW_LINE || c == 0;
+  uint64_t i = 1024 * (1 + isTextBlock);
   INJECT_SHARED_pos
   if( isNewline ) { // a new line has just started (or: zero in asciiz or in binary data)
-    nl4 = nl3;
-    nl3 = nl2;
-    nl2 = nl1;
-    nl1 = pos;
-    firstChar = -1;
-    firstWord = 0;
-    line0 = 0;
-  }
+      nl4 = nl3;
+      nl3 = nl2;
+      nl2 = nl1;
+      nl1 = pos;
+      firstChar = -1;
+      firstWord = 0;
+      line1 = line0;
+      line0 = 0;
+    }
   INJECT_SHARED_c1
-  line0 = combine64(line0, c1);
+    line0 = combine64(line0, c1);
   cm.set(RH, hash(++i, line0));
 
   uint32_t col = pos - nl1;
@@ -242,7 +247,7 @@ void Info::lineModelPredict() {
     firstChar = groups & 0xff;
   }
   INJECT_SHARED_buf
-  const uint8_t cAbove = buf[nl2 + col]; // N
+    const uint8_t cAbove = buf[nl2 + col]; // N
   const uint8_t pCAbove = buf[nl2 + col - 1]; // NW
 
   const bool isNewLineStart = col == 0 && nl2 > 0;
@@ -266,37 +271,48 @@ void Info::lineModelPredict() {
     cm.skip(RH);
     i++;
   }
-  cm.set(RH, hash(++i, aboveCtx, c1));
-  cm.set(RH, hash(++i, col << 9 | aboveCtx, c1));
-  const int lineLength = nl1 - nl2;
-  cm.set(RH, hash(++i, nl1 - nl2, col, aboveCtx, groups & 0xff)); // english_mc
-  cm.set(RH, hash(++i, nl1 - nl2, col, aboveCtx, c1)); // english_mc
+  const uint32_t lineLength = nl1 - nl2;
+  if( col < lineLength ) {
+    cm.set(RH, hash(++i, aboveCtx << 8 | c1));
+    cm.set(RH, hash(++i, aboveCtx << 8 | c1, col));
+  }
+  else {
+    cm.skipn(RH, 2);
+    i += 2;
+  }
+  cm.set(RH, hash(++i, lineLength, col, aboveCtx << 8 | (groups & 0xff))); // english_mc
+  cm.set(RH, hash(++i, lineLength, col, aboveCtx << 8 | c1)); // english_mc
 
 
   //modeling columns in fixed-length lines (such as in silesia/nci)
-  INJECT_SHARED_blockType
-  const bool isTextBlock = isTEXT(blockType);
-  if (isTextBlock) {
-    const uint8_t cAbove2 = buf[nl3 + col]; // NN
-    const uint8_t cAbove3 = buf[nl4 + col]; // NNN
-    const int lineLength2 = nl2 - nl3;
-    const int lineLength3 = nl3 - nl4;
-    if (lineLength >= 2 && cAbove == cAbove2 && lineLength == lineLength2) {
-      cm.set(RH, hash(++i, cAbove));
-    }
-    else {
-      cm.skip(RH);
-      i++;
-    }
-    if (lineLength == lineLength2 && lineLength == lineLength3 && lineLength >= 2) {
-      cm.set(RH, hash(++i, cAbove, cAbove2, cAbove3));
-    }
-    else {
-      cm.skip(RH);
-      i++;
-    }
+  const uint8_t cAbove2 = buf[nl3 + col]; // NN
+  const uint8_t cAbove3 = buf[nl4 + col]; // NNN
+  const int lineLength2 = nl2 - nl3;
+  const int lineLength3 = nl3 - nl4;
+  const uint32_t gBefore = groups & 0xffff;
+  if( cAbove == cAbove2 && lineLength == lineLength2 ) {
+    cm.set(RH, hash(++i, gBefore, cAbove));
   }
   else {
+    cm.skip(RH);
+    i++;
+  }
+  if( col < lineLength && col < lineLength2 && col < lineLength3 ) {
+    cm.set(RH, hash(++i, gBefore, cAbove, cAbove2, cAbove3));
+  }
+  else {
+    cm.skip(RH);
+    i++;
+  }
+
+  //modeling line content based on previous line content (nci, q.wk3)
+  if( lineLength > 1 /* same as line1 != 0 */ ) {
+    uint32_t cx = isTextBlock ? groups & 0xff : c1;
+    cm.set(RH, hash(++i, line1, col << 8 | cx));
+    cm.set(RH, hash(++i, line1, line0));
+  }
+  else {
+    cm.skipn(RH, 2);
     i += 2;
   }
 
@@ -306,7 +322,7 @@ void Info::lineModelPredict() {
   cm.set(RH, hash(++i, col, mask & 0x1ff));
   cm.set(RH, hash(++i, col, lineLength)); // the length of the previous line may foretell the content of columns
 
-  cm.set(RH, hash(++i, col, firstChar, static_cast<uint64_t>(lastUpper < col) << 8 | (groups & 0xff))); // book1 book2 news
+  cm.set(RH, hash(++i, col << 8 | firstChar, static_cast<uint64_t>(lastUpper < col) << 8 | (groups & 0xff))); // book1 book2 news
 
   // content of lines, paragraphs
   cm.set(RH, hash(++i, nl1)); //chars occurring in this paragraph (order 0)
@@ -315,7 +331,7 @@ void Info::lineModelPredict() {
   cm.set(RH, hash(++i, firstChar, c)); //chars occurring in a paragraph that began with firstChar (order 1)
   cm.set(RH, hash(++i, firstWord)); //chars occurring in a paragraph that began with firstWord (order 0)
   cm.set(RH, hash(++i, firstWord, c)); //chars occurring in a paragraph that began with firstWord (order 1)
-  assert(i == 1024 + nCM1);
+  assert(i == 1024 * (1 + isTextBlock) + nCM1);
 }
 
 void Info::lineModelSkip() {
@@ -330,9 +346,6 @@ void Info::predict(const uint8_t pdfTextParserState) {
   const bool word0MayEndNow = lastPos != 0;
   const uint8_t mayBeCaps = static_cast<const uint8_t>(uint8_t(c4 >> 8) >= 'A' && uint8_t(c4 >> 8) <= 'Z' && uint8_t(c4) >= 'A' && uint8_t(c4) <= 'Z');
                                                        
-  INJECT_SHARED_blockType
-  const bool isTextBlock = isTEXT(blockType);
-
   const uint8_t RH = CM_USE_RUN_STATS | CM_USE_BYTE_HISTORY;
   uint64_t i = 0;
 
