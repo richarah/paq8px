@@ -1973,8 +1973,8 @@ static void directEncodeBlock(BlockType type, File *in, uint64_t len, Encoder &e
   fprintf(stderr, "\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b");
 }
 
-static void compressRecursive(File *in, uint64_t blockSize, Encoder &en, String &blstr, int recursionLevel, float p1, float p2, const TransformOptions* const transformOptions);
-static void compressRecursiveForTar(File* in, uint64_t blockSize, Encoder& en, String& blstr, int recursionLevel, float p1, float p2, const TransformOptions* const transformOptions);
+static void compressRecursive(File *in, uint64_t blockSize, Encoder &en, String &blstr, float p1, float p2, const TransformOptions* const transformOptions);
+static void compressRecursiveForTar(File* in, uint64_t blockSize, Encoder& en, String& blstr, float p1, float p2, const TransformOptions* const transformOptions);
 
 static uint64_t decodeFunc(BlockType type, Encoder &en, File *tmp, uint64_t len, int info, File *out, FMode mode, uint64_t &diffFound, const TransformOptions* const transformOptions) {
   if( type == BlockType::IMAGE24 ) {
@@ -2131,7 +2131,7 @@ static uint64_t encodeFunc(BlockType type, File *in, File *tmp, uint64_t len, in
 }
 
 static void
-transformEncodeBlock(BlockType type, File *in, uint64_t len, Encoder &en, int info, String &blstr, int recursionLevel, float p1, float p2, uint64_t begin, const TransformOptions* const transformOptions) {
+transformEncodeBlock(BlockType type, File *in, uint64_t len, Encoder &en, int info, String &blstr, float p1, float p2, uint64_t begin, const TransformOptions* const transformOptions) {
   if( hasTransform(type, info)) {
     FileTmp tmp;
     int headerSize = 0;
@@ -2187,13 +2187,13 @@ transformEncodeBlock(BlockType type, File *in, uint64_t len, Encoder &en, int in
             directEncodeBlock(BlockType::HDR, &tmp, headerSize, en, -1);
             printf(" %-11s | --> %s |%10d bytes [%d - %d]\n", blstrSub2.c_str(), dataname, int(tmpSize - headerSize), headerSize, int(tmpSize - 1));
           }
-          transformEncodeBlock(type2, &tmp, tmpSize - headerSize, en, info & 0xffffff, blstr, recursionLevel, p1, p2, headerSize, transformOptions);
+          transformEncodeBlock(type2, &tmp, tmpSize - headerSize, en, info & 0xffffff, blstr, p1, p2, headerSize, transformOptions);
         } else {
           if (type == BlockType::TAR) {
-            compressRecursiveForTar(&tmp, tmpSize, en, blstr, recursionLevel + 1, p1, p2, transformOptions);
+            compressRecursiveForTar(&tmp, tmpSize, en, blstr, p1, p2, transformOptions);
           }
           else {
-            compressRecursive(&tmp, tmpSize, en, blstr, recursionLevel + 1, p1, p2, transformOptions);
+            compressRecursive(&tmp, tmpSize, en, blstr, p1, p2, transformOptions);
           }
         }
       } else {
@@ -2221,7 +2221,7 @@ static void composeSubBlockStringToPrint(String& blstr, String& blstrSub, int bl
   blstrSub += uint64_t(blNum);
 }
 
-static void printBlock(const uint64_t begin, const uint64_t len, const BlockType type, const int blockInfo, String& blstrSub, const int recursionLevel) {
+static void printBlock(const uint64_t begin, const uint64_t len, const BlockType type, const int blockInfo, String& blstrSub) {
   static const char* typeNames[30] = { "default", "jpeg", "hdr", "1b-image", "4b-image", "8b-image", "8b-img-grayscale",
                                       "24b-image", "32b-image", "audio", "audio - le", "x86/64", "cd", "zlib", "base64", "gif", "png-8b",
                                       "png-8b-grayscale", "png-24b", "png-32b", "text", "text - eol", "rle", "lzw", "dec-alpha", "mrb", 
@@ -2266,20 +2266,20 @@ static void printBlock(const uint64_t begin, const uint64_t len, const BlockType
   printf("\n");
 }
 
-static void compressBlock(File* in, const uint64_t begin, const uint64_t len, int &blNum, BlockType type, int blockInfo, Encoder& en, String& blstr, const int recursionLevel, float &p1, float &p2, const float pscale, const TransformOptions* const transformOptions) {
+static void compressBlock(File* in, const uint64_t begin, const uint64_t len, int &blNum, BlockType type, int blockInfo, Encoder& en, String& blstr, float &p1, float &p2, const float pscale, const TransformOptions* const transformOptions) {
   p2 = p1 + pscale * len;
   en.setStatusRange(p1, p2);
 
   String blstrSub;
   composeSubBlockStringToPrint(blstr, blstrSub, blNum);
-  printBlock(begin, len, type, blockInfo, blstrSub, recursionLevel);
-  transformEncodeBlock(type, in, len, en, blockInfo, blstrSub, recursionLevel, p1, p2, begin, transformOptions);
+  printBlock(begin, len, type, blockInfo, blstrSub);
+  transformEncodeBlock(type, in, len, en, blockInfo, blstrSub, p1, p2, begin, transformOptions);
   blNum++;
 
   p1 = p2;
 }
 
-static void compressRecursive(File *in, uint64_t bytesToProcess, Encoder &en, String &blstr, int recursionLevel, float p1, float p2, const TransformOptions* const transformOptions) {
+static void compressRecursive(File *in, uint64_t bytesToProcess, Encoder &en, String &blstr, float p1, float p2, const TransformOptions* const transformOptions) {
 
   uint64_t begin = in->curPos();
 
@@ -2296,13 +2296,13 @@ static void compressRecursive(File *in, uint64_t bytesToProcess, Encoder &en, St
     while(blockStart != begin) {
       TextDetectionInfo textDetectionInfo = detectText(in, begin, blockStart - begin); // DEFAULT / TEXT / TEXT_EOL
       in->setpos(begin);
-      compressBlock(in, textDetectionInfo.DataStart, textDetectionInfo.DataLength, /*ref: */ blNum, textDetectionInfo.Type, 0, en, /*in: */ blstr, recursionLevel, /*ref: */ p1, /*ref: */ p2, pscale, transformOptions);
+      compressBlock(in, textDetectionInfo.DataStart, textDetectionInfo.DataLength, /*ref: */ blNum, textDetectionInfo.Type, 0, en, /*in: */ blstr, /*ref: */ p1, /*ref: */ p2, pscale, transformOptions);
       begin += textDetectionInfo.DataLength;
       bytesToProcess -= textDetectionInfo.DataLength;
     }
 
     if (detectionInfo.HeaderLength != 0) {
-      compressBlock(in, detectionInfo.HeaderStart, detectionInfo.HeaderLength, /*ref: */ blNum, BlockType::HDR, 0, en, /*in: */ blstr, recursionLevel, /*ref: */ p1, /*ref: */ p2, pscale, transformOptions);
+      compressBlock(in, detectionInfo.HeaderStart, detectionInfo.HeaderLength, /*ref: */ blNum, BlockType::HDR, 0, en, /*in: */ blstr, /*ref: */ p1, /*ref: */ p2, pscale, transformOptions);
       begin += detectionInfo.HeaderLength;
       bytesToProcess -= detectionInfo.HeaderLength;
     }
@@ -2311,14 +2311,14 @@ static void compressRecursive(File *in, uint64_t bytesToProcess, Encoder &en, St
       quit("Internal error in compressRecursive");
     
     if (detectionInfo.DataLength != 0) {
-      compressBlock(in, detectionInfo.DataStart, detectionInfo.DataLength, /*ref: */ blNum, detectionInfo.Type, detectionInfo.DataInfo, en, /*in: */ blstr, recursionLevel, /*ref: */ p1, /*ref: */ p2, pscale, transformOptions);
+      compressBlock(in, detectionInfo.DataStart, detectionInfo.DataLength, /*ref: */ blNum, detectionInfo.Type, detectionInfo.DataInfo, en, /*in: */ blstr, /*ref: */ p1, /*ref: */ p2, pscale, transformOptions);
       begin += detectionInfo.DataLength;
       bytesToProcess -= detectionInfo.DataLength;
     }
   }
 }
 
-static void compressRecursiveForTar(File* in, uint64_t bytesToProcess, Encoder& en, String& blstr, int recursionLevel, float p1, float p2, const TransformOptions* const transformOptions) {
+static void compressRecursiveForTar(File* in, uint64_t bytesToProcess, Encoder& en, String& blstr, float p1, float p2, const TransformOptions* const transformOptions) {
   Array<uint64_t, 1> filePositions{ 0 };
   TarFilter tarFilter{};
   in->setpos(0);
@@ -2330,14 +2330,14 @@ static void compressRecursiveForTar(File* in, uint64_t bytesToProcess, Encoder& 
   float pscale = bytesToProcess != 0 ? (p2 - p1) / bytesToProcess : 0;
 
   auto headerSize = filePositions[0];
-  compressBlock(in, 0, headerSize, /*ref: */ blNum, BlockType::TARHDR, 0, en, /*in: */ blstr, recursionLevel, /*ref: */ p1, /*ref: */ p2, pscale, transformOptions);
+  compressBlock(in, 0, headerSize, /*ref: */ blNum, BlockType::TARHDR, 0, en, /*in: */ blstr, /*ref: */ p1, /*ref: */ p2, pscale, transformOptions);
   for (; blNum < filePositions.size(); blNum++) {
     uint64_t blockSize = filePositions[blNum] - filePositions[blNum - 1];
     p2 = p1 + pscale * blockSize;
     en.setStatusRange(p1, p2);
     String blstrSub;
     composeSubBlockStringToPrint(blstr, blstrSub, blNum);
-    compressRecursive(in, blockSize, en, blstrSub, recursionLevel + 1, p1, p2, transformOptions);
+    compressRecursive(in, blockSize, en, blstrSub, p1, p2, transformOptions);
     p1 = p2;
   }
 }
@@ -2363,15 +2363,14 @@ static void compressfile(const Shared* const shared, const char *filename, uint6
     const uint64_t begin = 0;
     int blNum = 0;
     const int info = -1;
-    const int recursionLevel = 0;
     float p1 = 0.0f;
     float p2 = 1.0f;
     const float pscale = fileSize != 0 ? (p2 - p1) / fileSize : 0;
-    compressBlock(&in, begin, fileSize, /*ref: */ blNum, BlockType::DEFAULT, info, en, /*in: */ blstr, recursionLevel, /*ref: */ p1, /*ref: */ p2, pscale, &transformOptions);
+    compressBlock(&in, begin, fileSize, /*ref: */ blNum, BlockType::DEFAULT, info, en, /*in: */ blstr, /*ref: */ p1, /*ref: */ p2, pscale, &transformOptions);
   }
   else {
     // detect block types + compress
-    compressRecursive(&in, fileSize, en, blstr, 0, 0.0F, 1.0F, &transformOptions);
+    compressRecursive(&in, fileSize, en, blstr, 0.0F, 1.0F, &transformOptions);
   }
   in.close();
 
@@ -2384,7 +2383,7 @@ static void compressfile(const Shared* const shared, const char *filename, uint6
   }
 }
 
-static uint64_t decompressRecursive(File *out, uint64_t blockSize, Encoder &en, FMode mode, int recursionLevel, TransformOptions *transformOptions) {
+static uint64_t decompressRecursive(File *out, uint64_t blockSize, Encoder &en, FMode mode, TransformOptions *transformOptions) {
   uint64_t i = 0;
   uint64_t diffFound = 0;
   while( i < blockSize ) {
@@ -2403,7 +2402,7 @@ static uint64_t decompressRecursive(File *out, uint64_t blockSize, Encoder &en, 
       tmp.close();
     } else if( hasRecursion(type)) {
       FileTmp tmp;
-      decompressRecursive(&tmp, len, en, FMode::FDECOMPRESS, recursionLevel + 1, transformOptions);
+      decompressRecursive(&tmp, len, en, FMode::FDECOMPRESS, transformOptions);
       if( mode != FMode::FDISCARD ) {
         tmp.setpos(0);
         if( hasTransform(type, info)) {
@@ -2454,7 +2453,7 @@ static void decompressFile(const Shared* const shared, const char* filename, FMo
 
   // Decompress/Compare
   TransformOptions transformOptions(shared);
-  uint64_t r = decompressRecursive(&f, fileSize, en, fMode, 0, &transformOptions);
+  uint64_t r = decompressRecursive(&f, fileSize, en, fMode, &transformOptions);
   if( fMode == FMode::FCOMPARE && (r == 0) && f.getchar() != EOF) {
     printf("file is longer\n");
   } else if( fMode == FMode::FCOMPARE && (r != 0)) {
