@@ -57,6 +57,11 @@ int ContextModel::p() {
         uint32_t fixedRecordLenght = 16;
         recordModel.setParam(fixedRecordLenght);
       }
+      else if (blockType == BlockType::TARHDR) {
+        RecordModel& recordModel = models->recordModel();
+        uint32_t fixedRecordLenght = 512;
+        recordModel.setParam(fixedRecordLenght);
+      }
       else {
         RecordModel& recordModel = models->recordModel();
         recordModel.setParam(0); //enable automatic record length detection

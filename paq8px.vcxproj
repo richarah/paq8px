@@ -382,6 +382,7 @@
     <ClInclude Include="filter\mrb.hpp" />
     <ClInclude Include="filter\png.hpp" />
     <ClInclude Include="filter\rle.hpp" />
+    <ClInclude Include="filter\tar.hpp" />
     <ClInclude Include="filter\TextParserStateInfo.hpp" />
     <ClInclude Include="filter\zlib.hpp" />
     <ClInclude Include="Hash.hpp" />

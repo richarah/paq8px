@@ -19,6 +19,7 @@
 #include "lzw.hpp"
 #include "mrb.hpp"
 #include "png.hpp"
+#include "tar.hpp"
 #include "DecAlphaFilter.hpp"
 #include <cctype>
 #include <cstdint>
@@ -1923,6 +1924,21 @@ static DetectionInfo detect(File *in, uint64_t blockSize, const TransformOptions
       }
     }
 
+    // UStar (Unix Standard TAR) detection
+    // Notable uses: silesia/mozilla, silesia/samba, silesia/xml
+    if (buf1 == 0x75737461 /* "usta" */ && (buf0 == 0x72202000 /* "r  \0" */ || buf0 == 0x72003030 /* "r\000" */)) {
+      uint64_t posBackup = in->curPos();
+      TarFilter tarFilter;
+      bool success = tarFilter.detect(in, start + blockSize);
+      if (success) {
+        detectionInfo.Type = BlockType::TAR;
+        detectionInfo.DataStart = tarFilter.detectedStartPos;
+        detectionInfo.DataLength = tarFilter.detectedEndPos - tarFilter.detectedStartPos;
+        return detectionInfo;
+      }
+      in->setpos(posBackup);
+    }
+
   }
   
   if (detectionInfo.Type != BlockType::DEFAULT)
@@ -1958,6 +1974,7 @@ static void directEncodeBlock(BlockType type, File *in, uint64_t len, Encoder &e
 }
 
 static void compressRecursive(File *in, uint64_t blockSize, Encoder &en, String &blstr, int recursionLevel, float p1, float p2, const TransformOptions* const transformOptions);
+static void compressRecursiveForTar(File* in, uint64_t blockSize, Encoder& en, String& blstr, int recursionLevel, float p1, float p2, const TransformOptions* const transformOptions);
 
 static uint64_t decodeFunc(BlockType type, Encoder &en, File *tmp, uint64_t len, int info, File *out, FMode mode, uint64_t &diffFound, const TransformOptions* const transformOptions) {
   if( type == BlockType::IMAGE24 ) {
@@ -2029,8 +2046,11 @@ static uint64_t decodeFunc(BlockType type, Encoder &en, File *tmp, uint64_t len,
     auto e = new DECAlphaFilter();
     e->setEncoder(en);
     return e->decode(tmp, out, mode, len, diffFound);
-  }
-  else {
+  } else if (type == BlockType::TAR) {
+    auto t = new TarFilter();
+    t->setEncoder(en);
+    return t->decode(tmp, out, mode, len, diffFound);
+  } else {
     assert(false);
   }
   return 0;
@@ -2101,8 +2121,10 @@ static uint64_t encodeFunc(BlockType type, File *in, File *tmp, uint64_t len, in
   } else if (type == BlockType::DEC_ALPHA) {
     auto e = new DECAlphaFilter();
     e->encode(in, tmp, len, info, hdrsize);
-  }
-  else {
+  } else if (type == BlockType::TAR) {
+    auto t = new TarFilter();
+    t->encode(in, tmp, len, info, hdrsize);
+  } else {
     assert(false);
   }
   return 0;
@@ -2167,7 +2189,12 @@ transformEncodeBlock(BlockType type, File *in, uint64_t len, Encoder &en, int in
           }
           transformEncodeBlock(type2, &tmp, tmpSize - headerSize, en, info & 0xffffff, blstr, recursionLevel, p1, p2, headerSize, transformOptions);
         } else {
-          compressRecursive(&tmp, tmpSize, en, blstr, recursionLevel + 1, p1, p2, transformOptions);
+          if (type == BlockType::TAR) {
+            compressRecursiveForTar(&tmp, tmpSize, en, blstr, recursionLevel + 1, p1, p2, transformOptions);
+          }
+          else {
+            compressRecursive(&tmp, tmpSize, en, blstr, recursionLevel + 1, p1, p2, transformOptions);
+          }
         }
       } else {
         if (type == BlockType::MRB) {
@@ -2195,9 +2222,10 @@ static void composeSubBlockStringToPrint(String& blstr, String& blstrSub, int bl
 }
 
 static void printBlock(const uint64_t begin, const uint64_t len, const BlockType type, const int blockInfo, String& blstrSub, const int recursionLevel) {
-  static const char* typeNames[28] = { "default", "jpeg", "hdr", "1b-image", "4b-image", "8b-image", "8b-img-grayscale",
+  static const char* typeNames[30] = { "default", "jpeg", "hdr", "1b-image", "4b-image", "8b-image", "8b-img-grayscale",
                                       "24b-image", "32b-image", "audio", "audio - le", "x86/64", "cd", "zlib", "base64", "gif", "png-8b",
-                                      "png-8b-grayscale", "png-24b", "png-32b", "text", "text - eol", "rle", "lzw", "dec-alpha", "mrb", "dBase", "base85"};
+                                      "png-8b-grayscale", "png-24b", "png-32b", "text", "text - eol", "rle", "lzw", "dec-alpha", "mrb", 
+                                      "dBase", "base85", "tar", "tar header"};
   static const char* audioTypes[4] = { "8b-mono", "8b-stereo", "16b-mono", "16b-stereo" };
   static const char* mrbTypes[4] = { "mrb-uncompressed", "mrb-rle", "mrb-lz77", "mrb-rle-lz77" };
 
@@ -2287,6 +2315,30 @@ static void compressRecursive(File *in, uint64_t bytesToProcess, Encoder &en, St
       begin += detectionInfo.DataLength;
       bytesToProcess -= detectionInfo.DataLength;
     }
+  }
+}
+
+static void compressRecursiveForTar(File* in, uint64_t bytesToProcess, Encoder& en, String& blstr, int recursionLevel, float p1, float p2, const TransformOptions* const transformOptions) {
+  Array<uint64_t, 1> filePositions{ 0 };
+  TarFilter tarFilter{};
+  in->setpos(0);
+  tarFilter.getFilePositions(in, filePositions);
+  assert(filePositions[filePositions.size() - 1] == bytesToProcess);
+  in->setpos(0);
+
+  int blNum = 0;
+  float pscale = bytesToProcess != 0 ? (p2 - p1) / bytesToProcess : 0;
+
+  auto headerSize = filePositions[0];
+  compressBlock(in, 0, headerSize, /*ref: */ blNum, BlockType::TARHDR, 0, en, /*in: */ blstr, recursionLevel, /*ref: */ p1, /*ref: */ p2, pscale, transformOptions);
+  for (; blNum < filePositions.size(); blNum++) {
+    uint64_t blockSize = filePositions[blNum] - filePositions[blNum - 1];
+    p2 = p1 + pscale * blockSize;
+    en.setStatusRange(p1, p2);
+    String blstrSub;
+    composeSubBlockStringToPrint(blstr, blstrSub, blNum);
+    compressRecursive(in, blockSize, en, blstrSub, recursionLevel + 1, p1, p2, transformOptions);
+    p1 = p2;
   }
 }
 
