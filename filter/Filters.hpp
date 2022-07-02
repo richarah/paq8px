@@ -1978,78 +1978,78 @@ static void compressRecursiveForTar(File* in, uint64_t blockSize, Encoder& en, S
 
 static uint64_t decodeFunc(BlockType type, Encoder &en, File *tmp, uint64_t len, int info, File *out, FMode mode, uint64_t &diffFound, const TransformOptions* const transformOptions) {
   if( type == BlockType::IMAGE24 ) {
-    auto b = new BmpFilter();
-    b->setWidth(info);
-    b->setSkipRgb(transformOptions->skipRgb);
-    b->setEncoder(en);
-    return b->decode(tmp, out, mode, len, diffFound);
+    auto f = BmpFilter();
+    f.setWidth(info);
+    f.setSkipRgb(transformOptions->skipRgb);
+    f.setEncoder(en);
+    return f.decode(tmp, out, mode, len, diffFound);
   }
   if( type == BlockType::IMAGE32 ) {
-    auto b = new BmpFilter();
-    b->setWidth(info);
-    b->setSkipRgb(transformOptions->skipRgb);
-    b->setHasApha();
-    b->setEncoder(en);
-    return b->decode(tmp, out, mode, len, diffFound);
+    auto f = BmpFilter();
+    f.setWidth(info);
+    f.setSkipRgb(transformOptions->skipRgb);
+    f.setHasApha();
+    f.setEncoder(en);
+    return f.decode(tmp, out, mode, len, diffFound);
   }
   if (type == BlockType::PNG8GRAY || type == BlockType::PNG8 || type == BlockType::PNG24|| type == BlockType::PNG32) {
-    auto b = new PngFilter();
-    b->setWidth(info);
+    auto f = PngFilter();
+    f.setWidth(info);
     auto stride = type == BlockType::PNG24 ? 3 : type == BlockType::PNG32 ? 4 : 1;
-    b->setStride(stride);
-    b->setEncoder(en);
-    return b->decode(tmp, out, mode, len, diffFound);
+    f.setStride(stride);
+    f.setEncoder(en);
+    return f.decode(tmp, out, mode, len, diffFound);
   }
   if( type == BlockType::AUDIO_LE ) {
-    auto e = new EndiannessFilter();
-    e->setEncoder(en);
-    return e->decode(tmp, out, mode, len, diffFound);
+    auto f = EndiannessFilter();
+    f.setEncoder(en);
+    return f.decode(tmp, out, mode, len, diffFound);
   } else if( type == BlockType::EXE ) {
-    auto e = new ExeFilter();
-    e->setBegin(info); 
-    e->setEncoder(en);
-    return e->decode(tmp, out, mode, len, diffFound);
+    auto f = ExeFilter();
+    f.setBegin(info); 
+    f.setEncoder(en);
+    return f.decode(tmp, out, mode, len, diffFound);
   } else if( type == BlockType::TEXT_EOL ) {
-    auto d = new EolFilter();
-    d->setEncoder(en);
-    return d->decode(tmp, out, mode, len, diffFound);
+    auto f = EolFilter();
+    f.setEncoder(en);
+    return f.decode(tmp, out, mode, len, diffFound);
   } else if( type == BlockType::CD ) {
-    auto c = new CdFilter();
-    return c->decode(tmp, out, mode, len, diffFound);
+    auto f = CdFilter();
+    return f.decode(tmp, out, mode, len, diffFound);
 #ifndef DISABLE_ZLIB
   } else if( type == BlockType::ZLIB ) {
     return decodeZlib(tmp, len, out, mode, diffFound);
 #endif //DISABLE_ZLIB
   } else if( type == BlockType::BASE64 ) {
-    auto b = new Base64Filter();
-    return b->decode(tmp, out, mode, len, diffFound);
+    auto f = Base64Filter();
+    return f.decode(tmp, out, mode, len, diffFound);
   } else if (type == BlockType::BASE85) {
-    auto b = new Base85Filter();
-    return b->decode(tmp, out, mode, len, diffFound);
+    auto f = Base85Filter();
+    return f.decode(tmp, out, mode, len, diffFound);
   }
   else if( type == BlockType::GIF ) {
     return decodeGif(tmp, len, out, mode, diffFound);
   } else if( type == BlockType::RLE ) {
-    auto r = new RleFilter();
-    //r->setScanLineSize(info & 0xFFFFFF); //now it self-encodes this info, but eventually we need to pass it
-    return r->decode(tmp, out, mode, len, diffFound);
+    auto f = RleFilter();
+    //f.setScanLineSize(info & 0xFFFFFF); //now it self-encodes this info, but eventually we need to pass it
+    return f.decode(tmp, out, mode, len, diffFound);
   } else if( type == BlockType::MRB) {
     uint8_t packingMethod = (info >> 24) & 3; //0..3
     if (packingMethod == 1 /*RLE*/) {
-      auto m = new MrbRleFilter();
-      return m->decode(tmp, out, mode, len, diffFound);
+      auto f = MrbRleFilter();
+      return f.decode(tmp, out, mode, len, diffFound);
     }
     else quit("MRB: not implemented");
   } else if( type == BlockType::LZW ) {
     return decodeLzw(tmp, out, mode, diffFound);
   } else if (type == BlockType::DEC_ALPHA) {
-    auto e = new DECAlphaFilter();
-    e->setEncoder(en);
-    return e->decode(tmp, out, mode, len, diffFound);
+    auto f = DECAlphaFilter();
+    f.setEncoder(en);
+    return f.decode(tmp, out, mode, len, diffFound);
   } else if (type == BlockType::TAR) {
-    auto t = new TarFilter();
-    t->setEncoder(en);
-    return t->decode(tmp, out, mode, len, diffFound);
+    auto f = TarFilter();
+    f.setEncoder(en);
+    return f.decode(tmp, out, mode, len, diffFound);
   } else {
     assert(false);
   }
@@ -2058,48 +2058,48 @@ static uint64_t decodeFunc(BlockType type, Encoder &en, File *tmp, uint64_t len,
 
 static uint64_t encodeFunc(BlockType type, File *in, File *tmp, uint64_t len, int info, int &hdrsize, const TransformOptions* const transformOptions) {
   if( type == BlockType::IMAGE24 ) {
-    auto b = new BmpFilter();
-    b->setSkipRgb(transformOptions->skipRgb);
-    b->encode(in, tmp, len, info, hdrsize);
+    auto f= BmpFilter();
+    f.setSkipRgb(transformOptions->skipRgb);
+    f.encode(in, tmp, len, info, hdrsize);
   } else if( type == BlockType::IMAGE32 ) {
-    auto b = new BmpFilter();
-    b->setSkipRgb(transformOptions->skipRgb);
-    b->setHasApha();
-    b->encode(in, tmp, len, info, hdrsize);
+    auto f = BmpFilter();
+    f.setSkipRgb(transformOptions->skipRgb);
+    f.setHasApha();
+    f.encode(in, tmp, len, info, hdrsize);
   } else if (type == BlockType::PNG8GRAY || type == BlockType::PNG8 || type == BlockType::PNG24 || type == BlockType::PNG32) {
-    auto b = new PngFilter();
+    auto f = PngFilter();
     auto stride = type == BlockType::PNG24 ? 3 : type == BlockType::PNG32 ? 4 : 1;
-    b->setStride(stride);
-    b->encode(in, tmp, len, info, hdrsize);
+    f.setStride(stride);
+    f.encode(in, tmp, len, info, hdrsize);
   } else if( type == BlockType::AUDIO_LE ) {
-    auto e = new EndiannessFilter();
-    e->encode(in, tmp, len, info, hdrsize);
+    auto f = EndiannessFilter();
+    f.encode(in, tmp, len, info, hdrsize);
   } else if( type == BlockType::EXE ) {
-    auto e = new ExeFilter();
-    e->setBegin(info); 
-    e->encode(in, tmp, len, info, hdrsize);
+    auto f = ExeFilter();
+    f.setBegin(info); 
+    f.encode(in, tmp, len, info, hdrsize);
   } else if( type == BlockType::TEXT_EOL ) {
-    auto e = new EolFilter();
-    e->encode(in, tmp, len, info, hdrsize);
+    auto f = EolFilter();
+    f.encode(in, tmp, len, info, hdrsize);
   } else if( type == BlockType::CD ) {
-    auto c = new CdFilter();
-    c->encode(in, tmp, len, info, hdrsize);
+    auto f = CdFilter();
+    f.encode(in, tmp, len, info, hdrsize);
 #ifndef DISABLE_ZLIB
   } else if( type == BlockType::ZLIB ) {
     return encodeZlib(in, tmp, len, hdrsize) ? 0 : 1;
 #endif //DISABLE_ZLIB
   } else if( type == BlockType::BASE64 ) {
-    auto b = new Base64Filter();
-    b->encode(in, tmp, len, info, hdrsize);
+    auto f = Base64Filter();
+    f.encode(in, tmp, len, info, hdrsize);
   } else if (type == BlockType::BASE85) {
-    auto b = new Base85Filter();
-    b->encode(in, tmp, len, info, hdrsize);
+    auto f = Base85Filter();
+    f.encode(in, tmp, len, info, hdrsize);
   } else if( type == BlockType::GIF ) {
     return encodeGif(in, tmp, len, hdrsize) != 0 ? 0 : 1;
   } else if( type == BlockType::RLE ) {
-    auto r = new RleFilter();
-    r->setScanLineSize(info & 0xFFFFFF);
-    r->encode(in, tmp, len, info, hdrsize);
+    auto f = RleFilter();
+    f.setScanLineSize(info & 0xFFFFFF);
+    f.encode(in, tmp, len, info, hdrsize);
   } else if (type == BlockType::MRB) {
     const uint8_t packingMethod = (info >> 24) & 3; //0..3
     const uint16_t colorBits = (info >> 26); //1,4,8
@@ -2111,19 +2111,19 @@ static uint64_t encodeFunc(BlockType type, File *in, File *tmp, uint64_t len, in
     else if (colorBits == 1) widthInBytes = ((width + 31) / 32) * 4;
     else quit("Unexpected colorBits for MRB");
     if (packingMethod == 1 /*RLE*/) {
-      auto m = new MrbRleFilter();
-      m->setInfo(widthInBytes, height);
-      m->encode(in, tmp, len, info, hdrsize);
+      auto f = MrbRleFilter();
+      f.setInfo(widthInBytes, height);
+      f.encode(in, tmp, len, info, hdrsize);
     }
     else quit("MRB: not implemented");
   } else if( type == BlockType::LZW ) {
     return encodeLzw(in, tmp, len, hdrsize) != 0 ? 0 : 1;
   } else if (type == BlockType::DEC_ALPHA) {
-    auto e = new DECAlphaFilter();
-    e->encode(in, tmp, len, info, hdrsize);
+    auto f = DECAlphaFilter();
+    f.encode(in, tmp, len, info, hdrsize);
   } else if (type == BlockType::TAR) {
-    auto t = new TarFilter();
-    t->encode(in, tmp, len, info, hdrsize);
+    auto f = TarFilter();
+    f.encode(in, tmp, len, info, hdrsize);
   } else {
     assert(false);
   }
