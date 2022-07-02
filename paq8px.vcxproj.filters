@@ -246,7 +246,7 @@
     <ClCompile Include="LargeStationaryMap.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="model\Info.cpp">
+    <ClCompile Include="model\WordModelInfo.cpp">
       <Filter>model</Filter>
     </ClCompile>
     <ClCompile Include="APMPost.cpp">
@@ -545,7 +545,7 @@
     <ClInclude Include="model\IndirectModel.hpp">
       <Filter>model</Filter>
     </ClInclude>
-    <ClInclude Include="model\Info.hpp">
+    <ClInclude Include="model\WordModelInfo.hpp">
       <Filter>model</Filter>
     </ClInclude>
     <ClInclude Include="model\JpegModel.hpp">

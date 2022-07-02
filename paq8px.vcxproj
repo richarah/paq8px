@@ -295,7 +295,7 @@
     <ClCompile Include="model\Image4BitModel.cpp" />
     <ClCompile Include="model\Image8BitModel.cpp" />
     <ClCompile Include="model\IndirectModel.cpp" />
-    <ClCompile Include="model\Info.cpp" />
+    <ClCompile Include="model\WordModelInfo.cpp" />
     <ClCompile Include="model\JpegModel.cpp" />
     <ClCompile Include="model\LinearPredictionModel.cpp" />
     <ClCompile Include="model\MatchModel.cpp" />
@@ -434,7 +434,7 @@
     <ClInclude Include="model\Image8BitModel.hpp" />
     <ClInclude Include="model\ImageModelsCommon.hpp" />
     <ClInclude Include="model\IndirectModel.hpp" />
-    <ClInclude Include="model\Info.hpp" />
+    <ClInclude Include="model\WordModelInfo.hpp" />
     <ClInclude Include="model\JpegModel.hpp" />
     <ClInclude Include="model\LinearPredictionModel.hpp" />
     <ClInclude Include="model\MatchModel.hpp" />

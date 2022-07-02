@@ -1,15 +1,15 @@
-#include "Info.hpp"
+#include "WordModelInfo.hpp"
 #include "../CharacterNames.hpp"
 
-Info::Info(Shared* const sh, ContextMap2 &contextmap) : shared(sh), cm(contextmap) {
+WordModelInfo::WordModelInfo(Shared* const sh, ContextMap2 &contextmap) : shared(sh), cm(contextmap) {
   reset();
 }
 
-void Info::setParams(bool isTextBlock) {
+void WordModelInfo::setParams(bool isTextBlock) {
   this->isTextBlock = isTextBlock;
 }
 
-void Info::reset() {
+void WordModelInfo::reset() {
   memset(&wordPositions[0], 0, (1 << wPosBits) * sizeof(uint32_t));
   memset(&checksums[0], 0, (1 << wPosBits) * sizeof(uint16_t));
   c4 = 0;
@@ -31,7 +31,7 @@ void Info::reset() {
   firstChar = lineMatch = -1;
 }
 
-void Info::shiftWords() {
+void WordModelInfo::shiftWords() {
   word4 = word3;
   word3 = word2;
   word2 = word1;
@@ -39,12 +39,12 @@ void Info::shiftWords() {
   wordLen1 = wordLen0;
 }
 
-void Info::killWords() {
+void WordModelInfo::killWords() {
   word4 = word3 = word2 = word1 = 0;
   gapToken1 = 0; //not really necessary - tiny gain
 }
 
-void Info::processChar(const bool isExtendedChar) {
+void WordModelInfo::processChar(const bool isExtendedChar) {
   //shift history
   ppC = pC;
   pC = c;
@@ -224,7 +224,7 @@ void Info::processChar(const bool isExtendedChar) {
   }
 }
 
-void Info::lineModelPredict() {
+void WordModelInfo::lineModelPredict() {
   const uint8_t RH = CM_USE_RUN_STATS | CM_USE_BYTE_HISTORY;
   uint64_t i = 1024 * (1 + isTextBlock);
   INJECT_SHARED_pos
@@ -334,12 +334,12 @@ void Info::lineModelPredict() {
   assert(i == 1024 * (1 + isTextBlock) + nCM1);
 }
 
-void Info::lineModelSkip() {
+void WordModelInfo::lineModelSkip() {
   const uint8_t RH = CM_USE_RUN_STATS | CM_USE_BYTE_HISTORY;
   cm.skipn(RH, nCM1);
 }
 
-void Info::predict(const uint8_t pdfTextParserState) {
+void WordModelInfo::predict(const uint8_t pdfTextParserState) {
   INJECT_SHARED_pos
   const uint32_t lastPos = checksums[w] != chk ? 0 : wordPositions[w]; //last occurrence (position) of a whole word or number
   const uint32_t dist = lastPos == 0 ? 0 : min(llog(pos - lastPos + 120) >> 4, 20);

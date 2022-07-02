@@ -8,7 +8,7 @@
 /**
  * Used by @ref WordModel.
  */
-class Info {
+class WordModelInfo {
 private:
   static constexpr uint32_t wPosBits = 16;
   static constexpr int maxWordLen = 45;
@@ -48,7 +48,7 @@ public:
   static constexpr int nCM1 = 21; // pdf / non_pdf contexts
   static constexpr int nCM2_TEXT = 41; // common contexts (text content)
   static constexpr int nCM2_BIN = 41 - 9; // common contexts (bibnary content)
-  Info(Shared* const sh, ContextMap2 &contextmap);
+  WordModelInfo(Shared* const sh, ContextMap2 &contextmap);
 
   /**
     * Zero the contents.
