@@ -65,7 +65,7 @@ int ContextModel::p() {
         RecordModel& recordModel = models->recordModel();
         uint32_t fixedRecordLenght = 512;
         recordModel.setParam(fixedRecordLenght);
-        //fixedLineLengthForWordModel = fixedRecordLenght; //it doesn't seen to help here
+        //fixedLineLengthForWordModel = fixedRecordLenght; //it doesn't seem to help here
       }
       else {
         RecordModel& recordModel = models->recordModel();

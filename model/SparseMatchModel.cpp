@@ -9,7 +9,7 @@ SparseMatchModel::SparseMatchModel(const Shared* const sh, const uint64_t size) 
   mask(uint32_t(size / sizeof(uint32_t) - 1)),
   hashBits(ilog2(mask + 1)) {
     assert(isPowerOf2(size));
-}
+  }
 
 void SparseMatchModel::update() {
   INJECT_SHARED_buf

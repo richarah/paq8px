@@ -439,10 +439,10 @@ static DetectionInfo detect(File *in, uint64_t blockSize, const TransformOptions
   uint64_t b64End = 0;
 
   // For base85 (ascii85) detection
-  uint64_t b85s = 0;
+  int b85state = 0; //0 or 1
+  int b85linelength = 0;
   uint64_t base85start = 0;
   uint64_t base85end = 0;
-  uint64_t b85line = 0;
 
   // For GIF detection
   uint64_t gifi = 0;
@@ -1891,20 +1891,20 @@ static DetectionInfo detect(File *in, uint64_t blockSize, const TransformOptions
 
     //detect base85 (ascii85) encoded data
     //headers: stream\n stream\r\n oNimage\n utimage\n \nimage\n
-    if (b85s == 0 && ((buf0 == 0x65616D0A && (buf1 & 0xffffff) == 0x737472) || (buf0 == 0x616D0D0A && buf1 == 0x73747265) || (buf0 == 0x6167650A && buf1 == 0x6F4E696D) || (buf0 == 0x6167650A && buf1 == 0x7574696D) || (buf0 == 0x6167650A && (buf1 & 0xffffff) == 0x0A696D))) {
-        b85s = 1;
+    if (b85state == 0 && ((buf0 == 0x65616D0A && (buf1 & 0xffffff) == 0x737472) || (buf0 == 0x616D0D0A && buf1 == 0x73747265) || (buf0 == 0x6167650A && buf1 == 0x6F4E696D) || (buf0 == 0x6167650A && buf1 == 0x7574696D) || (buf0 == 0x6167650A && (buf1 & 0xffffff) == 0x0A696D))) {
+        b85state = 1;
         base85start = i;
-        b85line = 0;
+        b85linelength = 0;
     }
-    else if (b85s == 1) {
-      if (c == CARRIAGE_RETURN && b85line == 0) {
-        b85line = i - base85start; //capture line lenght
-        if (b85line <= 25 || b85line > 255)
-          b85s = 0; //fail
+    else if (b85state == 1) {
+      if (c == CARRIAGE_RETURN && b85linelength == 0) {
+        b85linelength = i - base85start; //capture line lenght
+        if (b85linelength <= 25 || b85linelength > 255)
+          b85state = 0; //fail
       }
       else if (c == '~') { //end marker
         base85end = i - 1;
-        b85s = 0;
+        b85state = 0;
         if (((base85end - base85start) > 60) && ((base85end - base85start) < 0x8000000)) {
           detectionInfo.Type = BlockType::BASE85;
           detectionInfo.DataStart = start + base85start + 1;
@@ -1915,12 +1915,12 @@ static DetectionInfo detect(File *in, uint64_t blockSize, const TransformOptions
       else if (is_base85(c)) {
         // still ok
       }
-      else if (c == CARRIAGE_RETURN && b85line != 0) {
-        if (b85line != i - base85start)
-          b85s = 0; //fail
+      else if (c == CARRIAGE_RETURN && b85linelength != 0) {
+        if (b85linelength != i - base85start)
+          b85state = 0; //fail
       }
       else {
-        b85s = 0; //fail
+        b85state = 0; //fail
       }
     }
 
