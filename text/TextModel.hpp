@@ -100,6 +100,6 @@ public:
   TextModel(Shared* const sh, uint64_t size);
   ~TextModel();
   void update();
-  void setParam(int cmScale);
+  void setCmScale(int cmScale);
   void mix(Mixer &m);
 };

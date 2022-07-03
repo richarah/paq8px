@@ -50,6 +50,8 @@ public:
   static constexpr int nCM2_BIN = 41 - 9; // common contexts (bibnary content)
   WordModelInfo(Shared* const sh, ContextMap2 &contextmap);
 
+  uint32_t fixedLineLength {};
+
   /**
     * Zero the contents.
     */

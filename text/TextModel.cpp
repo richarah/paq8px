@@ -526,7 +526,7 @@ void TextModel::setContexts() {
   assert(i - State * 64 + 1 == nCM2);
 }
 
-void TextModel::setParam(int cmScale) {
+void TextModel::setCmScale(int cmScale) {
   cm.setScale(cmScale);
 }
 

@@ -11,7 +11,11 @@ void WordModel::reset() {
   infoPdf.reset();
 }
 
-void WordModel::setParam(int cmScale) {
+void WordModel::setParam(uint32_t fixedLineLength) {
+  infoNormal.fixedLineLength = fixedLineLength;
+}
+
+void WordModel::setCmScale(int cmScale) {
   cm.setScale(cmScale);
 }
 

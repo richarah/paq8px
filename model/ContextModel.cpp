@@ -26,6 +26,8 @@ int ContextModel::p() {
       BlockType blockType = shared->State.blockType;
       int blockInfo = shared->State.blockInfo;
 
+      uint32_t fixedLineLengthForWordModel = 0;
+
       if (blockType == BlockType::MRB) {
         const uint8_t packingMethod = (blockInfo >> 24) & 3; //0..3
         const uint16_t colorBits = (blockInfo >> 26); //1,4,8
@@ -51,16 +53,19 @@ int ContextModel::p() {
         RecordModel& recordModel = models->recordModel();
         uint32_t fixedRecordLenght = blockInfo;
         recordModel.setParam(fixedRecordLenght);
+        fixedLineLengthForWordModel = fixedRecordLenght;
       }
       else if (blockType == BlockType::DEC_ALPHA) {
         RecordModel& recordModel = models->recordModel();
         uint32_t fixedRecordLenght = 16;
         recordModel.setParam(fixedRecordLenght);
+        fixedLineLengthForWordModel = fixedRecordLenght;
       }
       else if (blockType == BlockType::TARHDR) {
         RecordModel& recordModel = models->recordModel();
         uint32_t fixedRecordLenght = 512;
         recordModel.setParam(fixedRecordLenght);
+        //fixedLineLengthForWordModel = fixedRecordLenght; //it doesn't seen to help here
       }
       else {
         RecordModel& recordModel = models->recordModel();
@@ -69,9 +74,10 @@ int ContextModel::p() {
 
       bool isText = isTEXT(blockType);
       TextModel& textModel = models->textModel();
-      textModel.setParam(isText ? 74 : 64);
+      textModel.setCmScale(isText ? 74 : 64);
       WordModel& wordModel = models->wordModel();
-      wordModel.setParam(isText ? 74 : 64);
+      wordModel.setCmScale(isText ? 74 : 64);
+      wordModel.setParam(fixedLineLengthForWordModel);
 
       switch (blockType) {
 

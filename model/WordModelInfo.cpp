@@ -62,8 +62,13 @@ void WordModelInfo::processChar(const bool isExtendedChar) {
   const bool isNumber =
           (c >= '0' && c <= '9') || (pC >= '0' && pC <= '9' && c == '.' /* decimal point (english) or thousand separator (misc) */);
   isNewlinePc = isNewline;
-  isNewline = isTextBlock ? c == NEW_LINE || c == 0 : c == 0;
 
+  if (fixedLineLength == 0) {
+    isNewline = isTextBlock ? c == NEW_LINE || c == 0 : c == 0;
+  } else {
+    INJECT_SHARED_blockPos
+    isNewline = blockPos % fixedLineLength == 0;
+  }
   lastUpper = min(lastUpper + 1, maxLastUpper);
   lastLetter = min(lastLetter + 1, maxLastLetter);
 
@@ -226,7 +231,7 @@ void WordModelInfo::processChar(const bool isExtendedChar) {
 
 void WordModelInfo::lineModelPredict() {
   const uint8_t RH = CM_USE_RUN_STATS | CM_USE_BYTE_HISTORY;
-  uint64_t i = 1024 * (1 + isTextBlock);
+  uint64_t i = 1024 * (1 + (isTextBlock << 1 | (fixedLineLength == 0)));
   INJECT_SHARED_pos
   if( isNewline ) { // a new line has just started (or: zero in asciiz or in binary data)
       nl4 = nl3;
@@ -239,7 +244,7 @@ void WordModelInfo::lineModelPredict() {
       line0 = 0;
     }
   INJECT_SHARED_c1
-    line0 = combine64(line0, c1);
+  line0 = combine64(line0, c1);
   cm.set(RH, hash(++i, line0));
 
   uint32_t col = pos - nl1;
@@ -331,7 +336,7 @@ void WordModelInfo::lineModelPredict() {
   cm.set(RH, hash(++i, firstChar, c)); //chars occurring in a paragraph that began with firstChar (order 1)
   cm.set(RH, hash(++i, firstWord)); //chars occurring in a paragraph that began with firstWord (order 0)
   cm.set(RH, hash(++i, firstWord, c)); //chars occurring in a paragraph that began with firstWord (order 1)
-  assert(i == 1024 * (1 + isTextBlock) + nCM1);
+  assert(i == 1024 * (1 + (isTextBlock << 1 | (fixedLineLength == 0))) + nCM1);
 }
 
 void WordModelInfo::lineModelSkip() {
