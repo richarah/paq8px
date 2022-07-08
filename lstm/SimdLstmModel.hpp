@@ -61,7 +61,7 @@ public:
       this->bot = 0;
       if ((this->shared->GetOptionTrainLSTM()) && (this->shared->State.blockPos == 0)) {
         BlockType const blockType = static_cast<BlockType>(this->shared->State.blockType);
-        if (blockType != pBlockType) {
+        if (blockType != pBlockType) { //todo: this switch is now obsolete
           switch (blockType) {
             case BlockType::TEXT:
             case BlockType::TEXT_EOL:

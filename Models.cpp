@@ -232,12 +232,64 @@ auto Models::audio16BitModel() -> Audio16BitModel & {
   return instance;
 }
 
-auto Models::lstmModel() -> LstmModel<> & {
+auto Models::decAlphaModel() -> DECAlphaModel & {
+  static DECAlphaModel instance{ shared };
+  return instance;
+}
+
+//An LSTM model adapts slowly to new contents, so we'll have a separate LSTM model per main content type
+
+auto Models::lstmModelText() -> LstmModel<>& {
+  static LstmModel<>* instance = LstmFactory<>::CreateLSTM(shared, 200, 2, 100, 0.06f, 16.f); //warning: current pre-trained LSTM repository 'english.rnn' is using this structure, don't change these parameters
+  return *instance;
+}
+
+auto Models::lstmModelGeneric() -> LstmModel<>& {
   static LstmModel<>* instance = LstmFactory<>::CreateLSTM(shared, 200, 2, 100, 0.06f, 16.f);
   return *instance;
 }
 
-auto Models::decAlphaModel() -> DECAlphaModel & {
-  static DECAlphaModel instance{ shared };
-  return instance;
+auto Models::lstmModelExe() -> LstmModel<>& {
+  static LstmModel<>* instance = LstmFactory<>::CreateLSTM(shared, 200, 2, 100, 0.06f, 16.f); //warning: current pre-trained LSTM repository 'x86_64.rnn' is using this structure, don't change these parameters
+  return *instance;
+}
+
+auto Models::lstmModelDec() -> LstmModel<>& {
+  static LstmModel<>* instance = LstmFactory<>::CreateLSTM(shared, 200, 2, 100, 0.06f, 16.f);
+  return *instance;
+}
+
+auto Models::lstmModelAudio8() -> LstmModel<>& {
+  static LstmModel<>* instance = LstmFactory<>::CreateLSTM(shared, 200, 2, 100, 0.06f, 16.f);
+  return *instance;
+}
+
+auto Models::lstmModelAudio16() -> LstmModel<>& {
+  static LstmModel<>* instance = LstmFactory<>::CreateLSTM(shared, 200, 2, 100, 0.06f, 16.f);
+  return *instance;
+}
+
+auto Models::lstmModelImage1() -> LstmModel<>& {
+  static LstmModel<>* instance = LstmFactory<>::CreateLSTM(shared, 200, 2, 100, 0.06f, 16.f);
+  return *instance;
+}
+
+auto Models::lstmModelImage4() -> LstmModel<>& {
+  static LstmModel<>* instance = LstmFactory<>::CreateLSTM(shared, 200, 2, 100, 0.06f, 16.f);
+  return *instance;
+}
+
+auto Models::lstmModelImage8() -> LstmModel<>& {
+  static LstmModel<>* instance = LstmFactory<>::CreateLSTM(shared, 200, 2, 100, 0.06f, 16.f);
+  return *instance;
+}
+
+auto Models::lstmModelImage24() -> LstmModel<>& {
+  static LstmModel<>* instance = LstmFactory<>::CreateLSTM(shared, 200, 2, 100, 0.06f, 16.f);
+  return *instance;
+}
+
+auto Models::lstmModelJpeg() -> LstmModel<>& {
+  static LstmModel<>* instance = LstmFactory<>::CreateLSTM(shared, 200, 2, 100, 0.06f, 16.f);
+  return *instance;
 }

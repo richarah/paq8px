@@ -302,6 +302,10 @@ public:
     }
   }
 
+  uint64_t GetCurrentTimeStep() const {
+    return layers[0]->update_steps;
+  }
+
   void SetTimeStep(uint64_t const t) {
     for (size_t i = 0; i < layers.size(); i++)
       layers[i]->update_steps = t;
@@ -367,7 +371,7 @@ public:
   }
 
   void SaveModel(LSTM::Model& model) {
-    model.timestep = layers[0]->update_steps;
+    model.timestep = GetCurrentTimeStep();
     size_t const last_epoch = ((epoch > 0) ? epoch : horizon) - 1;
     for (size_t i = 0; i < output_size; i++) {
       for (size_t j = 0; j < output_layer[0][i].size(); j++)
