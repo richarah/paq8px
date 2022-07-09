@@ -21,18 +21,18 @@ private:
   
   float gradient_clip;
   
-  std::size_t num_cells;
-  std::size_t epoch;
-  std::size_t horizon;
-  std::size_t input_size;
-  std::size_t output_size;
+  size_t num_cells;
+  size_t epoch;
+  size_t horizon;
+  size_t input_size;
+  size_t output_size;
 
   Layer<simd, Adam<simd, 25, 3, 9999, 4, 1, 6>, Logistic<simd>, PolynomialDecay<7, 3, 1, 3, 5, 4, 1, 2>, T> forget_gate; // initial learning rate: 7*10^-3; final learning rate = 1*10^-3; decay multiplier: 5*10^-4; power for decay: 1/2 (i.e. sqrt); Steps: 0
   Layer<simd, Adam<simd, 25, 3, 9999, 4, 1, 6>, Tanh<simd>,     PolynomialDecay<7, 3, 1, 3, 5, 4, 1, 2>, T> input_node;
   Layer<simd, Adam<simd, 25, 3, 9999, 4, 1, 6>, Logistic<simd>, PolynomialDecay<7, 3, 1, 3, 5, 4, 1, 2>, T> output_gate;
 
   void Clamp(std::valarray<float>* x) {
-    for (std::size_t i = 0; i < x->size(); i++)
+    for (size_t i = 0; i < x->size(); i++)
       (*x)[i] = std::max<float>(std::min<float>(gradient_clip, (*x)[i]), -gradient_clip);
   }
 
@@ -41,14 +41,14 @@ private:
   }
 public:
 
-  std::uint64_t update_steps;
+  uint64_t update_steps;
 
   LstmLayer(
-    std::size_t const input_size, //457
-    std::size_t const auxiliary_input_size, //0
-    std::size_t const output_size, //256
-    std::size_t const num_cells, //200
-    std::size_t const horizon, //100
+    size_t const input_size, //457
+    size_t const auxiliary_input_size, //0
+    size_t const output_size, //256
+    size_t const num_cells, //200
+    size_t const horizon, //100
     float const gradient_clip, //16.0
     float const range = 0.4f) :
 
@@ -77,8 +77,8 @@ public:
     assert(input_size == forget_gate.weights[0].size());
     assert(input_size == input_node.weights[0].size());
     assert(input_size == output_gate.weights[0].size());
-    for (std::size_t i = 0; i < num_cells; i++) {
-      for (std::size_t j = 0; j < input_size; j++) {
+    for (size_t i = 0; i < num_cells; i++) {
+      for (size_t j = 0; j < input_size; j++) {
         forget_gate.weights[i][j] = Rand(range);
         input_node.weights[i][j] = Rand(range);
         output_gate.weights[i][j] = Rand(range);
@@ -91,7 +91,7 @@ public:
     std::valarray<float> const& input,
     T const input_symbol,
     std::valarray<float>* hidden,
-    std::size_t const hidden_start)
+    size_t const hidden_start)
   {
     last_state[epoch] = state;
 
@@ -99,7 +99,7 @@ public:
     input_node.ForwardPass(input, input_symbol, epoch);
     output_gate.ForwardPass(input, input_symbol, epoch);
 
-    for (std::size_t i = 0; i < num_cells; i++) {
+    for (size_t i = 0; i < num_cells; i++) {
       input_gate_state[epoch][i] = 1.0f - forget_gate.state[epoch][i];
       state[i] = state[i] * forget_gate.state[epoch][i] + input_node.state[epoch][i] * input_gate_state[epoch][i];
       tanh_state[epoch][i] = tanha(state[i]);
@@ -112,12 +112,12 @@ public:
 
   void BackwardPass(
     std::valarray<float> const& input,
-    std::size_t const epoch,
-    std::size_t const layer,
+    size_t const epoch,
+    size_t const layer,
     T const input_symbol,
     std::valarray<float>* hidden_error)
   {
-    for (std::size_t i = 0; i < num_cells; i++) {
+    for (size_t i = 0; i < num_cells; i++) {
 
       if (epoch == horizon - 1) {
         stored_error[i] = (*hidden_error)[i];
@@ -157,15 +157,15 @@ public:
     input_node.Reset();
     output_gate.Reset();
 
-    for (std::size_t i = 0; i < horizon; i++) {
-      for (std::size_t j = 0; j < num_cells; j++) {
+    for (size_t i = 0; i < horizon; i++) {
+      for (size_t j = 0; j < num_cells; j++) {
         tanh_state[i][j] = 0.f;
         input_gate_state[i][j] = 0.f;
         last_state[i][j] = 0.f;
       }
     }
 
-    for (std::size_t i = 0; i < num_cells; i++) {
+    for (size_t i = 0; i < num_cells; i++) {
       state[i] = 0.f;
       state_error[i] = 0.f;
       stored_error[i] = 0.f;

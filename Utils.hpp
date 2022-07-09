@@ -57,7 +57,20 @@ constexpr bool isPowerOf2(T x) {
   return ((x & (x - 1)) == 0);
 }
 
-template <std::uint8_t e>
+ALWAYS_INLINE
+uint32_t nextPowerOf2(uint32_t x)
+{
+  x--;
+  x |= x >> 1;
+  x |= x >> 2;
+  x |= x >> 4;
+  x |= x >> 8;
+  x |= x >> 16;
+  x++;
+  return x;
+}
+
+template <uint8_t e>
 struct neg_pow10 {
   static constexpr float value = neg_pow10<e - 1>::value / 10.0f;
 };

@@ -37,26 +37,26 @@ public:
     Count
   };
   struct Instruction {
-    std::uint32_t Function, Displacement;
-    std::uint8_t Opcode, Bit, Ra, Rb, Rc, Literal, relOpcode, Format;
+    uint32_t Function, Displacement;
+    uint8_t Opcode, Bit, Ra, Rb, Rc, Literal, relOpcode, Format;
   };
 private:
-  static constexpr std::uint32_t nMaps = 11;
-  static constexpr std::uint32_t maps_mask[nMaps-1] = { 0x6FC3FF, 0x6F0387, 0x4E0383, 0x440183, 0x181, 0x181, 0x81, 0x1, 0x1, 0x1 };
+  static constexpr uint32_t nMaps = 11;
+  static constexpr uint32_t maps_mask[nMaps-1] = { 0x6FC3FF, 0x6F0387, 0x4E0383, 0x440183, 0x181, 0x181, 0x81, 0x1, 0x1, 0x1 };
   Shared* const shared;
   RingBuffer<Instruction> cache;
   State state;
   Instruction op;
-  std::uint32_t count;
-  std::uint8_t lastRc;
+  uint32_t count;
+  uint8_t lastRc;
   Instruction last[8];
   IndirectMap maps0[State::Count], maps1[18], maps2[12], maps3[9], maps4[6], maps5[3], maps6[3], maps7[2], maps8[1], maps9[1], maps10[1];
   IndirectMap* const maps[nMaps - 1] = { &maps1[0], &maps2[0], &maps3[0], &maps4[0], &maps5[0], &maps6[0], &maps7[0], &maps8[0], &maps9[0], &maps10[0] };
-  constexpr std::int32_t map_state(std::uint32_t const map, State const state) {
+  constexpr int32_t map_state(uint32_t const map, State const state) {
     assert(map < 10);
-    std::int32_t r = -1;
+    int32_t r = -1;
     if (((maps_mask[map] >> state) & 1) != 0)     
-      for (std::int32_t i = state; i >= 0; r += (maps_mask[map] >> i) & 1, i--);
+      for (int32_t i = state; i >= 0; r += (maps_mask[map] >> i) & 1, i--);
     return r;
   }
 public:
@@ -174,7 +174,7 @@ public:
     INJECT_SHARED_bpos
     if ((blockPos == 0) && (bpos == 0)) {
       state = State::OpCode;
-      for (std::uint32_t i = 0; i < nMaps - 1; i++) {
+      for (uint32_t i = 0; i < nMaps - 1; i++) {
         if (((maps_mask[i] >> State::OpCode) & 1) != 0)
           maps[i][map_state(i, State::OpCode)].setDirect(0);
       }
@@ -256,8 +256,8 @@ public:
           if ((count % 7) == 0) {
             if (count < 21) {
               maps0[state].setDirect(count / 7);
-              maps1[map_state(0, State::Bra_Displacement)].set(hash(count, cache(1).Opcode, op.Displacement) + 0x40);
-              maps2[map_state(1, State::Bra_Displacement)].set(hash(count, cache(1).Opcode, cache(2).Opcode, op.Displacement) + 0x1000);
+              maps1[map_state(0, State::Bra_Displacement)].set(hash(count, cache(1).Opcode, op.Displacement));
+              maps2[map_state(1, State::Bra_Displacement)].set(hash(count, cache(1).Opcode, cache(2).Opcode, op.Displacement));
             }
             else {
               state = State::OpCode;
@@ -275,7 +275,7 @@ public:
           }
           else if ((count % 3) == 0) {
             maps0[state].setDirect(count / 3);
-            maps1[map_state(0, State::F_P_Function)].set(hash(count, op.Opcode, op.Function) + 0x40);
+            maps1[map_state(0, State::F_P_Function)].set(hash(count, op.Opcode, op.Function));
           }
           break;
         }
@@ -502,7 +502,7 @@ public:
     if (count == 0) {
       maps0[state].setDirect(0);
       if (state == State::OpCode) {
-        std::uint64_t ctx = hash(op.Opcode, op.Function);
+        uint64_t ctx = hash(op.Opcode, op.Function);
         maps1[map_state(0, State::OpCode)].set(ctx);
         maps2[map_state(1, State::OpCode)].set(hash(ctx, cache(1).Opcode, cache(1).Function));
         maps3[map_state(2, State::OpCode)].set(ctx = hash(ctx, cache(1).Opcode, cache(2).Opcode));
@@ -520,7 +520,7 @@ public:
     }    
    
     maps0[state].mix(m);
-    for (std::uint32_t i = 0; i < nMaps - 1; i++) {
+    for (uint32_t i = 0; i < nMaps - 1; i++) {
       if (((maps_mask[i] >> state) & 1) != 0)
         maps[i][map_state(i, state)].mix(m);
       else
@@ -528,9 +528,9 @@ public:
           m.add(0);
     }
 
-    std::uint8_t const opcode = (state != State::OpCode) ? op.Opcode : cache(1).Opcode;
+    uint8_t const opcode = (state != State::OpCode) ? op.Opcode : cache(1).Opcode;
 
-    m.set(static_cast<std::uint32_t>(state) * 26 + count, State::Count * 26);
+    m.set(static_cast<uint32_t>(state) * 26 + count, State::Count * 26);
     m.set((state << 6) | opcode, State::Count * 64);
     m.set(finalize64(hash(state, count, opcode), 11), 2048);
     m.set(finalize64(hash(state, count, op.Opcode, cache(1).Opcode), 12), 4096);

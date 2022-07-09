@@ -246,7 +246,7 @@
     <ClCompile Include="LargeStationaryMap.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="model\Info.cpp">
+    <ClCompile Include="model\WordModelInfo.cpp">
       <Filter>model</Filter>
     </ClCompile>
     <ClCompile Include="APMPost.cpp">
@@ -485,9 +485,6 @@
     <ClInclude Include="filter\gif.hpp">
       <Filter>filter</Filter>
     </ClInclude>
-    <ClInclude Include="filter\im32.hpp">
-      <Filter>filter</Filter>
-    </ClInclude>
     <ClInclude Include="filter\lzw.hpp">
       <Filter>filter</Filter>
     </ClInclude>
@@ -548,7 +545,7 @@
     <ClInclude Include="model\IndirectModel.hpp">
       <Filter>model</Filter>
     </ClInclude>
-    <ClInclude Include="model\Info.hpp">
+    <ClInclude Include="model\WordModelInfo.hpp">
       <Filter>model</Filter>
     </ClInclude>
     <ClInclude Include="model\JpegModel.hpp">
@@ -763,6 +760,15 @@
     </ClInclude>
     <ClInclude Include="lstm\IActivation.hpp">
       <Filter>Header Files\lstm</Filter>
+    </ClInclude>
+    <ClInclude Include="filter\png.hpp">
+      <Filter>filter</Filter>
+    </ClInclude>
+    <ClInclude Include="filter\base85.hpp">
+      <Filter>filter</Filter>
+    </ClInclude>
+    <ClInclude Include="filter\tar.hpp">
+      <Filter>filter</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

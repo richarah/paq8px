@@ -295,7 +295,7 @@
     <ClCompile Include="model\Image4BitModel.cpp" />
     <ClCompile Include="model\Image8BitModel.cpp" />
     <ClCompile Include="model\IndirectModel.cpp" />
-    <ClCompile Include="model\Info.cpp" />
+    <ClCompile Include="model\WordModelInfo.cpp" />
     <ClCompile Include="model\JpegModel.cpp" />
     <ClCompile Include="model\LinearPredictionModel.cpp" />
     <ClCompile Include="model\MatchModel.cpp" />
@@ -364,6 +364,7 @@
     <ClInclude Include="file\ListOfFiles.hpp" />
     <ClInclude Include="file\OpenFromMyFolder.hpp" />
     <ClInclude Include="filter\base64.hpp" />
+    <ClInclude Include="filter\base85.hpp" />
     <ClInclude Include="filter\bmp.hpp" />
     <ClInclude Include="filter\cd.hpp" />
     <ClInclude Include="filter\DecAlpha.hpp" />
@@ -375,12 +376,13 @@
     <ClInclude Include="filter\Filter.hpp" />
     <ClInclude Include="filter\Filters.hpp" />
     <ClInclude Include="filter\gif.hpp" />
-    <ClInclude Include="filter\im32.hpp" />
     <ClInclude Include="filter\lzw.hpp" />
     <ClInclude Include="filter\LZWDictionary.hpp" />
     <ClInclude Include="filter\LZWEntry.hpp" />
     <ClInclude Include="filter\mrb.hpp" />
+    <ClInclude Include="filter\png.hpp" />
     <ClInclude Include="filter\rle.hpp" />
+    <ClInclude Include="filter\tar.hpp" />
     <ClInclude Include="filter\TextParserStateInfo.hpp" />
     <ClInclude Include="filter\zlib.hpp" />
     <ClInclude Include="Hash.hpp" />
@@ -432,7 +434,7 @@
     <ClInclude Include="model\Image8BitModel.hpp" />
     <ClInclude Include="model\ImageModelsCommon.hpp" />
     <ClInclude Include="model\IndirectModel.hpp" />
-    <ClInclude Include="model\Info.hpp" />
+    <ClInclude Include="model\WordModelInfo.hpp" />
     <ClInclude Include="model\JpegModel.hpp" />
     <ClInclude Include="model\LinearPredictionModel.hpp" />
     <ClInclude Include="model\MatchModel.hpp" />

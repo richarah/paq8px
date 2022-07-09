@@ -48,7 +48,7 @@ public:
     //is it useful?
     const bool useLSTM = shared->GetOptionUseLSTM();
     if (useLSTM) {
-      LstmModel<>& lstmModel = models->lstmModel();
+      LstmModel<>& lstmModel = models->lstmModelImage4();
       lstmModel.mix(*m);
     }
 

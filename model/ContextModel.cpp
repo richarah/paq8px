@@ -26,6 +26,8 @@ int ContextModel::p() {
       BlockType blockType = shared->State.blockType;
       int blockInfo = shared->State.blockInfo;
 
+      uint32_t fixedLineLengthForWordModel = 0;
+
       if (blockType == BlockType::MRB) {
         const uint8_t packingMethod = (blockInfo >> 24) & 3; //0..3
         const uint16_t colorBits = (blockInfo >> 26); //1,4,8
@@ -51,11 +53,19 @@ int ContextModel::p() {
         RecordModel& recordModel = models->recordModel();
         uint32_t fixedRecordLenght = blockInfo;
         recordModel.setParam(fixedRecordLenght);
+        fixedLineLengthForWordModel = fixedRecordLenght;
       }
       else if (blockType == BlockType::DEC_ALPHA) {
         RecordModel& recordModel = models->recordModel();
         uint32_t fixedRecordLenght = 16;
         recordModel.setParam(fixedRecordLenght);
+        fixedLineLengthForWordModel = fixedRecordLenght;
+      }
+      else if (blockType == BlockType::TARHDR) {
+        RecordModel& recordModel = models->recordModel();
+        uint32_t fixedRecordLenght = 512;
+        recordModel.setParam(fixedRecordLenght);
+        //fixedLineLengthForWordModel = fixedRecordLenght; //it doesn't seem to help here
       }
       else {
         RecordModel& recordModel = models->recordModel();
@@ -64,9 +74,10 @@ int ContextModel::p() {
 
       bool isText = isTEXT(blockType);
       TextModel& textModel = models->textModel();
-      textModel.setParam(isText ? 74 : 64);
+      textModel.setCmScale(isText ? 74 : 64);
       WordModel& wordModel = models->wordModel();
-      wordModel.setParam(isText ? 74 : 64);
+      wordModel.setCmScale(isText ? 74 : 64);
+      wordModel.setParam(fixedLineLengthForWordModel);
 
       switch (blockType) {
 
@@ -87,27 +98,21 @@ int ContextModel::p() {
         }
 
         case BlockType::IMAGE8:
-        case BlockType::PNG8:
-        case BlockType::IMAGE8GRAY:
-        case BlockType::PNG8GRAY: {
+        case BlockType::IMAGE8GRAY: {
           static ContextModelImage8 contextModelImage8{ shared, models, mixerFactory };
-          int isGray = blockType == BlockType::IMAGE8GRAY || blockType == BlockType::PNG8GRAY;
-          int isPNG = blockType == BlockType::PNG8 || blockType == BlockType::PNG8GRAY;
+          int isGray = blockType == BlockType::IMAGE8GRAY;
           int width = blockInfo & 0xffffff;
-          contextModelImage8.setParam(width, isGray, isPNG);
+          contextModelImage8.setParam(width, isGray);
           selectedContextModel = &contextModelImage8;
           break;
         }
 
         case BlockType::IMAGE24:
-        case BlockType::PNG24:
-        case BlockType::IMAGE32:
-        case BlockType::PNG32: {
+        case BlockType::IMAGE32: {
           static ContextModelImage24 contextModelImage24{ shared, models, mixerFactory };
-          int isAlpha = blockType == BlockType::IMAGE32 || blockType == BlockType::PNG32;
-          int isPNG = blockType == BlockType::PNG24 || blockType == BlockType::PNG32;
+          int isAlpha = blockType == BlockType::IMAGE32;
           int width = blockInfo & 0xffffff;
-          contextModelImage24.setParam(width, isAlpha, isPNG);
+          contextModelImage24.setParam(width, isAlpha);
           selectedContextModel = &contextModelImage24;
           break;
         }

@@ -29,11 +29,11 @@ private:
   std::valarray<float> beta_m;
   std::valarray<float> beta_v;
 
-  std::size_t input_size;
-  std::size_t auxiliary_input_size;
-  std::size_t output_size;
-  std::size_t num_cells;
-  std::size_t horizon;
+  size_t input_size;
+  size_t auxiliary_input_size;
+  size_t output_size;
+  size_t num_cells;
+  size_t horizon;
 
   float learning_rate;
 
@@ -48,11 +48,11 @@ public:
   std::valarray<float> error;
 
   Layer(
-    std::size_t const input_size,
-    std::size_t const auxiliary_input_size,
-    std::size_t const output_size,
-    std::size_t const num_cells,
-    std::size_t const horizon
+    size_t const input_size,
+    size_t const auxiliary_input_size,
+    size_t const output_size,
+    size_t const num_cells,
+    size_t const horizon
   ) :
     update(std::valarray<float>(input_size), num_cells),
     m(std::valarray<float>(input_size), num_cells),
@@ -89,14 +89,14 @@ public:
   void ForwardPass(
     std::valarray<float> const& input,
     T const input_symbol,
-    std::size_t const epoch)
+    size_t const epoch)
   {
-    for (std::size_t i = 0; i < num_cells; i++) {
+    for (size_t i = 0; i < num_cells; i++) {
       if (simd == SIMDType::SIMD_AVX2)
         norm[epoch][i] = dot256_ps_fma3(&input[0], &weights[i][output_size], input.size(), weights[i][input_symbol]);
       else {
         float f = weights[i][input_symbol];
-        for (std::size_t j = 0; j < input.size(); j++)
+        for (size_t j = 0; j < input.size(); j++)
           f += input[j] * weights[i][output_size + j];
         norm[epoch][i] = f;
       }
@@ -114,19 +114,19 @@ public:
     std::valarray<float> const& input,
     std::valarray<float>* hidden_error,
     std::valarray<float>* stored_error,
-    std::uint64_t const time_step,
-    std::size_t const epoch,
-    std::size_t const layer,
+    uint64_t const time_step,
+    size_t const epoch,
+    size_t const layer,
     T const input_symbol)
   {
     if (epoch == horizon - 1) {
       memset(&gamma_u[0], 0, num_cells * sizeof(float));
       memset(&beta_u[0], 0, num_cells * sizeof(float));
 
-      for (std::size_t i = 0; i < num_cells; i++) {
+      for (size_t i = 0; i < num_cells; i++) {
         memset(&update[i][0], 0, input_size * sizeof(float)); //657
-        std::size_t offset = output_size + auxiliary_input_size; //256+0
-        for (std::size_t j = 0; j < transpose.size(); j++)
+        size_t offset = output_size + auxiliary_input_size; //256+0
+        for (size_t j = 0; j < transpose.size(); j++)
           transpose[j][i] = weights[i][j + offset];
       }
     }
@@ -141,12 +141,12 @@ public:
     for (size_t i = 0; i < num_cells; i++) error[i] -= sop*norm[epoch][i];
 
     if (layer > 0) {
-      for (std::size_t i = 0; i < num_cells; i++) {
+      for (size_t i = 0; i < num_cells; i++) {
         if (simd == SIMDType::SIMD_AVX2)
           (*hidden_error)[i] += dot256_ps_fma3(&error[0], &transpose[num_cells + i][0], num_cells, 0.f);
         else {
           float f = 0.f;
-          for (std::size_t j = 0; j < num_cells; j++) {
+          for (size_t j = 0; j < num_cells; j++) {
             f += error[j] * transpose[num_cells + i][j];
           }
           (*hidden_error)[i] += f;
@@ -155,12 +155,12 @@ public:
     }
 
     if (epoch > 0) {
-      for (std::size_t i = 0; i < num_cells; i++) {
+      for (size_t i = 0; i < num_cells; i++) {
         if (simd == SIMDType::SIMD_AVX2)
           (*stored_error)[i] += dot256_ps_fma3(&error[0], &transpose[i][0], num_cells, 0.f);
         else {
           float f = 0.f;
-          for (std::size_t j = 0; j < num_cells; j++) {
+          for (size_t j = 0; j < num_cells; j++) {
             f += error[j] * transpose[i][j];
           }
           (*stored_error)[i] += f;
@@ -169,14 +169,14 @@ public:
     }
 
     std::slice slice = std::slice(output_size, input.size(), 1);
-    for (std::size_t cell_index = 0; cell_index < num_cells; cell_index++) {
+    for (size_t cell_index = 0; cell_index < num_cells; cell_index++) {
       update[cell_index][slice] += error[cell_index] * input;
       update[cell_index][input_symbol] += error[cell_index];
     }
 
     if (epoch == 0) {
       decay.Apply(learning_rate, time_step);
-      for (std::size_t cell_index = 0; cell_index < num_cells; cell_index++)
+      for (size_t cell_index = 0; cell_index < num_cells; cell_index++)
         optimizer.Run(&update[cell_index], &m[cell_index], &v[cell_index], &weights[cell_index], learning_rate, time_step);
       optimizer.Run(&gamma_u, &gamma_m, &gamma_v, &gamma, learning_rate, time_step);
       optimizer.Run(&beta_u, &beta_m, &beta_v, &beta, learning_rate, time_step);
@@ -184,25 +184,25 @@ public:
   }
 
   void Reset() {
-    for (std::size_t i = 0; i < horizon; i++) {
+    for (size_t i = 0; i < horizon; i++) {
       inverse_variance[i] = 0.f;
-      for (std::size_t j = 0; j < num_cells; j++) {
+      for (size_t j = 0; j < num_cells; j++) {
         state[i][j] = 0.f;
         norm[i][j] = 0.f;
       }
     }
-    for (std::size_t i = 0; i < num_cells; i++) {
+    for (size_t i = 0; i < num_cells; i++) {
       error[i] = 0.f;
       gamma[i] = 1.f, gamma_u[i] = 0.f, gamma_m[i] = 0.f, gamma_v[i] = 0.f;
       beta[i] = 0.f, beta_u[i] = 0.f, beta_m[i] = 0.f, beta_v[i] = 0.f;
-      for (std::size_t j = 0; j < input_size; j++) {
+      for (size_t j = 0; j < input_size; j++) {
         update[i][j] = 0.f;
         m[i][j] = 0.f;
         v[i][j] = 0.f;
       }
     }
-    for (std::size_t i = 0; i < transpose.size(); i++) {
-      for (std::size_t j = 0; j < num_cells; j++)
+    for (size_t i = 0; i < transpose.size(); i++) {
+      for (size_t j = 0; j < num_cells; j++)
         transpose[i][j] = 0.f;
     }
   }

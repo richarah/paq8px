@@ -5,14 +5,14 @@
 #include "../Shared.hpp"
 #include "../Utils.hpp"
 
-template <std::size_t Bits = 8>
+template <size_t Bits = 8>
 class LstmFactory {
 public:
   static LstmModel<Bits>* CreateLSTM(
     const Shared* const sh,
-    std::size_t const num_cells,
-    std::size_t const num_layers,
-    std::size_t const horizon,
+    size_t const num_cells,
+    size_t const num_layers,
+    size_t const horizon,
     float const learning_rate,
     float const gradient_clip)
   {

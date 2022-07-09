@@ -34,7 +34,7 @@ void setBegin(int info) {
     * @param size
     * @param info
     */
-  void encode(File *in, File *out, uint64_t size, int info, int &headerSize) override {
+  void encode(File *in, File *out, uint64_t size, int info, int &/*headerSize*/) override {
     Array<uint8_t> blk(block);
 
     // Transform
@@ -69,7 +69,7 @@ void setBegin(int info) {
     * @param diffFound
     * @return
     */
-  uint64_t decode(File *in, File *out, FMode fMode, uint64_t size, uint64_t &diffFound) override {
+  uint64_t decode(File */*in*/, File* out, FMode fMode, uint64_t size, uint64_t& diffFound) override {
     int offset = 6;
     int a = 0;
     uint8_t c[6];

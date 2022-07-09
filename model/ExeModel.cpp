@@ -278,7 +278,7 @@ void ExeModel::update() {
          static_cast<int>((op.data & multiByteOpcode) != 0 && (op.code & 0xF0) == 0x80)
     ));
 
-    shared->State.x86_64.state = 0x80 | (static_cast<std::uint8_t>(state) << 3) | op.bytesRead;
+    shared->State.x86_64.state = 0x80 | (static_cast<uint8_t>(state) << 3) | op.bytesRead;
   }
   else
     shared->State.x86_64.state = 0;

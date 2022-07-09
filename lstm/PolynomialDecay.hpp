@@ -4,7 +4,7 @@
 #include "../Utils.hpp"
 #include <cmath>
 
-template <std::uint16_t LR, std::uint8_t E1, std::uint16_t ELR, std::uint8_t E2, std::uint16_t DECAY, std::uint8_t DECAY_E, std::uint8_t N, std::uint8_t D, std::uint64_t Steps = 0>
+template <std::uint16_t LR, uint8_t E1, std::uint16_t ELR, uint8_t E2, std::uint16_t DECAY, uint8_t DECAY_E, uint8_t N, uint8_t D, uint64_t Steps = 0>
 class PolynomialDecay :
   public IDecay {
   static_assert(D > 0, "Polynomial decay denominator must be > 0");
@@ -15,7 +15,7 @@ private:
   static constexpr float end_learning_rate = ELR * neg_pow10<E2>::value;
   static constexpr float decay = DECAY * neg_pow10<DECAY_E>::value;
 public:
-  ALWAYS_INLINE void Apply(float& rate, std::uint64_t const time_step) const {
+  ALWAYS_INLINE void Apply(float& rate, uint64_t const time_step) const {
     if (Steps > 0) {
       if (time_step < Steps)
         rate = (learning_rate - end_learning_rate) * (std::pow((1.0f - time_step * mul), power)) + end_learning_rate;

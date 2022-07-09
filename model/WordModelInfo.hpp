@@ -8,7 +8,7 @@
 /**
  * Used by @ref WordModel.
  */
-class Info {
+class WordModelInfo {
 private:
   static constexpr uint32_t wPosBits = 16;
   static constexpr int maxWordLen = 45;
@@ -23,12 +23,13 @@ private:
   uint8_t c {}; /**< last char */
   uint8_t pC {}; /**< previous char */
   uint8_t ppC {}; /**< char before the previous char (converted to lower case) */
+  bool isTextBlock{}, isNewline{}, isNewlinePc{};
   bool isLetter {}, isLetterPc {}, isLetterPpC {};
   uint8_t opened {}; /**< "(", "[", "{", "<", opening QUOTE, opening APOSTROPHE (or 0 when none of them) */
   uint8_t wordLen0 {}; /**< length of word0 */
   uint8_t wordLen1 {}; /**< length of word1 */
   uint8_t exprLen0 {}; /**< length of expr0 */
-  uint64_t line0 {};
+  uint64_t line0 {}, line1 {};
   uint64_t firstWord {}; /**< hash of line content, hash of first word on line */
   uint64_t word0 {}, word1 {}, word2 {}, word3 {}, word4 {}; /**< wordToken hashes, word0 is the partially processed ("current") word */
   uint64_t expr0 {}, expr1 {}, expr2 {}, expr3 {}, expr4 {}; /**< wordToken hashes for expressions */
@@ -44,10 +45,12 @@ private:
   uint32_t mask {}, expr0Chars {}, mask2 {}, f4 {};
 
 public:
-  static constexpr int nCM1 = 19; // pdf / non_pdf contexts
+  static constexpr int nCM1 = 21; // pdf / non_pdf contexts
   static constexpr int nCM2_TEXT = 41; // common contexts (text content)
   static constexpr int nCM2_BIN = 41 - 9; // common contexts (bibnary content)
-  Info(Shared* const sh, ContextMap2 &contextmap);
+  WordModelInfo(Shared* const sh, ContextMap2 &contextmap);
+
+  uint32_t fixedLineLength {};
 
   /**
     * Zero the contents.
@@ -60,6 +63,7 @@ public:
     * \note: The pdf model also uses this function, therefore only @ref c1 may be referenced, @ref c4, @ref c8, etc. should not
     * @param isExtendedChar
     */
+  void setParams(bool isTextBlock);
   void processChar(bool isExtendedChar);
   void lineModelPredict();
   void lineModelSkip();

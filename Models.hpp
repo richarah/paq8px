@@ -65,6 +65,17 @@ public:
   auto image1BitModel() -> Image1BitModel &;
   auto audio8BitModel() -> Audio8BitModel &;
   auto audio16BitModel() -> Audio16BitModel &;
-  auto lstmModel() -> LstmModel<> &;
   auto decAlphaModel() -> DECAlphaModel &;
+
+  auto lstmModelText()->LstmModel<>&;
+  auto lstmModelGeneric()->LstmModel<>&;
+  auto lstmModelExe()->LstmModel<>&;
+  auto lstmModelDec()->LstmModel<>&;
+  auto lstmModelAudio8()->LstmModel<>&;
+  auto lstmModelAudio16()->LstmModel<>&;
+  auto lstmModelImage1()->LstmModel<>&;
+  auto lstmModelImage4()->LstmModel<>&;
+  auto lstmModelImage8()->LstmModel<>&;
+  auto lstmModelImage24()->LstmModel<>&;
+  auto lstmModelJpeg()->LstmModel<>&;
 };

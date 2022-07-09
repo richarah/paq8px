@@ -30,6 +30,9 @@ enum class BlockType {
   DEC_ALPHA,
   MRB,
   DBF,
+  BASE85,
+  TAR,
+  TARHDR,
   Count
 };
 

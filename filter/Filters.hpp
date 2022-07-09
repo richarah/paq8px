@@ -12,11 +12,14 @@
 #include "Filter.hpp"
 #include "TextParserStateInfo.hpp"
 #include "base64.hpp"
+#include "base85.hpp"
 #include "cd.hpp"
 #include "ecc.hpp"
 #include "gif.hpp"
 #include "lzw.hpp"
 #include "mrb.hpp"
+#include "png.hpp"
+#include "tar.hpp"
 #include "DecAlphaFilter.hpp"
 #include <cctype>
 #include <cstdint>
@@ -125,6 +128,11 @@ uint32_t GetCDWord(File* f) {
     return ((w1 << 16) | w) >> 1;
   }
   return w >> 1;
+}
+
+ALWAYS_INLINE
+static bool is_base85(unsigned char c) {
+  return (isalnum(c) || (c == 13) || (c == 10) || (c == 'y') || (c == 'z') || (c >= '!' && c <= 'u'));
 }
 
 struct DetectionInfo {
@@ -309,12 +317,10 @@ static DetectionInfo detect(File *in, uint64_t blockSize, const TransformOptions
   uint32_t buf1 = 0;
   uint32_t buf0 = 0;
   
-  static uint64_t start = 0;
-  static uint64_t prv_start = 0;
+  uint64_t start = 0;
 
-  prv_start = start;    // for DEC Alpha detection
   start = in->curPos(); // start of the current block
-
+  
   // For EXE detection
   Array<uint64_t> absPos(256); // CALL/JMP abs. address. low byte -> last offset
   Array<uint64_t> relPos(256); // CALL/JMP relative address. low byte -> last offset
@@ -323,13 +329,13 @@ static DetectionInfo detect(File *in, uint64_t blockSize, const TransformOptions
   uint64_t e8e9last = 0; // offset of most recent CALL or JMP
   
   // For DEC Alpha detection
-  struct {
-    Array<uint64_t> absPos{ 256 };
-    Array<uint64_t> relPos{ 256 };
-    uint32_t opcode = 0, idx = 0, count[4] = { 0 }, branches[4] = { 0 };
-    uint64_t offset = 0, last = 0;
-  } DEC;
-  
+  int decAlpha = 0;
+  uint64_t decAlphaHeaderStart = 0;
+  uint16_t decAlphaNumberOfSections = 0;
+  uint64_t decAlphaNextExpectedOffset = 0;
+  uint64_t decAlphaSectionStart = 0;
+  uint64_t decAlphaSectionLen = 0;
+
   // For JPEG detection
   uint64_t soi = 0; // Start Of Image 
   uint64_t sof = 0; // Start Of Frame
@@ -432,6 +438,12 @@ static DetectionInfo detect(File *in, uint64_t blockSize, const TransformOptions
   uint64_t b64Nl = 0;
   uint64_t b64End = 0;
 
+  // For base85 (ascii85) detection
+  int b85state = 0; //0 or 1
+  int b85linelength = 0;
+  uint64_t base85start = 0;
+  uint64_t base85end = 0;
+
   // For GIF detection
   uint64_t gifi = 0;
   uint64_t gifa = 0;
@@ -479,7 +491,7 @@ static DetectionInfo detect(File *in, uint64_t blockSize, const TransformOptions
         pngw = buf2;
         pngh = buf1;
         pngbps = buf0 >> 24;
-        pngType = static_cast<uint8_t>(buf0 >> 16);
+        pngType = static_cast<uint8_t>(buf0 >> 16); //Color type codes represent sums of the following values: 1 (palette used), 2 (color used), and 4 (alpha channel used). Valid values are 0, 2, 3, 4, and 6.
         pnggray = 0;
         png *= static_cast<int>((buf0 & 0xFFFF) == 0 && (pngw != 0) && (pngh != 0) && pngbps == 8 &&
           ((pngType == 0) || pngType == 2 || pngType == 3 || pngType == 4 || pngType == 6));
@@ -596,12 +608,12 @@ static DetectionInfo detect(File *in, uint64_t blockSize, const TransformOptions
           pdfGray = 0;
         }
         else if (png && pngw < 0x1000000 && lastChunk == 0x49444154 /*IDAT*/) {
-          if (pngbps == 8 && pngType == 2 && (int)strm.total_out == (pngw * 3 + 1) * pngh)
+          if (pngbps == 8 && pngType == 2 /*color, no alpha*/ && (int)strm.total_out == (pngw * 3 + 1) * pngh)
             info = (BlockType::PNG24 << 24) | (pngw * 3), png = 0;
-          else if (pngbps == 8 && pngType == 6 && (int)strm.total_out == (pngw * 4 + 1) * pngh)
+          else if (pngbps == 8 && pngType == 6 /*color, with alpha*/ && (int)strm.total_out == (pngw * 4 + 1) * pngh)
             info = (BlockType::PNG32 << 24) | (pngw * 4), png = 0;
-          else if (pngbps == 8 && (!pngType || pngType == 3) && (int)strm.total_out == (pngw + 1) * pngh)
-            info = (((!pngType || pnggray) ? BlockType::PNG8GRAY : BlockType::PNG8) << 24) | (pngw), png = 0;
+          else if (pngbps == 8 && (pngType == 0 /*no color channels, no palette, i.e. grayscale*/ || pngType == 3 /*palette, color*/) && (int)strm.total_out == (pngw + 1) * pngh)
+            info = (((pngType == 0 /*grayscale png*/ || pnggray) ? BlockType::PNG8GRAY : BlockType::PNG8) << 24) | (pngw), png = 0;
         }
         detectionInfo.Type = BlockType::ZLIB;
         detectionInfo.DataInfo = info;
@@ -1665,48 +1677,169 @@ static DetectionInfo detect(File *in, uint64_t blockSize, const TransformOptions
       e8e9count = 0;
     }
 
-    // detect DEC Alpha
+    //DEC Alpha code section detection 
+    //Based on the Tru64 Object file format
+    //see: https://www3.physnet.uni-hamburg.de/physnet/Tru64-Unix/HTML/APS31DTE/DOCU_013.HTM
+    //note: this document^ doesn't cover the same version as in silesia/mozilla
+    //luckily the 3 sections containing DEC Alpha code are always adjacent to each other
+    //so we can treat them as one continuous section.
+
+    if (decAlpha == 0 && ((buf3 >> 16) == 0x8301 /*Target-machine magic number*/ || buf1 == 0 && buf0 == 0 /*no symbolic header*/)) {
+      uint16_t numberOfSections = bswap(buf3) >> 16;
+      if (numberOfSections >= 3 && numberOfSections <= 24) {
+        decAlpha = 1;
+        decAlphaHeaderStart = i - 15;
+        decAlphaNumberOfSections = numberOfSections;
+      }
+    }
+
+    if (decAlpha != 0) {
+      if (decAlpha == 1) { // sanity checks
+        if (i == decAlphaHeaderStart + 23) {
+          //size of optional header is always 80
+          uint16_t sizeOfOptionalHeader = bswap(buf0)&0xffff;
+          //flags:
+          //0x2005/0x2007 - Dynamically shared object (so)
+          //0x3007        - Dynamic executable file
+          uint16_t flags = bswap(buf0) >> 16;
+          if (sizeOfOptionalHeader != 80 || !(flags == 0x2005 || flags == 0x2007 || flags == 0x3007)) {
+            decAlpha = 0; //fail
+          }
+        }
+        else if (i == decAlphaHeaderStart + 24 + 80) {
+          if (c != '.') { //section names start with a dot (this is the first section)
+            decAlpha = 0; //fail
+          }
+        }
+        else if (i > decAlphaHeaderStart + 24 + 80 + decAlphaNumberOfSections * 64) {
+          decAlpha = 0; //fail
+        }
+      }
+
+      //we look for the 3 (adjacent) sections containing program code
+      if (decAlpha == 1 && buf1 == 0x2E746578 && buf0 == 0x74000000) { // ".text   "
+        decAlpha = 2;
+        decAlphaNextExpectedOffset = i + 32;
+      }
+      else if (decAlpha == 2 && i == decAlphaNextExpectedOffset) {
+        decAlphaSectionStart = ((uint64_t)bswap(buf0)) << 32 | bswap(buf1);
+        decAlphaSectionLen = ((uint64_t)bswap(buf2)) << 32 | bswap(buf3);
+        decAlpha = 3;
+      }
+      else if (decAlpha == 3 && buf1 == 0x2E696E69 && buf0 == 0x74000000) { // ".init   "
+        decAlpha = 4;
+        decAlphaNextExpectedOffset = i + 32;
+      }
+      else if (decAlpha == 4 && i == decAlphaNextExpectedOffset) {
+        uint64_t initstart = ((uint64_t)bswap(buf0)) << 32 | bswap(buf1);
+        if (initstart == decAlphaSectionStart + decAlphaSectionLen) {
+          decAlphaSectionLen += ((uint64_t)bswap(buf2)) << 32 | bswap(buf3);
+          decAlpha = 5;
+        } 
+        else {
+          //printf("DECALPHA - found .text and .init sections are not adjacent");
+          decAlpha = 0; //fail
+        }
+      }
+      else if (decAlpha == 5 && buf1 == 0x2E66696E && buf0 == 0x69000000) { // ".fini   "
+        decAlpha = 6;
+        decAlphaNextExpectedOffset = i + 32;
+      }
+      else if (decAlpha == 6 && i == decAlphaNextExpectedOffset) {
+        uint64_t finistart = ((uint64_t)bswap(buf0)) << 32 | bswap(buf1);
+        if (finistart == decAlphaSectionStart + decAlphaSectionLen) {
+          decAlphaSectionLen += ((uint64_t)bswap(buf2)) << 32 | bswap(buf3);
+          if (decAlphaHeaderStart + decAlphaSectionStart + decAlphaSectionLen <= n) {
+            detectionInfo.Type = BlockType::DEC_ALPHA;
+            detectionInfo.DataStart = start + decAlphaHeaderStart + decAlphaSectionStart;
+            detectionInfo.DataLength = decAlphaSectionLen;
+            return detectionInfo;
+          }
+          else {
+            //printf("DECALPHA - end of section is past end of file");
+            decAlpha = 0; //fail
+          }
+        }
+        else {
+          //printf("DECALPHA - found .init and .fini sections are not adjavent");
+          decAlpha = 0; //fail
+        }
+      }
+    }
+
+    // this is the old DEC Alpha detection logic
+    // unused - kept for reference only 
+#ifdef USE_OLD_DECALPHA_DETECTION
+
+    struct {
+      Array<uint64_t> absPos{ 256 * 4 };
+      Array<uint64_t> relPos{ 256 * 4 };
+      uint32_t opcode = 0, idx = 0, count[4] = { 0 }, branches[4] = { 0 };
+      uint64_t offset[4] = { 0 }, last[4] = { 0 };
+    } DEC;
+
     DEC.idx = i & 3;
     DEC.opcode = bswap(buf0);
-    DEC.count[DEC.idx] = ((i >= 3) && DECAlpha::IsValidInstruction(DEC.opcode)) ? DEC.count[DEC.idx] + 1 : DEC.count[DEC.idx] >> 3;
+    bool isValidDecAlphaInstruction = (i >= 3) && DECAlpha::IsValidInstruction(DEC.opcode);
+    if (DEC.count[DEC.idx] == 0 && buf0 == 0 && buf1 == 0 /*ignore lead-in padding*/)
+      isValidDecAlphaInstruction = false;
+    if (isValidDecAlphaInstruction && buf0 == 0 && buf1 == 0 && buf2 == 0 && buf3 == 0 /*stop when lead-out padding*/)
+      isValidDecAlphaInstruction = false;
+    DEC.count[DEC.idx] = isValidDecAlphaInstruction ? DEC.count[DEC.idx] + 1 : DEC.count[DEC.idx] = 0;
     DEC.opcode >>= 21;
     //test if bsr opcode and if last 4 opcodes are valid
     if (
       (DEC.opcode == (0x34 << 5) + 26) &&
       (DEC.count[DEC.idx] > 4) &&
       ((e8e9count == 0) && !soi && !pgm && !rgbi && !bmpi && !wavi && !tga)
-    ) {
-      std::uint32_t const absAddrLSB = DEC.opcode & 0xFF; // absolute address low 8 bits
-      std::uint32_t const relAddrLSB = ((DEC.opcode & 0x1FFFFF) + static_cast<std::uint32_t>(i) / 4u) & 0xff; // relative address low 8 bits
-      std::uint64_t const absPos = DEC.absPos[absAddrLSB];
-      std::uint64_t const relPos = DEC.relPos[relAddrLSB];
-      std::uint64_t const curPos = static_cast<std::uint64_t>(i);
-      if ((absPos > relPos) && (curPos < absPos + UINT64_C(0x8000)) && (absPos > 16) && (curPos > absPos + UINT64_C(16)) && (((curPos-absPos) & UINT64_C(3)) == 0)) {
-        DEC.last = curPos;
-        DEC.branches[DEC.idx]++;      
-        if ((DEC.offset == 0) || (DEC.offset > DEC.absPos[absAddrLSB])) {
-          std::uint64_t const addr = curPos - (DEC.count[DEC.idx] - 1) * UINT64_C(4);
-          DEC.offset = ((start > 0) && (start == prv_start)) ? DEC.absPos[absAddrLSB] : std::min<std::uint64_t>(DEC.absPos[absAddrLSB], addr);
+      ) {
+      uint32_t const absAddrLSB = DEC.opcode & 0xFF; // absolute address low 8 bits
+      uint32_t const relAddrLSB = ((DEC.opcode & 0x1FFFFF) + static_cast<uint32_t>(i) / 4u) & 0xff; // relative address low 8 bits
+      uint64_t const absPos = DEC.absPos[absAddrLSB * 4 + DEC.idx];
+      uint64_t const relPos = DEC.relPos[relAddrLSB * 4 + DEC.idx];
+      uint64_t const curPos = i - 3;
+      if ((absPos > relPos) && (curPos < absPos + UINT64_C(0x8000)) && (absPos > 16) && (curPos > absPos + UINT64_C(16)) && (((curPos - absPos) & UINT64_C(3)) == 0)) {
+        DEC.last[DEC.idx] = curPos;
+        DEC.branches[DEC.idx]++;
+        if ((DEC.offset[DEC.idx] == 0) || (DEC.offset[DEC.idx] > DEC.absPos[absAddrLSB])) {
+          uint64_t const addr = curPos - (DEC.count[DEC.idx] - 1) * UINT64_C(4);
+          DEC.offset[DEC.idx] = std::min<uint64_t>(DEC.absPos[absAddrLSB * 4 + DEC.idx], addr);
         }
       }
       else
         DEC.branches[DEC.idx] = 0;
-      DEC.absPos[absAddrLSB] = DEC.relPos[relAddrLSB] = curPos;
+      DEC.absPos[absAddrLSB * 4 + DEC.idx] = DEC.relPos[relAddrLSB * 4 + DEC.idx] = curPos;
     }
-     
-    if ((detectionInfo.Type == BlockType::DEFAULT) && (DEC.branches[DEC.idx] >= 16)) {
-      detectionInfo.Type = BlockType::DEC_ALPHA;
-      detectionInfo.DataStart = start + DEC.offset - (start + DEC.offset) % 4;
-    }
-   
-    if ((i + 1 == n) || (static_cast<std::uint64_t>(i) > DEC.last + (detectionInfo.Type == BlockType::DEC_ALPHA ? UINT64_C(0x8000) : UINT64_C(0x4000))) && (DEC.count[DEC.offset & 3] == 0)) {
-      if (detectionInfo.Type == BlockType::DEC_ALPHA) {
-        detectionInfo.DataLength = (start + DEC.last - (start + DEC.last) % 4) - detectionInfo.DataStart;
+
+    if (DEC.last[DEC.idx] != 0) {
+      if ((detectionInfo.Type == BlockType::DEFAULT) && (DEC.branches[DEC.idx] >= 16) && DEC.count[DEC.idx] >= 64) {
+        detectionInfo.Type = BlockType::DEC_ALPHA;
+        detectionInfo.DataStart = start + DEC.offset[DEC.idx];
+        for (int i = 0; i < 4; i++) {
+          if (i != DEC.idx) {
+            DEC.last[i] = 0;
+            DEC.offset[i] = 0;
+            DEC.branches[i] = 0;
+          }
+        }
+      }
+
+      else if ((detectionInfo.Type == BlockType::DEFAULT) && (i > DEC.last[DEC.idx] + UINT64_C(0x8000))) {
+        DEC.last[DEC.idx] = 0;
+        DEC.offset[DEC.idx] = 0;
+        DEC.branches[DEC.idx] = 0;
+      }
+
+      else if (detectionInfo.Type == BlockType::DEC_ALPHA 
+        && (start + DEC.offset[DEC.idx]-detectionInfo.DataStart) % 4 == 0
+        && ((i + 4 >= n) || (i > DEC.last[DEC.idx] + UINT64_C(0x1000) && DEC.count[DEC.idx] == 0))) {
+        detectionInfo.DataStart = start + DEC.offset[DEC.idx];
+        detectionInfo.DataLength = (start + DEC.last[DEC.idx]) - detectionInfo.DataStart;
         return detectionInfo;
       }
-      DEC.last = 0, DEC.offset = 0;
-      std::memset(&DEC.branches[0], 0, sizeof(DEC.branches));
     }
+
+#endif //USE_OLD_DECALPHA_DETECTION
 
     // Detect base64 encoded data
     if( b64S == 0 && buf0 == 0x73653634 && ((buf1 & 0xffffff) == 0x206261 || (buf1 & 0xffffff) == 0x204261)) {
@@ -1756,6 +1889,56 @@ static DetectionInfo detect(File *in, uint64_t blockSize, const TransformOptions
       }
     }
 
+    //detect base85 (ascii85) encoded data
+    //headers: stream\n stream\r\n oNimage\n utimage\n \nimage\n
+    if (b85state == 0 && ((buf0 == 0x65616D0A && (buf1 & 0xffffff) == 0x737472) || (buf0 == 0x616D0D0A && buf1 == 0x73747265) || (buf0 == 0x6167650A && buf1 == 0x6F4E696D) || (buf0 == 0x6167650A && buf1 == 0x7574696D) || (buf0 == 0x6167650A && (buf1 & 0xffffff) == 0x0A696D))) {
+        b85state = 1;
+        base85start = i;
+        b85linelength = 0;
+    }
+    else if (b85state == 1) {
+      if (c == CARRIAGE_RETURN && b85linelength == 0) {
+        b85linelength = i - base85start; //capture line lenght
+        if (b85linelength <= 25 || b85linelength > 255)
+          b85state = 0; //fail
+      }
+      else if (c == '~') { //end marker
+        base85end = i - 1;
+        b85state = 0;
+        if (((base85end - base85start) > 60) && ((base85end - base85start) < 0x8000000)) {
+          detectionInfo.Type = BlockType::BASE85;
+          detectionInfo.DataStart = start + base85start + 1;
+          detectionInfo.DataLength = base85end - base85start;
+          return detectionInfo;
+        }
+      }
+      else if (is_base85(c)) {
+        // still ok
+      }
+      else if (c == CARRIAGE_RETURN && b85linelength != 0) {
+        if (b85linelength != i - base85start)
+          b85state = 0; //fail
+      }
+      else {
+        b85state = 0; //fail
+      }
+    }
+
+    // UStar (Unix Standard TAR) detection
+    // Notable uses: silesia/mozilla, silesia/samba, silesia/xml
+    if (buf1 == 0x75737461 /* "usta" */ && (buf0 == 0x72202000 /* "r  \0" */ || buf0 == 0x72003030 /* "r\000" */)) {
+      uint64_t posBackup = in->curPos();
+      TarFilter tarFilter;
+      bool success = tarFilter.detect(in, start + blockSize);
+      if (success) {
+        detectionInfo.Type = BlockType::TAR;
+        detectionInfo.DataStart = tarFilter.detectedStartPos;
+        detectionInfo.DataLength = tarFilter.detectedEndPos - tarFilter.detectedStartPos;
+        return detectionInfo;
+      }
+      in->setpos(posBackup);
+    }
+
   }
   
   if (detectionInfo.Type != BlockType::DEFAULT)
@@ -1773,7 +1956,6 @@ static DetectionInfo detect(File *in, uint64_t blockSize, const TransformOptions
 #include "endianness16b.hpp"
 #include "eol.hpp"
 #include "exe.hpp"
-#include "im32.hpp"
 #include "rle.hpp"
 
 //////////////////// Compress, Decompress ////////////////////////////
@@ -1791,64 +1973,84 @@ static void directEncodeBlock(BlockType type, File *in, uint64_t len, Encoder &e
   fprintf(stderr, "\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b");
 }
 
-static void compressRecursive(File *in, uint64_t blockSize, Encoder &en, String &blstr, int recursionLevel, float p1, float p2, const TransformOptions* const transformOptions);
+static void compressRecursive(File *in, uint64_t blockSize, Encoder &en, String &blstr, float p1, float p2, const TransformOptions* const transformOptions);
+static void compressRecursiveForTar(File* in, uint64_t blockSize, Encoder& en, String& blstr, float p1, float p2, const TransformOptions* const transformOptions);
 
 static uint64_t decodeFunc(BlockType type, Encoder &en, File *tmp, uint64_t len, int info, File *out, FMode mode, uint64_t &diffFound, const TransformOptions* const transformOptions) {
   if( type == BlockType::IMAGE24 ) {
-    auto b = new BmpFilter();
-    b->setWidth(info);
-    b->setSkipRgb(transformOptions->skipRgb);
-    b->setEncoder(en);
-    return b->decode(tmp, out, mode, len, diffFound);
+    auto f = BmpFilter();
+    f.setWidth(info);
+    f.setSkipRgb(transformOptions->skipRgb);
+    f.setEncoder(en);
+    return f.decode(tmp, out, mode, len, diffFound);
   }
   if( type == BlockType::IMAGE32 ) {
-    return decodeIm32(en, len, info, out, mode, diffFound, transformOptions->skipRgb);
+    auto f = BmpFilter();
+    f.setWidth(info);
+    f.setSkipRgb(transformOptions->skipRgb);
+    f.setHasApha();
+    f.setEncoder(en);
+    return f.decode(tmp, out, mode, len, diffFound);
+  }
+  if (type == BlockType::PNG8GRAY || type == BlockType::PNG8 || type == BlockType::PNG24|| type == BlockType::PNG32) {
+    auto f = PngFilter();
+    f.setWidth(info);
+    auto stride = type == BlockType::PNG24 ? 3 : type == BlockType::PNG32 ? 4 : 1;
+    f.setStride(stride);
+    f.setEncoder(en);
+    return f.decode(tmp, out, mode, len, diffFound);
   }
   if( type == BlockType::AUDIO_LE ) {
-    auto e = new EndiannessFilter();
-    e->setEncoder(en);
-    return e->decode(tmp, out, mode, len, diffFound);
+    auto f = EndiannessFilter();
+    f.setEncoder(en);
+    return f.decode(tmp, out, mode, len, diffFound);
   } else if( type == BlockType::EXE ) {
-    auto e = new ExeFilter();
-    e->setBegin(info); 
-    e->setEncoder(en);
-    return e->decode(tmp, out, mode, len, diffFound);
+    auto f = ExeFilter();
+    f.setBegin(info); 
+    f.setEncoder(en);
+    return f.decode(tmp, out, mode, len, diffFound);
   } else if( type == BlockType::TEXT_EOL ) {
-    auto d = new EolFilter();
-    d->setEncoder(en);
-    return d->decode(tmp, out, mode, len, diffFound);
+    auto f = EolFilter();
+    f.setEncoder(en);
+    return f.decode(tmp, out, mode, len, diffFound);
   } else if( type == BlockType::CD ) {
-    auto c = new CdFilter();
-    return c->decode(tmp, out, mode, len, diffFound);
-  }
+    auto f = CdFilter();
+    return f.decode(tmp, out, mode, len, diffFound);
 #ifndef DISABLE_ZLIB
-  else if( type == BlockType::ZLIB )
+  } else if( type == BlockType::ZLIB ) {
     return decodeZlib(tmp, len, out, mode, diffFound);
 #endif //DISABLE_ZLIB
-  else if( type == BlockType::BASE64 ) {
-    auto b = new Base64Filter();
-    return b->decode(tmp, out, mode, len, diffFound);
-  } else if( type == BlockType::GIF ) {
+  } else if( type == BlockType::BASE64 ) {
+    auto f = Base64Filter();
+    return f.decode(tmp, out, mode, len, diffFound);
+  } else if (type == BlockType::BASE85) {
+    auto f = Base85Filter();
+    return f.decode(tmp, out, mode, len, diffFound);
+  }
+  else if( type == BlockType::GIF ) {
     return decodeGif(tmp, len, out, mode, diffFound);
   } else if( type == BlockType::RLE ) {
-    auto r = new RleFilter();
-    //r->setScanLineSize(info & 0xFFFFFF); //now it self-encodes this info, but eventually we need to pass it
-    return r->decode(tmp, out, mode, len, diffFound);
+    auto f = RleFilter();
+    //f.setScanLineSize(info & 0xFFFFFF); //now it self-encodes this info, but eventually we need to pass it
+    return f.decode(tmp, out, mode, len, diffFound);
   } else if( type == BlockType::MRB) {
     uint8_t packingMethod = (info >> 24) & 3; //0..3
     if (packingMethod == 1 /*RLE*/) {
-      auto m = new MrbRleFilter();
-      return m->decode(tmp, out, mode, len, diffFound);
+      auto f = MrbRleFilter();
+      return f.decode(tmp, out, mode, len, diffFound);
     }
     else quit("MRB: not implemented");
   } else if( type == BlockType::LZW ) {
     return decodeLzw(tmp, out, mode, diffFound);
   } else if (type == BlockType::DEC_ALPHA) {
-    auto e = new DECAlphaFilter();
-    e->setEncoder(en);
-    return e->decode(tmp, out, mode, len, diffFound);
-  }
-  else {
+    auto f = DECAlphaFilter();
+    f.setEncoder(en);
+    return f.decode(tmp, out, mode, len, diffFound);
+  } else if (type == BlockType::TAR) {
+    auto f = TarFilter();
+    f.setEncoder(en);
+    return f.decode(tmp, out, mode, len, diffFound);
+  } else {
     assert(false);
   }
   return 0;
@@ -1856,38 +2058,48 @@ static uint64_t decodeFunc(BlockType type, Encoder &en, File *tmp, uint64_t len,
 
 static uint64_t encodeFunc(BlockType type, File *in, File *tmp, uint64_t len, int info, int &hdrsize, const TransformOptions* const transformOptions) {
   if( type == BlockType::IMAGE24 ) {
-    auto b = new BmpFilter();
-    b->setSkipRgb(transformOptions->skipRgb);
-    b->encode(in, tmp, len, info, hdrsize);
+    auto f= BmpFilter();
+    f.setSkipRgb(transformOptions->skipRgb);
+    f.encode(in, tmp, len, info, hdrsize);
   } else if( type == BlockType::IMAGE32 ) {
-    encodeIm32(in, tmp, len, info, transformOptions->skipRgb);
+    auto f = BmpFilter();
+    f.setSkipRgb(transformOptions->skipRgb);
+    f.setHasApha();
+    f.encode(in, tmp, len, info, hdrsize);
+  } else if (type == BlockType::PNG8GRAY || type == BlockType::PNG8 || type == BlockType::PNG24 || type == BlockType::PNG32) {
+    auto f = PngFilter();
+    auto stride = type == BlockType::PNG24 ? 3 : type == BlockType::PNG32 ? 4 : 1;
+    f.setStride(stride);
+    f.encode(in, tmp, len, info, hdrsize);
   } else if( type == BlockType::AUDIO_LE ) {
-    auto e = new EndiannessFilter();
-    e->encode(in, tmp, len, info, hdrsize);
+    auto f = EndiannessFilter();
+    f.encode(in, tmp, len, info, hdrsize);
   } else if( type == BlockType::EXE ) {
-    auto e = new ExeFilter();
-    e->setBegin(info); 
-    e->encode(in, tmp, len, info, hdrsize);
+    auto f = ExeFilter();
+    f.setBegin(info); 
+    f.encode(in, tmp, len, info, hdrsize);
   } else if( type == BlockType::TEXT_EOL ) {
-    auto e = new EolFilter();
-    e->encode(in, tmp, len, info, hdrsize);
+    auto f = EolFilter();
+    f.encode(in, tmp, len, info, hdrsize);
   } else if( type == BlockType::CD ) {
-    auto c = new CdFilter();
-    c->encode(in, tmp, len, info, hdrsize);
-  }
+    auto f = CdFilter();
+    f.encode(in, tmp, len, info, hdrsize);
 #ifndef DISABLE_ZLIB
-  else if( type == BlockType::ZLIB )
+  } else if( type == BlockType::ZLIB ) {
     return encodeZlib(in, tmp, len, hdrsize) ? 0 : 1;
 #endif //DISABLE_ZLIB
-  else if( type == BlockType::BASE64 ) {
-    auto b = new Base64Filter();
-    b->encode(in, tmp, len, info, hdrsize);
+  } else if( type == BlockType::BASE64 ) {
+    auto f = Base64Filter();
+    f.encode(in, tmp, len, info, hdrsize);
+  } else if (type == BlockType::BASE85) {
+    auto f = Base85Filter();
+    f.encode(in, tmp, len, info, hdrsize);
   } else if( type == BlockType::GIF ) {
     return encodeGif(in, tmp, len, hdrsize) != 0 ? 0 : 1;
   } else if( type == BlockType::RLE ) {
-    auto r = new RleFilter();
-    r->setScanLineSize(info & 0xFFFFFF);
-    r->encode(in, tmp, len, info, hdrsize);
+    auto f = RleFilter();
+    f.setScanLineSize(info & 0xFFFFFF);
+    f.encode(in, tmp, len, info, hdrsize);
   } else if (type == BlockType::MRB) {
     const uint8_t packingMethod = (info >> 24) & 3; //0..3
     const uint16_t colorBits = (info >> 26); //1,4,8
@@ -1899,25 +2111,27 @@ static uint64_t encodeFunc(BlockType type, File *in, File *tmp, uint64_t len, in
     else if (colorBits == 1) widthInBytes = ((width + 31) / 32) * 4;
     else quit("Unexpected colorBits for MRB");
     if (packingMethod == 1 /*RLE*/) {
-      auto m = new MrbRleFilter();
-      m->setInfo(widthInBytes, height);
-      m->encode(in, tmp, len, info, hdrsize);
+      auto f = MrbRleFilter();
+      f.setInfo(widthInBytes, height);
+      f.encode(in, tmp, len, info, hdrsize);
     }
     else quit("MRB: not implemented");
   } else if( type == BlockType::LZW ) {
     return encodeLzw(in, tmp, len, hdrsize) != 0 ? 0 : 1;
   } else if (type == BlockType::DEC_ALPHA) {
-    auto e = new DECAlphaFilter();
-    e->encode(in, tmp, len, info, hdrsize);
-  }
-  else {
+    auto f = DECAlphaFilter();
+    f.encode(in, tmp, len, info, hdrsize);
+  } else if (type == BlockType::TAR) {
+    auto f = TarFilter();
+    f.encode(in, tmp, len, info, hdrsize);
+  } else {
     assert(false);
   }
   return 0;
 }
 
 static void
-transformEncodeBlock(BlockType type, File *in, uint64_t len, Encoder &en, int info, String &blstr, int recursionLevel, float p1, float p2, uint64_t begin, const TransformOptions* const transformOptions) {
+transformEncodeBlock(BlockType type, File *in, uint64_t len, Encoder &en, int info, String &blstr, float p1, float p2, uint64_t begin, const TransformOptions* const transformOptions) {
   if( hasTransform(type, info)) {
     FileTmp tmp;
     int headerSize = 0;
@@ -1937,17 +2151,16 @@ transformEncodeBlock(BlockType type, File *in, uint64_t len, Encoder &en, int in
       directEncodeBlock(BlockType::DEFAULT, in, len, en, -1);
     } else {
       tmp.setpos(0);
-      if (type == BlockType::MRB) {
-        String blstrSub0;
-        blstrSub0 += blstr.c_str();
-        blstrSub0 += "->";
-        printf(" %-11s | ->  uncompressed |%10d bytes [%d - %d]\n", blstrSub0.c_str(), int(tmpSize), 0, int(tmpSize - 1));
-      }
       if( hasRecursion(type)) {
-        // TODO(epsteina): Large file support
-        Block::EncodeBlockType(&en, type);
-        Block::EncodeBlockSize(&en, tmpSize);
+        Block::EncodeBlockHeader(&en, type, tmpSize, info&0xffffff);
         BlockType type2 = static_cast<BlockType>((info >> 24) & 0xFF);
+        if (isPNG(type)) {
+            type2 =
+                type == BlockType::PNG8GRAY ? BlockType::IMAGE8GRAY :
+                type == BlockType::PNG8 ? BlockType::IMAGE8 :
+                type == BlockType::PNG24 ? BlockType::IMAGE24 :
+                type == BlockType::PNG32 ? BlockType::IMAGE32 : BlockType::DEFAULT;
+        }
         if( type2 != BlockType::DEFAULT ) {
           String blstrSub0;
           blstrSub0 += blstr.c_str();
@@ -1958,18 +2171,38 @@ transformEncodeBlock(BlockType type, File *in, uint64_t len, Encoder &en, int in
           String blstrSub2;
           blstrSub2 += blstr.c_str();
           blstrSub2 += "-->";
-          printf(" %-11s | ->  exploded     |%10d bytes [%d - %d]\n", blstrSub0.c_str(), int(tmpSize), 0, int(tmpSize - 1));
+          const char* exploded = 
+                           "exploded    ";
+          const char* addedheader =
+            isPNG(type)  ? "filter data " : // PNG ->Image
+                           "added header";
+          const char* dataname =
+            isPNG(type2) ? "png data    " : // ZLIB -> PNG
+            isPNG(type)  ? "pixel data  " : // PNG  -> Image
+                           "data        ";
+          if(!isPNG(type))
+            printf(" %-11s | ->  %s |%10d bytes [%d - %d]\n", blstrSub0.c_str(), exploded, int(tmpSize), 0, int(tmpSize - 1));
           if (headerSize != 0) {
-            printf(" %-11s | --> added header |%10d bytes [%d - %d]\n", blstrSub1.c_str(), headerSize, 0, headerSize - 1);
+            printf(" %-11s | --> %s |%10d bytes [%d - %d]\n", blstrSub1.c_str(), addedheader, headerSize, 0, headerSize - 1);
             directEncodeBlock(BlockType::HDR, &tmp, headerSize, en, -1);
-            printf(" %-11s | --> data         |%10d bytes [%d - %d]\n", blstrSub2.c_str(), int(tmpSize - headerSize), headerSize,
-              int(tmpSize - 1));
+            printf(" %-11s | --> %s |%10d bytes [%d - %d]\n", blstrSub2.c_str(), dataname, int(tmpSize - headerSize), headerSize, int(tmpSize - 1));
           }
-          transformEncodeBlock(type2, &tmp, tmpSize - headerSize, en, info & 0xffffff, blstr, recursionLevel, p1, p2, headerSize, transformOptions);
+          transformEncodeBlock(type2, &tmp, tmpSize - headerSize, en, info & 0xffffff, blstr, p1, p2, headerSize, transformOptions);
         } else {
-          compressRecursive(&tmp, tmpSize, en, blstr, recursionLevel + 1, p1, p2, transformOptions);
+          if (type == BlockType::TAR) {
+            compressRecursiveForTar(&tmp, tmpSize, en, blstr, p1, p2, transformOptions);
+          }
+          else {
+            compressRecursive(&tmp, tmpSize, en, blstr, p1, p2, transformOptions);
+          }
         }
       } else {
+        if (type == BlockType::MRB) {
+          String blstrSub0;
+          blstrSub0 += blstr.c_str();
+          blstrSub0 += "->";
+          printf(" %-11s | ->  uncompressed |%10d bytes [%d - %d]\n", blstrSub0.c_str(), int(tmpSize), 0, int(tmpSize - 1));
+        }
         directEncodeBlock(type, &tmp, tmpSize, en, info);
       }
     }
@@ -1988,10 +2221,11 @@ static void composeSubBlockStringToPrint(String& blstr, String& blstrSub, int bl
   blstrSub += uint64_t(blNum);
 }
 
-static void printBlock(const uint64_t begin, const uint64_t len, const BlockType type, const int blockInfo, String& blstrSub, const int recursionLevel) {
-  static const char* typeNames[27] = { "default", "jpeg", "hdr", "1b-image", "4b-image", "8b-image", "8b-img-grayscale",
+static void printBlock(const uint64_t begin, const uint64_t len, const BlockType type, const int blockInfo, String& blstrSub) {
+  static const char* typeNames[30] = { "default", "jpeg", "hdr", "1b-image", "4b-image", "8b-image", "8b-img-grayscale",
                                       "24b-image", "32b-image", "audio", "audio - le", "x86/64", "cd", "zlib", "base64", "gif", "png-8b",
-                                      "png-8b-grayscale", "png-24b", "png-32b", "text", "text - eol", "rle", "lzw", "dec-alpha", "mrb", "dBase"};
+                                      "png-8b-grayscale", "png-24b", "png-32b", "text", "text - eol", "rle", "lzw", "dec-alpha", "mrb", 
+                                      "dBase", "base85", "tar", "tar header"};
   static const char* audioTypes[4] = { "8b-mono", "8b-stereo", "16b-mono", "16b-stereo" };
   static const char* mrbTypes[4] = { "mrb-uncompressed", "mrb-rle", "mrb-lz77", "mrb-rle-lz77" };
 
@@ -2003,7 +2237,13 @@ static void printBlock(const uint64_t begin, const uint64_t len, const BlockType
   if (type == BlockType::AUDIO || type == BlockType::AUDIO_LE) {
     printf(" (%s)", audioTypes[blockInfo % 4]);
   }
-  else if (type == BlockType::IMAGE1 || type == BlockType::IMAGE4 || type == BlockType::IMAGE8 || type == BlockType::IMAGE8GRAY || type == BlockType::IMAGE24 || type == BlockType::IMAGE32 ||
+  else if (
+    type == BlockType::IMAGE1 || 
+    type == BlockType::IMAGE4 || 
+    type == BlockType::IMAGE8 ||
+    type == BlockType::IMAGE8GRAY || 
+    type == BlockType::IMAGE24 ||
+    type == BlockType::IMAGE32 ||
     (type == BlockType::ZLIB && isPNG(BlockType(blockInfo >> 24)))) {
     printf(" (width: %d)", (type == BlockType::ZLIB) ? (blockInfo & 0xFFFFFF) : blockInfo);
   }
@@ -2026,20 +2266,20 @@ static void printBlock(const uint64_t begin, const uint64_t len, const BlockType
   printf("\n");
 }
 
-static void compressBlock(File* in, const uint64_t begin, const uint64_t len, int &blNum, BlockType type, int blockInfo, Encoder& en, String& blstr, const int recursionLevel, float &p1, float &p2, const float pscale, const TransformOptions* const transformOptions) {
+static void compressBlock(File* in, const uint64_t begin, const uint64_t len, int &blNum, BlockType type, int blockInfo, Encoder& en, String& blstr, float &p1, float &p2, const float pscale, const TransformOptions* const transformOptions) {
   p2 = p1 + pscale * len;
   en.setStatusRange(p1, p2);
 
   String blstrSub;
   composeSubBlockStringToPrint(blstr, blstrSub, blNum);
-  printBlock(begin, len, type, blockInfo, blstrSub, recursionLevel);
-  transformEncodeBlock(type, in, len, en, blockInfo, blstrSub, recursionLevel, p1, p2, begin, transformOptions);
+  printBlock(begin, len, type, blockInfo, blstrSub);
+  transformEncodeBlock(type, in, len, en, blockInfo, blstrSub, p1, p2, begin, transformOptions);
   blNum++;
 
   p1 = p2;
 }
 
-static void compressRecursive(File *in, uint64_t bytesToProcess, Encoder &en, String &blstr, int recursionLevel, float p1, float p2, const TransformOptions* const transformOptions) {
+static void compressRecursive(File *in, uint64_t bytesToProcess, Encoder &en, String &blstr, float p1, float p2, const TransformOptions* const transformOptions) {
 
   uint64_t begin = in->curPos();
 
@@ -2056,13 +2296,13 @@ static void compressRecursive(File *in, uint64_t bytesToProcess, Encoder &en, St
     while(blockStart != begin) {
       TextDetectionInfo textDetectionInfo = detectText(in, begin, blockStart - begin); // DEFAULT / TEXT / TEXT_EOL
       in->setpos(begin);
-      compressBlock(in, textDetectionInfo.DataStart, textDetectionInfo.DataLength, /*ref: */ blNum, textDetectionInfo.Type, 0, en, /*in: */ blstr, recursionLevel, /*ref: */ p1, /*ref: */ p2, pscale, transformOptions);
+      compressBlock(in, textDetectionInfo.DataStart, textDetectionInfo.DataLength, /*ref: */ blNum, textDetectionInfo.Type, 0, en, /*in: */ blstr, /*ref: */ p1, /*ref: */ p2, pscale, transformOptions);
       begin += textDetectionInfo.DataLength;
       bytesToProcess -= textDetectionInfo.DataLength;
     }
 
     if (detectionInfo.HeaderLength != 0) {
-      compressBlock(in, detectionInfo.HeaderStart, detectionInfo.HeaderLength, /*ref: */ blNum, BlockType::HDR, 0, en, /*in: */ blstr, recursionLevel, /*ref: */ p1, /*ref: */ p2, pscale, transformOptions);
+      compressBlock(in, detectionInfo.HeaderStart, detectionInfo.HeaderLength, /*ref: */ blNum, BlockType::HDR, 0, en, /*in: */ blstr, /*ref: */ p1, /*ref: */ p2, pscale, transformOptions);
       begin += detectionInfo.HeaderLength;
       bytesToProcess -= detectionInfo.HeaderLength;
     }
@@ -2071,10 +2311,34 @@ static void compressRecursive(File *in, uint64_t bytesToProcess, Encoder &en, St
       quit("Internal error in compressRecursive");
     
     if (detectionInfo.DataLength != 0) {
-      compressBlock(in, detectionInfo.DataStart, detectionInfo.DataLength, /*ref: */ blNum, detectionInfo.Type, detectionInfo.DataInfo, en, /*in: */ blstr, recursionLevel, /*ref: */ p1, /*ref: */ p2, pscale, transformOptions);
+      compressBlock(in, detectionInfo.DataStart, detectionInfo.DataLength, /*ref: */ blNum, detectionInfo.Type, detectionInfo.DataInfo, en, /*in: */ blstr, /*ref: */ p1, /*ref: */ p2, pscale, transformOptions);
       begin += detectionInfo.DataLength;
       bytesToProcess -= detectionInfo.DataLength;
     }
+  }
+}
+
+static void compressRecursiveForTar(File* in, uint64_t bytesToProcess, Encoder& en, String& blstr, float p1, float p2, const TransformOptions* const transformOptions) {
+  Array<uint64_t, 1> filePositions{ 0 };
+  TarFilter tarFilter{};
+  in->setpos(0);
+  tarFilter.getFilePositions(in, filePositions);
+  assert(filePositions[filePositions.size() - 1] == bytesToProcess);
+  in->setpos(0);
+
+  int blNum = 0;
+  float pscale = bytesToProcess != 0 ? (p2 - p1) / bytesToProcess : 0;
+
+  auto headerSize = filePositions[0];
+  compressBlock(in, 0, headerSize, /*ref: */ blNum, BlockType::TARHDR, 0, en, /*in: */ blstr, /*ref: */ p1, /*ref: */ p2, pscale, transformOptions);
+  for (; blNum < filePositions.size(); blNum++) {
+    uint64_t blockSize = filePositions[blNum] - filePositions[blNum - 1];
+    p2 = p1 + pscale * blockSize;
+    en.setStatusRange(p1, p2);
+    String blstrSub;
+    composeSubBlockStringToPrint(blstr, blstrSub, blNum);
+    compressRecursive(in, blockSize, en, blstrSub, p1, p2, transformOptions);
+    p1 = p2;
   }
 }
 
@@ -2099,15 +2363,14 @@ static void compressfile(const Shared* const shared, const char *filename, uint6
     const uint64_t begin = 0;
     int blNum = 0;
     const int info = -1;
-    const int recursionLevel = 0;
     float p1 = 0.0f;
     float p2 = 1.0f;
     const float pscale = fileSize != 0 ? (p2 - p1) / fileSize : 0;
-    compressBlock(&in, begin, fileSize, /*ref: */ blNum, BlockType::DEFAULT, info, en, /*in: */ blstr, recursionLevel, /*ref: */ p1, /*ref: */ p2, pscale, &transformOptions);
+    compressBlock(&in, begin, fileSize, /*ref: */ blNum, BlockType::DEFAULT, info, en, /*in: */ blstr, /*ref: */ p1, /*ref: */ p2, pscale, &transformOptions);
   }
   else {
     // detect block types + compress
-    compressRecursive(&in, fileSize, en, blstr, 0, 0.0F, 1.0F, &transformOptions);
+    compressRecursive(&in, fileSize, en, blstr, 0.0F, 1.0F, &transformOptions);
   }
   in.close();
 
@@ -2120,7 +2383,7 @@ static void compressfile(const Shared* const shared, const char *filename, uint6
   }
 }
 
-static uint64_t decompressRecursive(File *out, uint64_t blockSize, Encoder &en, FMode mode, int recursionLevel, TransformOptions *transformOptions) {
+static uint64_t decompressRecursive(File *out, uint64_t blockSize, Encoder &en, FMode mode, TransformOptions *transformOptions) {
   uint64_t i = 0;
   uint64_t diffFound = 0;
   while( i < blockSize ) {
@@ -2137,11 +2400,9 @@ static uint64_t decompressRecursive(File *out, uint64_t blockSize, Encoder &en, 
         len = decodeFunc(type, en, &tmp, len, info, out, mode, diffFound, transformOptions);
       }
       tmp.close();
-    } 
-    else
-    if( hasRecursion(type)) {
+    } else if( hasRecursion(type)) {
       FileTmp tmp;
-      decompressRecursive(&tmp, len, en, FMode::FDECOMPRESS, recursionLevel + 1, transformOptions);
+      decompressRecursive(&tmp, len, en, FMode::FDECOMPRESS, transformOptions);
       if( mode != FMode::FDISCARD ) {
         tmp.setpos(0);
         if( hasTransform(type, info)) {
@@ -2192,7 +2453,7 @@ static void decompressFile(const Shared* const shared, const char* filename, FMo
 
   // Decompress/Compare
   TransformOptions transformOptions(shared);
-  uint64_t r = decompressRecursive(&f, fileSize, en, fMode, 0, &transformOptions);
+  uint64_t r = decompressRecursive(&f, fileSize, en, fMode, &transformOptions);
   if( fMode == FMode::FCOMPARE && (r == 0) && f.getchar() != EOF) {
     printf("file is longer\n");
   } else if( fMode == FMode::FCOMPARE && (r != 0)) {
