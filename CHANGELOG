@@ -1975,3 +1975,15 @@ paq8px_v206fix1 by Zoltán Gotthardt
   - Removed [[nodiscard]] attributes (they didn't contribute to code safety)
 - Fixed some signed left shifts.
 
+
+paq8px_v207 by Zoltán Gotthardt
+2022.07.09
+- Refactoring: moved im32 filter logic to bmp filter.
+- Implemented png filtering (transformation) at the transformation level. Cosmetic changes around other filters.
+- Removed png filtering from Image24BitModel and Image8BitModel.
+- Added base85 filter from paq8pxd.
+- Added new DECAlpha detection based on object file signature. Disabled old detection mechanism.
+- Added TAR detection and transformation.
+- Added 2 WordModel (linemodel) contexts targeting structured text files with re-occuring line content such as silesia/nci; Tuned other WordModel (linemodel) contexts; Using the RecordLength as LineLength to boost wordmodel (linemodel) performance for DBase and DEC-Alpha content.
+- Use a separate LSTM model for each main context type.
+- Other cosmetic changes.
